@@ -26,7 +26,6 @@ def grade():
     req = urllib.request.Request("http://%s:%d/tutorial" % (inginious_instance_hostname, inginious_instance_port),
                                  data=data)
     resp = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-    print(resp)
     p = subprocess.Popen(['rst2html5'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     p.stdin.write(bytes(resp["result"][1], encoding='utf-8'))
     out = p.communicate()
@@ -35,7 +34,6 @@ def grade():
 
 @app.route('/parserst', methods=['POST'])
 def parse_rst():
-    print(request.form)
     inpt = request.form["rst"]
     p = subprocess.Popen(['rst2html5'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     p.stdin.write(bytes(inpt, encoding='utf-8'))
