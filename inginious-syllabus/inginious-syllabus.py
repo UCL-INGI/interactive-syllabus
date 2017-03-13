@@ -1,9 +1,6 @@
 from flask import Flask, render_template, request
-import subprocess
-import urllib
-import json
-
-import docutils
+import utils.pages
+from docutils.core import publish_string
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -17,27 +14,16 @@ def hello_world():
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port))
 
 
-@app.route('/grade', methods=['POST'])
-def grade():
-    task_id = request.form["taskid"]
-    inpt = request.form["input"]
-    data = urllib.parse.urlencode({'taskid': task_id, 'input': inpt}).encode()
-    # POST
-    req = urllib.request.Request("http://%s:%d/tutorial" % (inginious_instance_hostname, inginious_instance_port),
-                                 data=data)
-    resp = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-    p = subprocess.Popen(['rst2html5'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    p.stdin.write(bytes(resp["result"][1], encoding='utf-8'))
-    out = p.communicate()
-    return out
-
+@app.route('/rst_version')
+def hello_world_rst():
+    return render_template('hello_rst.html',
+                           inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
+                           chapter="mission1", page="page1", render_rst=utils.pages.render_page)
 
 @app.route('/parserst', methods=['POST'])
 def parse_rst():
     inpt = request.form["rst"]
-    p = subprocess.Popen(['rst2html5'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    p.stdin.write(bytes(inpt, encoding='utf-8'))
-    out = p.communicate()
+    out = publish_string(inpt, writer_name='html')
     return out
 
 
