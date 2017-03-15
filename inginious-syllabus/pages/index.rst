@@ -8,7 +8,6 @@ dans une phrase.
 
 Cette syntaxe, cette grammaire, cette façon d'écrire en java a toute son importance et vous l'apprendrez en détails dans les différentes unités de ce cours.
 
-
 Mais puisqu'il faut bien commencer quelque part et parce que c'est la coutume, nous allons détailler
 ensemble un premier programme complet :
 
@@ -31,5 +30,7 @@ Pour les non novices, si vous êtes déjà capable de comprendre entièrement ce
 
 Regardons de plus près le code de ce programme. Nous allons le détailler dans les unités suivantes.
 
+
+Exercice:
 
 .. inginious::
