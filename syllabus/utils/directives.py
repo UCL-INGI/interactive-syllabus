@@ -1,6 +1,7 @@
 from docutils.parsers.rst import Directive
-from inginious-syllabus
 from docutils import nodes
+
+from syllabus.config import *
 
 
 class InginiousDirective(Directive):
@@ -21,5 +22,6 @@ class InginiousDirective(Directive):
 
     def run(self):
         print(self.arguments[0])
-        par = nodes.raw('', self.html.format(self.arguments[0]), format='html')
+        par = nodes.raw('', self.html.format(inginious_instance_hostname, inginious_instance_port,
+                                             inginious_instance_course_id, self.arguments[0]), format='html')
         return [par]
