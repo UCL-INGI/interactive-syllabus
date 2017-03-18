@@ -11,8 +11,11 @@
     <script src="/static/js/codemirror.js"></script>
     <script src="/static/js/codemirror-clike-style.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
 </head>
 <body>
+
 <div class="container">
     <span id="maincontent"></span>
     <h2>Parler java : syntaxe de base</h2>
@@ -22,22 +25,7 @@
             {{ render_rst(chapter, page)|safe }}
         </div>
     </div>
-    <h2>Exercise time !</h2>
-    Mettez maintenant en pratique ce que vous venez de voir !
-    Pour vous entraîner à l'utilisation de boucles for, écrivez une boucle for qui permettra de calculer la somme des n premiers entier PAIRS supérieurs à zéro, en fonction de la variable n, déjà définie à une valeur supérieure ou égale à zéro. Le résultat final doit être stocké dans la variable sum à la fin de la boucle, elle aussi déjà définie. Lorsque n est négatif, le résultat doit valoir zéro.
-    <pre>
-    int n = /* n peut prendre n'importe quelle valeur */
-    int sum = 0;</pre>
-    Écrivez ici le bout de programme permettant de calculer la somme des n premiers entiers pairs :
-    <div id="feedback-container" class="alert alert-success" hidden>
-        <strong>Success!</strong> Indicates a successful or positive action.
-    </div>
-    <form method="post" id="form1" action="http://localhost:8080/tutorial">
-        <textarea style="width:100%; height:150px;" id="code" name="code"></textarea><br/>
-        <input type="text" name="taskid" id="taskid" value="syllabus-test" hidden/>
-        <input type="text" name="input" id="to-submit" hidden/>
-    </form>
-    <button class="btn btn-primary" id="b1" value="Submit">Submit</button>
+
 </div>
 </body>
 <script src="/static/js/submitter.js"></script>
