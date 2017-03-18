@@ -1,25 +1,32 @@
 from flask import Flask, render_template, request
-import utils.pages, utils.directives
+import syllabus.utils.pages, syllabus.utils.directives
 from docutils.core import publish_string
-from config import *
+from syllabus.config import *
 from docutils.parsers.rst import directives
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-# directives.register_directive('inginious', utils.directives.InginiousDirective)
+directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 
 
-@app.route('/')
 def hello_world():
     return render_template('hello.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port))
 
 
-@app.route('/rst_version')
-def hello_world_rst():
+@app.route('/')
+@app.route('/index')
+def index():
     return render_template('hello_rst.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
-                           chapter="mission1", page="page1", render_rst=utils.pages.render_page)
+                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page)
+
+
+@app.route('/<chapter>/<page>')
+def get_page(chapter, page):
+    return render_template('hello_rst.html',
+                           inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
+                           chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page)
 
 
 @app.route('/parserst', methods=['POST'])
