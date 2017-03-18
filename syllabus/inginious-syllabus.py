@@ -7,7 +7,7 @@ from docutils.parsers.rst import directives
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
-
+directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 
 def hello_world():
     return render_template('hello.html',

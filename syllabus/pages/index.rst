@@ -1,5 +1,4 @@
 Voici la table des matières du syllabus de java pour SINF0000.
-
 {% for chapter in structure.keys() %}
 
 - {{ chapter }}
@@ -7,3 +6,5 @@ Voici la table des matières du syllabus de java pour SINF0000.
   - {{ hyperlink(page, "/%s/%s" % (chapter, page))|safe }}
 {% endfor %}
 {% endfor %}
+
+.. table-of-contents::

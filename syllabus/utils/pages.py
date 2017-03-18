@@ -31,6 +31,7 @@ class MyWebSupport(WebSupport):
         app.builder.set_webinfo(self.staticdir, self.staticroot,
                                 self.search, self.storage)
         app.add_directive('inginious', directives.InginiousDirective)
+        app.add_directive('table-of-contents', directives.ToCDirective)
 
         self.storage.pre_build()
         app.build()
