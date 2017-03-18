@@ -2,6 +2,7 @@ import os
 
 from docutils.core import publish_string
 from flask.helpers import get_root_path
+from flask import render_template_string
 from sphinx.websupport import WebSupport
 from sphinx.application import Sphinx
 import utils.directives as directives
@@ -53,4 +54,4 @@ default_rst_opts = {
 
 def render_page(chapter, page):
     with open(os.path.join(get_root_path("inginious-syllabus"), "pages/%s/%s.rst" % (chapter, page)), "r") as f:
-        return publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts)
+        return publish_string(render_template_string(f.read()), writer_name='html', settings_overrides=default_rst_opts)
