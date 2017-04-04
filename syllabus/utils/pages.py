@@ -56,20 +56,23 @@ default_rst_opts = {
 
 
 # TODO: define some explicit user-defined (YAML file ?) ordering of the chapters.
-def get_syllabus_toc():
+def get_syllabus_toc(wanted_root):
     """
+    :param wanted_root: The directory from where the arborescence will start
     :return: An ordered dictionary containing the table of content of the syllabus.
     The chapters and pages inside chapters are ordered in lexicographical order
     """
     structure = OrderedDict()
     root_path = get_root_path("inginious-syllabus")
-    for directory in sorted(os.listdir(os.path.join(root_path, "pages"))):
-        print(directory)
-        if os.path.isdir(os.path.join(root_path, "pages", directory)):
-            print(directory)
-            structure[directory] = []
-            for file in sorted(os.listdir(os.path.join(root_path, "pages", directory))):
-                structure[directory].append(file.replace('.rst', ''))
+    split_root = wanted_root.split("/")
+    node_name = split_root[len(split_root)-1]
+    structure[node_name] = []
+    for directory in sorted(os.listdir(os.path.join(root_path, wanted_root))):
+        current_path = os.path.join(root_path,wanted_root, directory)
+        if os.path.isdir(current_path):
+            structure[node_name].append(get_syllabus_toc(os.path.join(wanted_root,directory)))
+        else:
+            structure[node_name].append(directory.replace('.rst', ''))
     print(structure)
     return structure
 
@@ -77,6 +80,6 @@ def get_syllabus_toc():
 def render_page(chapter, page):
     with open(os.path.join(get_root_path("inginious-syllabus"),
                            os.path.join("pages", chapter, "%s.rst" % page)), "r") as f:
-        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc(),
+        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc("pages"),
                                                      hyperlink=rst.hyperlink, h=rst.h),
                               writer_name='html', settings_overrides=default_rst_opts)

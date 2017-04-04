@@ -1,9 +1,11 @@
 from docutils.parsers.rst import Directive
 from docutils import nodes
+import collections
 
 import syllabus.utils.pages
 
 from syllabus.config import *
+
 
 class InginiousDirective(Directive):
     required_arguments = 1
@@ -30,20 +32,34 @@ class InginiousDirective(Directive):
 
 class ToCDirective(Directive):
     required_arguments = 0
-    optional_arguments = 0
+    optional_arguments = 1
     html = """
     <div id="table-of-contents">
         <h1> Table des matières! </h1>
-        <ol type="I">
     """
 
     def run(self):
-        toc = syllabus.utils.pages.get_syllabus_toc()
-        for directory in toc:
-            self.html += "\t\t<li>"+directory+"</li>\n"
-            self.html += "\t\t<ol>\n"
-            for file in toc[directory]:
-                self.html += "\t\t\t<li><a href='"+directory+"/"+file+"'>"+file+"</a></li>\n"
-            self.html += "\t\t</ol>\n"
-        self.html += "\t</ol>\n</div>"
+
+        if len(self.arguments) == 0:
+            return
+        toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
+        self.html += self.parse(toc[self.arguments[0]],"")
+        self.html += "</div>"
         return [nodes.raw(' ', self.html, format='html')]
+
+    def parse(self, dictio,pathTo):
+
+        if pathTo== "":
+            html = ""
+        else:
+            split = pathTo.split("/")
+            html = "<h"+str(len(split))+">"+split[len(split)-1]+"</h"+str(len(split))+">\n<ul>"
+        for elem in dictio:
+            if isinstance(elem,collections.OrderedDict):
+                for k in elem:
+                    key = k
+                html += self.parse(elem[key],pathTo+"/"+key)
+            else:
+                html += "<li><a href='"+pathTo+"/"+elem+"'>"+elem+"</a>"
+        html += "</ul>"
+        return html
