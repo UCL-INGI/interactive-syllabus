@@ -41,6 +41,10 @@ Pour vous entraîner à l'utilisation de boucles for, écrivez une boucle for qu
     int n = /* n peut prendre n'importe quelle valeur */
     int sum = 0;
 
-Écrivez ici le bout de programme permettant de calculer la somme des n premiers entiers pairs :
+Remplissez les trous du bout de programme permettant de calculer la somme des n premiers entiers pairs :
 
 .. inginious:: syllabus-test
+
+    for(int i = /*1*/ ; i <= n ; /*2*/){
+        sum += /*3*/;
+    }

@@ -1,12 +1,14 @@
 import os
 from collections import OrderedDict
 
+import sys
 from docutils.core import publish_string
 from flask.helpers import get_root_path
 from flask import render_template_string
 from sphinx.websupport import WebSupport
 from sphinx.application import Sphinx
 
+import syllabus
 from syllabus.config import *
 import syllabus.utils.directives as directives
 from syllabus.utils import rst
@@ -78,8 +80,8 @@ def get_syllabus_toc(wanted_root):
 
 
 def render_page(chapter, page):
-    with open(os.path.join(get_root_path("inginious-syllabus"),
-                           os.path.join("pages", chapter, "%s.rst" % page)), "r") as f:
-        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc("pages"),
+    root_path = get_root_path("syllabus")
+    with open(os.path.join(root_path, "pages", chapter, "%s.rst" % page), "r") as f:
+        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc(),
                                                      hyperlink=rst.hyperlink, h=rst.h),
                               writer_name='html', settings_overrides=default_rst_opts)

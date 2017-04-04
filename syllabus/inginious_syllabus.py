@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request
 import syllabus.utils.pages, syllabus.utils.directives
 from docutils.core import publish_string
@@ -36,5 +37,5 @@ def parse_rst():
     return out
 
 
-if __name__ == '__main__':
+def main():
     app.run()

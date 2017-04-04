@@ -7,7 +7,6 @@ def hyperlink(text, target):
     :param target: the hyperlink target (works like an a href)
     :return: The rst expression that shows an hyperlink going to the specified target
     """
-    print("`%s <%s>`__" % (text, target))
     return "`%s <%s>`__" % (text, target)
 
 
