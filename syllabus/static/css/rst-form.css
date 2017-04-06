@@ -1,0 +1,50 @@
+/*
+:Author: 3.14r
+:Contact: 3@14r.com
+:Copyright: This stylesheet has been placed in the public domain.
+
+Stylesheet for use with Docutils.
+
+*/
+
+/* @import url(html4css1.css); */
+
+
+/* Your customizations go here.  For example: */
+
+
+h1.title {
+    text-align: left;
+}
+
+div.section {
+    margin-top: 35px;
+    margin-bottom: 10px;
+}
+
+.checker>h1, div.section>h1 {
+    font-size: 150%;
+}
+
+li p.first {
+    display: inline;
+}
+
+li>img.checkmark {
+    margin-left: -50px;
+}
+
+ul {
+    list-style-type: none;
+}
+
+input[type=radio] {
+    margin-right: 15px;
+    vertical-align: center;
+}
+
+.result {
+    display: inline;
+    margin-left: 30px;
+    font-weight: bold;
+}
