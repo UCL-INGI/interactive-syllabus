@@ -32,6 +32,7 @@ class InginiousDirective(Directive):
 
 
 class ToCDirective(Directive):
+    has_content = True
     required_arguments = 0
     optional_arguments = 1
     html = """
@@ -41,25 +42,32 @@ class ToCDirective(Directive):
 
     def run(self):
         if len(self.arguments) == 0:
-            return
+            tmp = "<ol>\n"
+            for line in self.content:
+                tmp += "<li>" + line + "</li>\n"
+            tmp += "</ol>"
+            return [nodes.raw(' ', tmp, format='html')]
         toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
-        self.html += self.parse(toc[self.arguments[0]],"")
+        self.html += self.parse(toc[self.arguments[0]], "")
         self.html += "</div>"
         return [nodes.raw(' ', self.html, format='html')]
 
-    def parse(self, dictio,pathTo):
+    def parse(self, dictio, pathTo):
 
-        if pathTo== "":
+        if pathTo == "":
             html = ""
         else:
             split = pathTo.split("/")
-            html = "<h"+str(len(split))+">"+split[len(split)-1]+"</h"+str(len(split))+">\n<ul>"
+            html = "<h" + str(len(split)) + ">" + split[len(split)-1] + "</h" + str(len(split)) + ">\n<ul>"
         for elem in dictio:
-            if isinstance(elem,collections.OrderedDict):
+            if isinstance(elem, collections.OrderedDict):
                 for k in elem:
                     key = k
-                html += self.parse(elem[key],pathTo+"/"+key)
+                html += self.parse(elem[key], pathTo+"/"+key)
             else:
-                html += "<li><a href='"+pathTo+"/"+elem+"'>"+elem+"</a>"
+                html += "<li><a href='" + pathTo + "/" + elem + "'>" + elem + "</a>"
         html += "</ul>"
         return html
+
+    def getContent(self, content):
+        return "Hello"

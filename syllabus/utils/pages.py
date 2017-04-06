@@ -82,6 +82,6 @@ def get_syllabus_toc(wanted_root):
 def render_page(chapter, page):
     root_path = get_root_path("syllabus")
     with open(os.path.join(root_path, "pages", chapter, "%s.rst" % page), "r") as f:
-        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc(),
+        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc("pages"),
                                                      hyperlink=rst.hyperlink, h=rst.h),
                               writer_name='html', settings_overrides=default_rst_opts)

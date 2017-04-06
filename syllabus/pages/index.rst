@@ -1,1 +1,5 @@
-.. table-of-contents:: pages
+.. table-of-contents::
+
+    Hello, darkness
+    my old friend.
+
