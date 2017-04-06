@@ -65,7 +65,7 @@ def get_syllabus_toc(wanted_root):
     The chapters and pages inside chapters are ordered in lexicographical order
     """
     structure = OrderedDict()
-    root_path = get_root_path("inginious-syllabus")
+    root_path = get_root_path("syllabus")
     split_root = wanted_root.split("/")
     node_name = split_root[len(split_root)-1]
     structure[node_name] = []
