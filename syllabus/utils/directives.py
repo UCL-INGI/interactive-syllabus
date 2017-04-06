@@ -12,15 +12,17 @@ class InginiousDirective(Directive):
     required_arguments = 1
     optional_arguments = 0
     html = """
-    <div id="feedback-container" class="alert alert-success" hidden>
-        <strong>Success!</strong> Indicates a successful or positive action.
+    <div class="inginious-task" style="margin: 20px">
+        <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
+            <strong>Success!</strong> Indicates a successful or positive action.
+        </div>
+        <form method="post" action="http://{0}:{1}/{2}">
+            <textarea style="width:100%; height:150px;" class="inginious-code" name="code">{3}</textarea><br/>
+            <input type="text" name="taskid" class="taskid" value="{4}" hidden/>
+            <input type="text" name="input" class="to-submit" hidden/>
+        </form>
+        <button class="btn btn-primary button-inginious-task" id="{4}" value="Submit">Submit</button>
     </div>
-    <form method="post" id="form1" action="http://{0}:{1}/{2}">
-        <textarea style="width:100%; height:150px;" id="code" name="code">{3}</textarea><br/>
-        <input type="text" name="taskid" id="taskid" value="{4}" hidden/>
-        <input type="text" name="input" id="to-submit" hidden/>
-    </form>
-    <button class="btn btn-primary button-inginious-task" id="b1" value="Submit">Submit</button>
 
     """
 
