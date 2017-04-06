@@ -29,7 +29,25 @@ Ce programme va afficher ``Hello, world !``.
 Pour les non novices, si vous êtes déjà capable de comprendre entièrement cet exemple, il est conseillé
     de passer directement à la section suivante.
 
-Regardons de plus près le code de ce programme. Nous allons le détailler dans les unités suivantes.
+Pour les autres, êtes-vous capables de modifier ce petit programme pour afficher ``"Bonjour !"`` au lieu de ``"Hello, world !"`` ?
+
+Essayez donc :
+
+.. inginious:: syllabus-bonjour
+
+        /*
+         * Un programme qui affiche Hello, world!
+         */
+         public class Hello {
+             public static void main (String[] args) {
+                 // affiche à l’écran
+                 System.out.println("Hello, world !");
+             } // fin de main
+         } // fin de la classe Hello
+
+
+
+Nous allons détailler ce programme dans les unités suivantes.
 
 Exercise time !
 ***************
