@@ -2,7 +2,7 @@ function submitCode(url, taskID, questionID, code, feedbackContainer, toDisable)
     let td = $(toDisable);
     td.attr("disabled", true);
     $.post(url, {'taskid': taskID, 'input': JSON.stringify({[questionID]: code})}, function(data) {
-        let toParse = "**" + data.result[1] + "**";
+        let toParse = data.result[1];
         for(let property in data.problems){
             toParse += "\n\n" + data.problems[property];
         }
