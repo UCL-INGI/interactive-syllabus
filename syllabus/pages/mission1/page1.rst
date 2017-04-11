@@ -49,8 +49,8 @@ Essayez donc :
 
 Nous allons détailler ce programme dans les unités suivantes.
 
-Exercise time !
-***************
+Exercise
+********
 Mettez maintenant en pratique ce que vous venez de voir !
 Pour vous entraîner à l'utilisation de boucles for, écrivez une boucle for qui permettra de calculer la somme des n premiers entier PAIRS supérieurs à zéro, en fonction de la variable n, déjà définie à une valeur supérieure ou égale à zéro. Le résultat final doit être stocké dans la variable sum à la fin de la boucle, elle aussi déjà définie. Lorsque n est négatif, le résultat doit valoir zéro.
 
@@ -61,7 +61,7 @@ Pour vous entraîner à l'utilisation de boucles for, écrivez une boucle for qu
 
 Remplissez les trous du bout de programme permettant de calculer la somme des n premiers entiers pairs :
 
-.. inginious:: syllabus-test
+.. inginious:: syllabus-integer-sum
 
     for(int i = /*1*/ ; i <= n ; /*2*/){
         sum += /*3*/;
