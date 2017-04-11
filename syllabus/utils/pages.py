@@ -70,12 +70,11 @@ def get_syllabus_toc(wanted_root):
     node_name = split_root[len(split_root)-1]
     structure[node_name] = []
     for directory in sorted(os.listdir(os.path.join(root_path, wanted_root))):
-        current_path = os.path.join(root_path,wanted_root, directory)
+        current_path = os.path.join(root_path, wanted_root, directory)
         if os.path.isdir(current_path):
-            structure[node_name].append(get_syllabus_toc(os.path.join(wanted_root,directory)))
+            structure[node_name].append(get_syllabus_toc(os.path.join(wanted_root, directory)))
         else:
             structure[node_name].append(directory.replace('.rst', ''))
-    print(structure)
     return structure
 
 
