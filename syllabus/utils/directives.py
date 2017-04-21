@@ -39,14 +39,14 @@ class ToCDirective(Directive):
     optional_arguments = 1
     html = """
     <div id="table-of-contents">
-        <h1> Table des matières! </h1>
+        <h2> Table des matières </h2>
     """
 
     def run(self):
         if len(self.arguments) == 0:
             tmp = "<ol>\n"
             for line in self.content:
-                tmp += "<li>" + line + "</li>\n"
+                tmp += '<li style="list-style-type: none;">' + line + '</li>\n'
             tmp += "</ol>"
             return [nodes.raw(' ', tmp, format='html')]
         toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
@@ -57,17 +57,17 @@ class ToCDirective(Directive):
     def parse(self, dictio, pathTo):
 
         if pathTo == "":
-            html = ""
+            html = "<ul>"
         else:
             split = pathTo.split("/")
-            html = "<h" + str(len(split)) + ">" + split[len(split)-1] + "</h" + str(len(split)) + ">\n<ul>"
+            html = "<h" + str(len(split)+1) + ">" + split[len(split)-1] + "</h" + str(len(split)+1) + ">\n<ul>"
         for elem in dictio:
             if isinstance(elem, collections.OrderedDict):
                 for k in elem:
                     key = k
                 html += self.parse(elem[key], pathTo+"/"+key)
             else:
-                html += "<li><a href='" + pathTo + "/" + elem + "'>" + elem + "</a>"
+                html += "<li style=\"list-style-type: none;\"><a href='" + pathTo + "/" + elem + "'>" + elem + "</a>"
         html += "</ul>"
         return html
 
