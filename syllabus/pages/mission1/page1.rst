@@ -1,3 +1,7 @@
+Parler java : syntaxe de base
+=============================
+Syntaxe - commentaires
+----------------------
 Java est un **langage de programmation**. Au travers d'une grammaire bien précise, il permet d'écrire dans un fichier texte
 une suite d'instructions. Ce texte, appelé **code source**, est la base d'un **programme** informatique capable d'accomplir vos rêves les plus fous.
 
