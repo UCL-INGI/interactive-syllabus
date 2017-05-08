@@ -35,23 +35,6 @@ class InginiousDirective(Directive):
 
 
 class ToCDirective(Directive):
-    """
-    This is a class for the table of contents directive. This directive support multiple format for different 
-    usage:
-
-        1) If there is no option to the directive, the content of the directive must follow the following schema:
-            
-            - Line of the content represent 1 entry in the ToC
-            - The line must have the following format : <Text that will be display>|<path to the rst page>
-
-        2) If there is an option to the directive, this option must be the directory from where the ToC should
-            start. There is 2 ways to use the directive with an option
-
-            - By default, the entry in the ToC will be name by taking the name of the file and removing the ".rst" suffix.
-            - To change this behavior, a line must be inserted at the beginning of the file. This should be a rst comment of the form : ".. name: The text that will be display". In this case, the entry will be "The text that will be display"
-        
-            
-    """
     has_content = True
     required_arguments = 0
     optional_arguments = 1
@@ -65,10 +48,12 @@ class ToCDirective(Directive):
             tmp = "<ol>\n"
             for line in self.content:
                 splitted = line.split("|")
-                tmp += '<li style="list-style-type: none;"><a href=' + splitted[1] + '>' + splitted[0] + '</a></li>\n'
+                if len(splitted) == 2:
+                    tmp += '<li style="list-style-type: none;"><a href=' + splitted[1] + '>' + splitted[0] + '</a></li>\n'
+                else:
+                    tmp += '<li style="list-style-type: none;"><a href=' + line + '>' + self.getName("pages/"+splitted[0]) + '</a></li>\n'
             tmp += "</ol>"
             return [nodes.raw(' ', tmp, format='html')]
-
 
         toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
         self.html += self.parse(toc[self.arguments[0]], "")
@@ -88,24 +73,23 @@ class ToCDirective(Directive):
                     key = k
                 html += self.parse(elem[key], pathTo+"/"+key)
             else:
-                directory = os.path.join(os.getcwd(),"pages")
+                directory = os.path.join(os.getcwd(), "pages")
                 for s in pathTo.split("/"):
-                    directory = os.path.join(directory,s)
-                directory = os.path.join(directory,elem)
+                    directory = os.path.join(directory, s)
+                directory = os.path.join(directory, elem)
                 name = self.getName(directory)
                 html += "<li style=\"list-style-type: none;\"><a href='" + pathTo + "/" + elem + "'>" + name + "</a>"
         html += "</ul>"
         return html
 
     def getName(self, path):
-        with open(path+".rst",'r') as f:
+        with open(path+".rst", 'r') as f:
             first = f.readline()
             if first[:8] == ".. name:":
                 return str(first[8:])
             else:
                 tab = path.split("/")
                 return tab[len(tab)-1]
-
 
     def getContent(self, content):
         return "Hello"
