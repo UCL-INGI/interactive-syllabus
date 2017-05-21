@@ -24,7 +24,7 @@ $(function() {
     });
     $('ul.positive').hide();
     $('ul.negative').hide();
-    $('body').append('<div id="checker" class="checker"><h1>Vérifiez vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
+    $('#questionnaire-rst').append('<div id="checker" class="checker"><h1>Vérifiez vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
     $('#verifier').click(function () {
         $('.comment').not('.preproc').hide();
         $('.checkmark').remove();
