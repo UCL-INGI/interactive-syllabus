@@ -1,5 +1,7 @@
 from docutils.parsers.rst import Directive
 from docutils import nodes
+from werkzeug.utils import secure_filename
+from flask.helpers import get_root_path
 import collections
 import os
 
@@ -73,7 +75,7 @@ class ToCDirective(Directive):
                     key = k
                 html += self.parse(elem[key], pathTo+"/"+key)
             else:
-                directory = os.path.join(os.getcwd(), "pages")
+                directory = os.path.join(get_root_path("syllabus"), "pages")
                 for s in pathTo.split("/"):
                     directory = os.path.join(directory, s)
                 directory = os.path.join(directory, elem)

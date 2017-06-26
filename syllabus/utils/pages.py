@@ -7,6 +7,7 @@ from flask.helpers import get_root_path
 from flask import render_template_string
 from sphinx.websupport import WebSupport
 from sphinx.application import Sphinx
+from werkzeug.utils import secure_filename
 
 import syllabus
 from syllabus.config import *
@@ -78,9 +79,20 @@ def get_syllabus_toc(wanted_root):
     return structure
 
 
-def render_page(chapter, page):
+def sanitize_filenames(f):
+    def wrapper(chapter, page, structure):
+        return f(secure_filename(chapter), secure_filename(page), structure)
+    return wrapper
+
+
+@sanitize_filenames
+def render_page(chapter, page, structure=None):
     root_path = get_root_path("syllabus")
+    print(list(structure.values())[0])
+    print(root_path)
+    if structure is None:
+        structure = get_syllabus_toc("pages")
     with open(os.path.join(root_path, "pages", chapter, "%s.rst" % page), "r") as f:
-        return publish_string(render_template_string(f.read(), structure=get_syllabus_toc("pages"),
+        return publish_string(render_template_string(f.read(), structure=structure,
                                                      hyperlink=rst.hyperlink, h=rst.h),
                               writer_name='html', settings_overrides=default_rst_opts)
