@@ -1,4 +1,3 @@
-=======
 =========================================================
 Apprendre la programmation en Java de manière interactive
 =========================================================
@@ -7,5 +6,5 @@ de savoir appliquer ces concepts pour résoudre des problèmes. Ce syllabus inte
 théorie et pratique en permettant à l'étudiant de confirmer sa compréhension de la matière en appuyant la
 théorie par des exercices simples ainsi que de s'habituer rapidement à la syntaxe du langage utilisé.
 
-.. table-of-content
+.. table-of-contents::
 
