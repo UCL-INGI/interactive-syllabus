@@ -11,27 +11,28 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 
-def hello_world():
-    return render_template('hello.html',
-                           inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port))
-
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('hello_rst.html',
+    toc = syllabus.get_toc()
+    return render_template('rst_page.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
-                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page, structure=get_syllabus_toc("pages"), list=list)
+                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
+                           structure=get_syllabus_toc("pages"), list=list,
+                           toc=toc,
+                           chapter_content=None)
 
 
 @app.route('/<chapter>/<page>')
 @syllabus.utils.pages.sanitize_filenames
 def get_page(chapter, page):
-    print("here")
-    return render_template('hello_rst.html',
+    toc = syllabus.get_toc()
+    return render_template('rst_page.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
                            chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
-                           chapter_content=get_chapter_content(chapter))
+                           toc=toc,
+                           chapter_content=get_chapter_content(chapter, toc))
 
 
 @app.route('/parserst', methods=['POST'])
