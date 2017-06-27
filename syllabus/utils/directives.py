@@ -45,53 +45,35 @@ class ToCDirective(Directive):
         <h2> Table des matières </h2>
     """
 
-    def run(self):
-        if len(self.arguments) == 0:
-            tmp = "<ol>\n"
-            for line in self.content:
-                splitted = line.split("|")
-                if len(splitted) == 2:
-                    tmp += '<li style="list-style-type: none;"><a href=' + splitted[1] + '>' + splitted[0] + '</a></li>\n'
-                else:
-                    tmp += '<li style="list-style-type: none;"><a href=' + line + '>' + self.getName("pages/"+splitted[0]) + '</a></li>\n'
-            tmp += "</ol>"
-            return [nodes.raw(' ', tmp, format='html')]
+    #def run(self):
+        # if len(self.arguments) == 0:
+        #     tmp = "<ol>\n"
+        #     for line in self.content:
+        #         splitted = line.split("|")
+        #         if len(splitted) == 2:
+        #             tmp += '<li style="list-style-type: none;"><a href=' + splitted[1] + '>' + splitted[0] + '</a></li>\n'
+        #         else:
+        #             tmp += '<li style="list-style-type: none;"><a href=' + line + '>' + self.getName("pages/"+splitted[0]) + '</a></li>\n'
+        #     tmp += "</ol>"
+        #     return [nodes.raw(' ', tmp, format='html')]
+        #
+        # toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
+        # self.html += self.parse(toc[self.arguments[0]], "")
+        # self.html += "</div>"
+        # return [nodes.raw(' ', self.html, format='html')]
 
-        toc = syllabus.utils.pages.get_syllabus_toc(self.arguments[0])
-        self.html += self.parse(toc[self.arguments[0]], "")
-        self.html += "</div>"
-        return [nodes.raw(' ', self.html, format='html')]
+    def run(self):
+        toc = syllabus.get_toc()
+        for keys in toc.keys():
+            self.html += "<h3> " + toc[keys]["title"] + "</h3>\n"
+            self.html += self.parse(toc[keys]["content"], keys + "/")
+        return [nodes.raw(' ',self.html,format='html')]
 
     def parse(self, dictio, pathTo):
-
-        if pathTo == "":
-            html = "<ul>"
-        else:
-            split = pathTo.split("/")
-            html = "<h" + str(len(split)+1) + ">" + split[len(split)-1] + "</h" + str(len(split)+1) + ">\n<ul>"
-        for elem in dictio:
-            if isinstance(elem, collections.OrderedDict):
-                for k in elem:
-                    key = k
-                html += self.parse(elem[key], pathTo+"/"+key)
-            else:
-                directory = os.path.join(get_root_path("syllabus"), "pages")
-                for s in pathTo.split("/"):
-                    directory = os.path.join(directory, s)
-                directory = os.path.join(directory, elem)
-                name = self.getName(directory)
-                html += "<li style=\"list-style-type: none;\"><a href='" + pathTo + "/" + elem + "'>" + name + "</a>"
-        html += "</ul>"
-        return html
-
-    def getName(self, path):
-        with open(path+".rst", 'r') as f:
-            first = f.readline()
-            if first[:8] == ".. name:":
-                return str(first[8:])
-            else:
-                tab = path.split("/")
-                return tab[len(tab)-1]
-
-    def getContent(self, content):
-        return "Hello"
+        tmp_html = "<ul>\n"
+        for key in dictio:
+            tmp_html += '<li style="list-style-type: none;"><a href=' + pathTo +key + '>' + dictio[key]["title"] + '</a></li>\n'
+            if "content" in dictio[key]:
+                tmp_html += self.parse(dictio[key]["content"],pathTo+key+"/")
+        tmp_html += "</ul>"
+        return tmp_html

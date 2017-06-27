@@ -21,7 +21,9 @@ def hello_world():
 def index():
     return render_template('hello_rst.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
-                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page, structure=get_syllabus_toc("pages"), list=list)
+                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
+                           chapter_content=None,
+                           structure=get_syllabus_toc("pages"), list=list)
 
 
 @app.route('/<chapter>/<page>')
