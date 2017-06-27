@@ -67,29 +67,29 @@ def get_syllabus_toc(wanted_root):
     """
     structure = OrderedDict()
     root_path = get_root_path("syllabus")
-    split_root = wanted_root.split("/")
-    node_name = split_root[len(split_root)-1]
-    structure[node_name] = []
     for directory in sorted(os.listdir(os.path.join(root_path, wanted_root))):
         current_path = os.path.join(root_path, wanted_root, directory)
         if os.path.isdir(current_path):
-            structure[node_name].append(get_syllabus_toc(os.path.join(wanted_root, directory)))
+            structure[directory] = get_syllabus_toc(os.path.join(wanted_root, directory))
         else:
-            structure[node_name].append(directory.replace('.rst', ''))
+            structure[directory.replace('.rst', '')] = OrderedDict()
     return structure
 
 
+def get_chapter_content(chapter_name, toc=None):
+    toc = syllabus.get_toc() if toc is None else toc
+    return toc[chapter_name]
+
+
 def sanitize_filenames(f):
-    def wrapper(chapter, page, structure):
-        return f(secure_filename(chapter), secure_filename(page), structure)
+    def wrapper(chapter, page, **kwargs):
+        return f(secure_filename(chapter), secure_filename(page), **kwargs)
     return wrapper
 
 
 @sanitize_filenames
 def render_page(chapter, page, structure=None):
     root_path = get_root_path("syllabus")
-    print(list(structure.values())[0])
-    print(root_path)
     if structure is None:
         structure = get_syllabus_toc("pages")
     with open(os.path.join(root_path, "pages", chapter, "%s.rst" % page), "r") as f:

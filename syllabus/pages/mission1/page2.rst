@@ -17,7 +17,7 @@
 Question 1. Analyse de code
 ---------------------------
 
-Quelle est la valeur dans la variabl ``x`` après l'exécution de ce code ?
+Quelle est la valeur dans la variable ``x`` après l'exécution de ce code ?
 
 .. code-block:: java
 

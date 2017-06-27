@@ -35,11 +35,13 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Pages <span class="caret"></span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["title"] }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        {% for chapter_name in list(structure.values())[0] %}
-                        <li><a href="#">{{ chapter_name.__str__() }}</a></li>
-                        <li role="separator" class="divider"></li>
+                        {% for (page_name, page_infos) in chapter_content["content"].items() %}
+                        <li><a href="/{{ chapter }}/{{ page_name }}">{{ page_infos["title"] }}</a></li>
+                            {% if not loop.last %}
+                                <li role="separator" class="divider"></li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </li>
