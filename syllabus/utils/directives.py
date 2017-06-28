@@ -7,11 +7,16 @@ from syllabus.config import *
 
 
 class InginiousDirective(Directive):
+    """
+    required argument: the task id on which post the answer on INGInious
+    optional argument: the language mode supported by CodeMirror
+    directive content: the prefilled code in the text area
+    """
     has_content = True
     required_arguments = 1
-    optional_arguments = 0
+    optional_arguments = 1
     html = """
-    <div class="inginious-task" style="margin: 20px">
+    <div class="inginious-task" style="margin: 20px" data-language="{5}">
         <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
             <strong>Success!</strong> Indicates a successful or positive action.
         </div>
@@ -28,7 +33,8 @@ class InginiousDirective(Directive):
     def run(self):
         par = nodes.raw('', self.html.format(inginious_instance_hostname, inginious_instance_port,
                                              inginious_instance_course_id, '\n'.join(self.content),
-                                             self.arguments[0]), format='html')
+                                             self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
+                        format='html')
         return [par]
 
 
