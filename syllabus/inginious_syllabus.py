@@ -24,9 +24,18 @@ def index():
                            chapter_content=None)
 
 
+@app.route('/<chapter>')
+def chapter_index(chapter):
+    return render_web_page(chapter, None)
+
+
 @app.route('/<chapter>/<page>')
 @syllabus.utils.pages.sanitize_filenames
 def get_page(chapter, page):
+    return render_web_page(chapter, page)
+
+
+def render_web_page(chapter, page):
     toc = syllabus.get_toc()
     return render_template('rst_page.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
