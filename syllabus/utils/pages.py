@@ -81,6 +81,14 @@ def get_chapter_content(chapter_name, toc=None):
     return toc[chapter_name]
 
 
+def get_chapter_desc(chapter_name, toc):
+    file = toc[chapter_name].get("chapter_intro_file")
+    if file is not None:
+        with open(os.path.join(syllabus.get_root_path(), "pages", chapter_name, file), 'r') as f:
+            return f.read()
+    return ""
+
+
 def sanitize_filenames(f):
     def wrapper(chapter, page, **kwargs):
         return f(secure_filename(chapter), secure_filename(page) if page is not None else page, **kwargs)
@@ -89,9 +97,10 @@ def sanitize_filenames(f):
 
 
 @sanitize_filenames
-def render_page(chapter, page=None):
+def render_page(chapter, page=None, toc=syllabus.get_toc()):
     if page is None:
-        return render_rst_file("chapter_index.rst", chapter_name=chapter)
+        return render_rst_file("chapter_index.rst", chapter_name=chapter,
+                               chapter_desc=get_chapter_desc(chapter, toc))
     else:
         return render_rst_file(os.path.join(chapter, "%s.rst" % page))
 

@@ -5,6 +5,7 @@ mission1:
       title: "First Basics"
     page2:
       title: "Second Basics"
+  chapter_intro_file: "chapter_description.rst"
 tuto:
   title: "Petits QCMs"
   content:
