@@ -38,11 +38,21 @@ def get_page(chapter, page):
 
 def render_web_page(chapter, page):
     toc = syllabus.get_toc()
+    if page is None:
+        chapters = list(toc.keys())
+        chapter_index = chapters.index(chapter)
+        previous = None if chapter_index == 0 else chapters[chapter_index - 1]
+        next = None if chapter_index == len(chapters) - 1 else chapters[chapter_index + 1]
+    else:
+        pages = list(toc[chapter]["content"].keys())
+        page_index = pages.index(page)
+        previous = None if page_index == 0 else pages[page_index - 1]
+        next = None if page_index == len(pages) - 1 else pages[page_index + 1]
     return render_template('rst_page.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
                            chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
                            toc=toc,
-                           chapter_content=get_chapter_content(chapter, toc))
+                           chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
 
 
 @app.route('/parserst', methods=['POST'])

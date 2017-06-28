@@ -85,7 +85,7 @@ def get_chapter_content(chapter_name, toc=None):
 def get_chapter_desc(chapter_name, toc):
     file = toc[chapter_name].get("chapter_intro_file")
     if file is not None:
-        with open(os.path.join(syllabus.get_root_path(), "pages", chapter_name, file), 'r') as f:
+        with open(os.path.join(syllabus.get_root_path(), "pages", chapter_name, file), 'r', encoding="utf-8") as f:
             return f.read()
     return ""
 
