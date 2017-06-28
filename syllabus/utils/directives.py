@@ -69,7 +69,7 @@ class AuthorDirective(Directive):
     optional_arguments = 0
 
     def run(self):
-        html = '<div align=right><div style="display: inline-block;"><p><small> Auteur : ' + self.content[0] + '</small></p>'
+        html = '<div align=right><div style="display: inline-block;"><p><small> Auteur(s) : ' + self.content[0] + '</small></p>'
         html += '<hr style="margin-top: -5px;;" >\n'
         html += '</div></div>'
         return [nodes.raw(' ', html, format='html')]
