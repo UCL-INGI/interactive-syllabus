@@ -83,16 +83,21 @@ def get_chapter_content(chapter_name, toc=None):
 
 def sanitize_filenames(f):
     def wrapper(chapter, page, **kwargs):
-        return f(secure_filename(chapter), secure_filename(page), **kwargs)
+        return f(secure_filename(chapter), secure_filename(page) if page is not None else page, **kwargs)
+
     return wrapper
 
 
 @sanitize_filenames
-def render_page(chapter, page, structure=None):
+def render_page(chapter, page=None):
+    if page is None:
+        return render_rst_file("chapter_index.rst", chapter_name=chapter)
+    else:
+        return render_rst_file(os.path.join(chapter, "%s.rst" % page))
+
+
+def render_rst_file(page_path, **kwargs):
     root_path = get_root_path("syllabus")
-    if structure is None:
-        structure = get_syllabus_toc("pages")
-    with open(os.path.join(root_path, "pages", chapter, "%s.rst" % page), "r") as f:
-        return publish_string(render_template_string(f.read(), structure=structure,
-                                                     hyperlink=rst.hyperlink, h=rst.h),
+    with open(os.path.join(root_path, "pages", page_path), "r") as f:
+        return publish_string(render_template_string(f.read(), **kwargs),
                               writer_name='html', settings_overrides=default_rst_opts)
