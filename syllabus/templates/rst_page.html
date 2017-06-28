@@ -39,7 +39,7 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["title"] }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             {% for (chapter_name, chapter_infos) in toc.items() %}
-                                <li><a href="#">{{ chapter_infos["title"] }}</a></li>
+                                <li><a href="/{{ chapter_name }}">{{ chapter_infos["title"] }}</a></li>
                                 {% if not loop.last %}
                                     <li role="separator" class="divider"></li>
                                 {% endif %}
@@ -47,8 +47,12 @@
                         </ul>
                     </li>
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["content"][page]["title"] }} <span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["content"][page]["title"] if page is not none else "Index du chapitre" }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
+
+                            <li><a href="/{{ chapter }}"> Index du chapitre </a></li>
+                            <li role="separator" class="divider"></li>
+
                             {% for (page_name, page_infos) in chapter_content["content"].items() %}
                             <li><a href="/{{ chapter }}/{{ page_name }}">{{ page_infos["title"] }}</a></li>
                                 {% if not loop.last %}
@@ -66,7 +70,7 @@
     <span id="maincontent"></span>
     <div class="box contents">
         <div class="no-overflow">
-            {{ render_rst(chapter, page, structure=structure)|safe }}
+            {{ render_rst(chapter, page)|safe }}
         </div>
     </div>
 
