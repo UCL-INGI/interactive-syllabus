@@ -1,3 +1,6 @@
+# syllabus-specific
+syllabus/pages
+#
 .idea
 *.iml
 # Byte-compiled / optimized / DLL files
