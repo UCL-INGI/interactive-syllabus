@@ -38,12 +38,15 @@ def get_page(chapter, page):
 
 def render_web_page(chapter, page):
     toc = syllabus.get_toc()
+    # find previous/next page/chapter
     if page is None:
+        # find previous/next chapter
         chapters = list(toc.keys())
         chapter_index = chapters.index(chapter)
         previous = None if chapter_index == 0 else chapters[chapter_index - 1]
         next = None if chapter_index == len(chapters) - 1 else chapters[chapter_index + 1]
     else:
+        # find previous/next page
         pages = list(toc[chapter]["content"].keys())
         page_index = pages.index(page)
         previous = None if page_index == 0 else pages[page_index - 1]
