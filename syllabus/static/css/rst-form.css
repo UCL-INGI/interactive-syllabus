@@ -23,7 +23,19 @@ div.section {
 }
 
 .checker>h1, div.section>h1 {
+    font-size: 180%;
+}
+
+.checker>h2, div.section>h2 {
     font-size: 150%;
+}
+
+.checker>h3, div.section>h3 {
+    font-size: 130%;
+}
+
+.checker>h4, div.section>h4 {
+    font-size: 115%;
 }
 
 li p.first {
@@ -34,7 +46,7 @@ li>img.checkmark {
     margin-left: -50px;
 }
 
-ul {
+#table-of-contents>ul {
     list-style-type: none;
 }
 
