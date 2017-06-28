@@ -35,6 +35,7 @@ class MyWebSupport(WebSupport):
                                 self.search, self.storage)
         app.add_directive('inginious', directives.InginiousDirective)
         app.add_directive('table-of-contents', directives.ToCDirective)
+        app.add_directive('author', directives.AuthorDirective)
 
         self.storage.pre_build()
         app.build()

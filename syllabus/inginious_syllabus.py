@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
+directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 
 
 @app.route('/')
