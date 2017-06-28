@@ -14,7 +14,13 @@
     <script type="text/javascript" src="/static/js/rst-form.js"></script>
     <script type="text/javascript" src="/static/js/jquery-shuffle.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .CodeMirror {
+            border: 1px solid #eee;
+            height: auto;
+        }
 
+    </style>
 
 </head>
 <body>
@@ -84,7 +90,8 @@
         let editor = CodeMirror.fromTextArea(area, {
             lineNumbers: true,
             matchBrackets: true,
-            mode: "text/x-java"
+            mode: "text/x-java",
+            viewportMargin: Infinity
         });
         $(task).find('.button-inginious-task').click(function(e){
             const toSubmit = editor.getValue();
