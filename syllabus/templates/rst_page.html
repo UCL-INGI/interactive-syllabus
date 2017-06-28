@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/css/codemirror.css">
     <script src="/static/js/codemirror.js"></script>
     <script src="/static/js/codemirror-clike-style.js"></script>
+    <script src="/static/js/codemirror-yaml.js"></script>
     <script type="text/javascript" src="/static/js/rst-form.js"></script>
     <script type="text/javascript" src="/static/js/jquery-shuffle.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -123,10 +124,12 @@
 <script>
     $('.inginious-task').each(function(index, task){
         let area = $(task).find('.inginious-code').get(0);
+        let language = $(task).attr("data-language");
+        console.log(language)
         let editor = CodeMirror.fromTextArea(area, {
             lineNumbers: true,
             matchBrackets: true,
-            mode: "text/x-java",
+            mode: language,
             viewportMargin: Infinity
         });
         $(task).find('.button-inginious-task').click(function(e){
