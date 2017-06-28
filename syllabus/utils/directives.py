@@ -1,9 +1,5 @@
 from docutils.parsers.rst import Directive
 from docutils import nodes
-from werkzeug.utils import secure_filename
-from flask.helpers import get_root_path
-import collections
-import os
 
 import syllabus.utils.pages
 
@@ -65,3 +61,15 @@ class ToCDirective(Directive):
                 tmp_html += self.parse(dictio[key]["content"],pathTo+key+"/")
         tmp_html += "</ul>"
         return tmp_html
+
+
+class AuthorDirective(Directive):
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 0
+
+    def run(self):
+        html = '<div align=right><div style="display: inline-block;"><p><small> Auteur : ' + self.content[0] + '</small></p>'
+        html += '<hr style="margin-top: -5px;;" >\n'
+        html += '</div></div>'
+        return [nodes.raw(' ', html, format='html')]

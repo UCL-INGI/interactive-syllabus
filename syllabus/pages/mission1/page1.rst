@@ -1,5 +1,11 @@
+.. author::
+
+    John Doe
+
+=============================
 Parler java : syntaxe de base
 =============================
+----------------------
 Syntaxe - commentaires
 ----------------------
 Java est un **langage de programmation**. Au travers d'une grammaire bien précise, il permet d'écrire dans un fichier texte
@@ -70,3 +76,7 @@ Remplissez les trous du bout de programme permettant de calculer la somme des n 
     for(int i = /*1*/ ; i <= n ; /*2*/){
         sum += /*3*/;
     }
+
+.. author::
+
+    Michel François
