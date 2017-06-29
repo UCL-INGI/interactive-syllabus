@@ -22,7 +22,7 @@ def index():
                            chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
                            structure=get_syllabus_toc("pages"), list=list,
                            toc=toc,
-                           chapter_content=None)
+                           chapter_content=None, next=None, previous=None)
 
 
 @app.route('/<chapter>')
