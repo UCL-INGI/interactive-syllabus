@@ -86,7 +86,9 @@
     </div>
 
 </div>
-<hr style="border: 1px inset;">
+{% if previous is not none or next is not none %}
+    <hr style="border: 1px inset;">
+{% endif %}
 <div style="display: flex; flex-direction: row; justify-content: space-between">
     {% if previous is not none %}
         {% if page is not none %}
