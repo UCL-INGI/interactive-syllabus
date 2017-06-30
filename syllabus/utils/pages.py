@@ -5,48 +5,12 @@ import sys
 from docutils.core import publish_string
 from flask.helpers import get_root_path
 from flask import render_template_string
-from sphinx.websupport import WebSupport
-from sphinx.application import Sphinx
 from werkzeug.utils import secure_filename
 
 import syllabus
 from syllabus.config import *
 import syllabus.utils.directives as directives
 from syllabus.utils import rst
-
-
-class MyWebSupport(WebSupport):
-    def build(self):
-        """Build the documentation. Places the data into the `outdir`
-        directory. Use it like this::
-
-            support = WebSupport(srcdir, builddir, search='xapian')
-            support.build()
-
-        This will read reStructured text files from `srcdir`. Then it will
-        build the pickles and search index, placing them into `builddir`.
-        It will also save node data to the database.
-        """
-        if not self.srcdir:
-            raise RuntimeError('No srcdir associated with WebSupport object')
-        app = Sphinx(self.srcdir, self.srcdir, self.outdir, self.doctreedir,
-                     'websupport', status=self.status, warning=self.warning)
-        app.builder.set_webinfo(self.staticdir, self.staticroot,
-                                self.search, self.storage)
-        app.add_directive('inginious', directives.InginiousDirective)
-        app.add_directive('table-of-contents', directives.ToCDirective)
-        app.add_directive('author', directives.AuthorDirective)
-
-        self.storage.pre_build()
-        app.build()
-        self.storage.post_build()
-
-
-# support = MyWebSupport(srcdir=os.path.join(get_root_path('inginious-syllabus'), 'pages'),
-#                        builddir=os.path.join(get_root_path('inginious-syllabus'), 'pages-build'))
-# support.build()
-
-# print(support.get_document('index')['body'])
 
 default_rst_opts = {
     'no_generator': True,
@@ -58,8 +22,6 @@ default_rst_opts = {
     'halt_level': 5
 }
 
-
-# TODO: define some explicit user-defined (YAML file ?) ordering of the chapters.
 def get_syllabus_toc(wanted_root):
     """
     :param wanted_root: The directory from where the arborescence will start
