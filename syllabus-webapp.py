@@ -24,7 +24,7 @@ import os
 
 if __name__ == '__main__':
     path = os.path.join(get_root_path(), "pages")
-    if not os.path.isdir(path):
+    if not os.path.isdir(path) and os.path.isfile(path):
         chapter_index = """
 {{ chapter_desc }}
 
