@@ -1,17 +1,18 @@
-function submitCode(url, taskID, questionID, code, feedbackContainer, toDisable){
-    let td = $(toDisable);
-    td.attr("disabled", true);
+function submitCode(url, taskID, questionID, code, feedbackContainer, toChangeOpacity,editor){
+    $(toChangeOpacity).css("opacity",0.5);
+    editor.setOption("readOnly",true);
+
     $.post(url, {'taskid': taskID, 'input': JSON.stringify({[questionID]: code})}, function(data) {
         let toParse = data.result[1];
         for(let property in data.problems){
             toParse += "\n\n" + data.problems[property];
         }
         console.log(toParse);
-        parseRST(toParse, data.result[0], feedbackContainer, td);
+        parseRST(toParse, data.result[0], feedbackContainer, toChangeOpacity, editor);
     });
 }
 
-function parseRST(rst, status, feedbackContainer, toEnable){
+function parseRST(rst, status, feedbackContainer, toChangeOpacity, editor){
     $.post("/parserst", {rst: rst}, function(data){
         let container = $(feedbackContainer);
         let result = data["result"];
@@ -23,7 +24,8 @@ function parseRST(rst, status, feedbackContainer, toEnable){
             container.removeClass("alert-danger");
             container.addClass("alert-success");
         }
-        toEnable.attr("disabled", false);
+        $(toChangeOpacity).css("opacity",1);
+        editor.setOption("readOnly",false);
         container.html(data);
         container.show();
     })
