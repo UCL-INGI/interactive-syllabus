@@ -18,14 +18,38 @@ $(function() {
             .attr('class', 'false');
         });
     });
+    $('ul.positive-multiple').before('<ul class="proposals-multiple"></ul>');
+    $('ul.positive-multiple').each(function(index) {
+        //$(this).shuffle();
+        $(this).children('li').each(function(index) {
+            $(this)
+            .prependTo($(this).parent().parent().children('ul.proposals-multiple'))
+            .attr('class','correct');
+        });
+    });
+    $('ul.negative-multiple').each(function(index) {
+        //$(this).shuffle();
+        $(this).children('li').each(function(index) {
+            $(this)
+            .prependTo($(this).parent().parent().children('ul.proposals-multiple'))
+            .attr('class','false');
+        });
+    });
     $('ul.proposals').each(function(index) {
         $(this).shuffle();
         $('<input type="radio" name="' + $(this).parent().attr('id') + '">').prependTo($(this).children('li'));
     });
+    $('ul.proposals-multiple').each(function(index) {
+        $('<input type="checkbox" name="' + $(this).parent().attr('id') + '">').prependTo($(this).children('li'));
+    });
     $('ul.positive').hide();
     $('ul.negative').hide();
+    $('ul.positive-multiple').hide();
+    $('ul.negative-multiple').hide();
     $('#questionnaire-rst').append('<div id="checker" class="checker"><h1>Vérifiez vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
     $('#verifier').click(function () {
+        var nb_prop = $('ul.proposals').length + $('ul.proposals-multiple').length;
+        var res = $('li.correct input:checked').length - $('li.false input:checked').length;
         $('.comment-feedback').not('prepoc').show();
         $('.checkmark').remove();
         $('.result').remove();
@@ -34,8 +58,8 @@ $(function() {
         $('.checkmark').show();
         $('input:checked').parent().children('.comment').show('slow');
         $('#checker').append('<div class="result">Votre score est de ' +
-                            $('li.correct input:checked').length + '/' +
-                            $('ul.proposals').length + '</div>');
+                            res + '/' +
+                            nb_prop + '</div>');
     });
     $('pre.literal-block').addClass('prettyprint');
 });
