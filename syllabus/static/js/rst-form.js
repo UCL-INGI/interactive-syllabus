@@ -26,7 +26,7 @@ $(function() {
     $('ul.negative').hide();
     $('#questionnaire-rst').append('<div id="checker" class="checker"><h1>Vérifiez vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
     $('#verifier').click(function () {
-        $('.comment').not('.preproc').hide();
+        //$('.comment').not('.preproc').hide();
         $('.checkmark').remove();
         $('.result').remove();
         $('li.false input:checked').parent().prepend('<img class="checkmark" src="/static/images/false.png" style="display: none;"></img>');
