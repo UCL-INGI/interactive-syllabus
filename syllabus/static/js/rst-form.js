@@ -50,6 +50,9 @@ $(function() {
     $('#verifier').click(function () {
         var nb_prop = $('ul.proposals').length + $('ul.proposals-multiple').length;
         var res = $('li.correct input:checked').length - $('li.false input:checked').length;
+        if(res <0) {
+            res = 0;
+        }
         $('.comment-feedback').not('prepoc').show();
         $('.checkmark').remove();
         $('.result').remove();
