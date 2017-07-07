@@ -41,6 +41,7 @@ $(function () {
 
 	$('#questionnaire-rst').append('<div id="checker" class="checker"><h1>Vérifier vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
 	$('#verifier').click(function() {
+	    $('.comment-feedback').hide();
 		var nb_prop = $('ul.proposals').length + $('ul.proposals-multiple').length;
 		var res = $('li.correct input:checked').length - $('li.false input:checked').length;
 		if(res < 0) {
@@ -51,7 +52,7 @@ $(function () {
 		$('li.false input:checked').parent().prepend('<img class="checkmark" src="/static/images/false.png" style="display: none;"></img>');
 		$('li.correct input:checked').parent().prepend('<img class="checkmark" src="/static/images/correct.png" style="display: none;"></img>');
 		$('.checkmark').show();
-		$('input:checked').parent().parent().children('.comment-feedback').show('slow');
+		$('input:checked').parent().children('.comment-feedback').show('slow');
 		$('#checker').append('<div class="result">Votre score est de ' + res + '/' + nb_prop + '</div>');
 	});
 	$('pre.literal-block').addClass('prettyprint');
