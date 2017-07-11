@@ -65,7 +65,7 @@ if __name__ == '__main__':
     path = syllabus.get_pages_path()
     create_toc = False
     if not os.path.isdir(path) and not os.path.isfile(path):
-        create_dir = ask_question_yes_no("No pages directory found in the wurrent working directory. Would you like "
+        create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "
                                          "to create it ?")
         if create_dir:
             os.mkdir(path)
