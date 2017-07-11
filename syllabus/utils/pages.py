@@ -43,22 +43,6 @@ default_rst_opts = {
     'halt_level': 5
 }
 
-def get_syllabus_toc(wanted_root):
-    """
-    :param wanted_root: The directory from where the arborescence will start
-    :return: An ordered dictionary containing the table of content of the syllabus.
-    The chapters and pages inside chapters are ordered in lexicographical order
-    """
-    structure = OrderedDict()
-    root_path = get_root_path("syllabus")
-    for directory in sorted(os.listdir(os.path.join(root_path, wanted_root))):
-        current_path = os.path.join(root_path, wanted_root, directory)
-        if os.path.isdir(current_path):
-            structure[directory] = get_syllabus_toc(os.path.join(wanted_root, directory))
-        else:
-            structure[directory.replace('.rst', '')] = OrderedDict()
-    return structure
-
 
 def get_chapter_content(chapter_name, toc=None):
     toc = syllabus.get_toc() if toc is None else toc
