@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+
+# -*- coding: utf-8 -*-
+#
+#    This file belongs to the Interactive Syllabus project
+#
+#    Copyright (C) 2017  Alexandre Dubray, François Michel
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as published
+#    by the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import syllabus
+import os
+import yaml
+
+chapter_index = \
+"""
+{{ chapter_desc }}
+
+.. table-of-contents:: {{ chapter_name }}
+"""
+default_index = """
+==================
+Default index page
+==================
+
+--------------------------------------------------------------
+This is the auto-generated index page for the syllabus webapp.
+--------------------------------------------------------------
+"""
+default_toc = \
+{
+    "contribuer": {
+        "title": "Contribuer au syllabus",
+        "content": {
+            "contribuer": {
+                "title": "Contribuer au contenu du syllabus"
+            },
+            "create_task": {
+                "title": "Créer une tâche INGInious"
+            }
+        }
+    }
+}
+
+def ask_question_yes_no(question):
+    answer = None
+    while True:
+        text_answer = input("%s [y/n]" % question)
+        if text_answer.lower() not in "yn":
+            print("Please answer y or n")
+        else:
+            return text_answer == "y"
+
+if __name__ == '__main__':
+    path = syllabus.get_pages_path()
+    create_toc = False
+    if not os.path.isdir(path) and not os.path.isfile(path):
+        create_dir = ask_question_yes_no("No pages directory found in the wurrent working directory. Would you like "
+                                         "to create it ?")
+        if create_dir:
+            os.mkdir(path)
+            with open(os.path.join(path, "chapter_index.rst"), "w+") as f:
+                f.write(chapter_index)
+            with open(os.path.join(path, "index.rst"), "w+") as f:
+                f.write(default_index)
+        else:
+            print("Bye !")
+            exit()
+    if not os.path.isfile(os.path.join(path, "toc.yaml")):
+        with open(os.path.join(path, "toc.yaml"), "w+") as f:
+            yaml.dump(default_toc, f)
+    from syllabus.inginious_syllabus import main
+    main()
