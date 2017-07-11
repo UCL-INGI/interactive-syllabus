@@ -22,12 +22,16 @@
 import os
 from flask import Flask, render_template, request
 import syllabus.utils.pages, syllabus.utils.directives
-from syllabus.utils.pages import get_syllabus_toc, get_chapter_content
+from syllabus.utils.pages import get_chapter_content
 from docutils.core import publish_string
 from syllabus.config import *
+import syllabus
 from docutils.parsers.rst import directives
 
-app = Flask(__name__)
+print(os.path.join(syllabus.get_root_path(), 'templates'))
+
+app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
+            static_folder=os.path.join(syllabus.get_root_path(), 'static'))
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
@@ -41,7 +45,7 @@ def index():
     return render_template('rst_page.html',
                            inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
                            chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
-                           structure=get_syllabus_toc("pages"), list=list,
+                           structure=syllabus.get_toc(), list=list,
                            toc=toc,
                            chapter_content=None, next=None, previous=None)
 

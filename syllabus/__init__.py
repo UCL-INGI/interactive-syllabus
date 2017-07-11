@@ -26,9 +26,16 @@ from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 
 
 def get_toc():
-    with open(os.path.join(get_root_path(), "pages", "toc.yaml")) as f:
+    with open(os.path.join(get_pages_path(), "toc.yaml")) as f:
         return yaml.load(f, OrderedDictYAMLLoader)
 
 
 def get_root_path():
     return os.path.abspath(os.path.dirname(__file__))
+
+
+def get_pages_path():
+    """
+    :return: The path to the content of the "pages" directory
+    """
+    return os.path.join(os.getcwd(), "pages")
