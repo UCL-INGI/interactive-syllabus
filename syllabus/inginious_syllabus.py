@@ -20,7 +20,7 @@
 
 
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
 import syllabus.utils.pages, syllabus.utils.directives
 from syllabus.utils.pages import get_chapter_content
 from docutils.core import publish_string
@@ -48,6 +48,11 @@ def index():
                            structure=syllabus.get_toc(), list=list,
                            toc=toc,
                            chapter_content=None, next=None, previous=None)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    abort(404)
 
 
 @app.route('/<chapter>')
