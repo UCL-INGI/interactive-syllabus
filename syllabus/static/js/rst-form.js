@@ -11,6 +11,7 @@ function parse_question(pattern, object, bool) {
 
 $(function () {
 
+
 	$('.comment-feedback').hide();
 	/* Classical treatment */
 	$('ul.positive').before('<ul class="proposals"></ul>');
@@ -42,7 +43,7 @@ $(function () {
 	$('#questionnaire-rst').append('<div id="checker" class="checker"><h1>Vérifier vos réponses</h1><input type="submit" value="Vérifier" id="verifier"></div>');
 	$('#verifier').click(function() {
 	    $('.comment-feedback').hide();
-		var nb_prop = $('ul.proposals').length + $('ul.proposals-multiple').length;
+		var nb_prop = $('li.correct').length;
 		var res = $('li.correct input:checked').length;
 		if(res < 0) {
 			res = 0;
