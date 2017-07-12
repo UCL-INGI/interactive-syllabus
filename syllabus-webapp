@@ -18,39 +18,27 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import shutil
+
 import syllabus
 import os
 import yaml
 
-chapter_index = \
-"""
-{{ chapter_desc }}
-
-.. table-of-contents:: {{ chapter_name }}
-"""
-default_index = """
-==================
-Default index page
-==================
-
---------------------------------------------------------------
-This is the auto-generated index page for the syllabus webapp.
---------------------------------------------------------------
-"""
 default_toc = \
-{
-    "contribuer": {
-        "title": "Contribuer au syllabus",
-        "content": {
-            "contribuer": {
-                "title": "Contribuer au contenu du syllabus"
-            },
-            "create_task": {
-                "title": "Créer une tâche INGInious"
+    {
+        "contribuer": {
+            "title": "Contribuer au syllabus",
+            "content": {
+                "contribuer": {
+                    "title": "Contribuer au contenu du syllabus"
+                },
+                "create_task": {
+                    "title": "Créer une tâche INGInious"
+                }
             }
         }
     }
-}
+
 
 def ask_question_yes_no(question):
     answer = None
@@ -61,18 +49,15 @@ def ask_question_yes_no(question):
         else:
             return text_answer == "y"
 
+
 if __name__ == '__main__':
     path = syllabus.get_pages_path()
     create_toc = False
     if not os.path.isdir(path) and not os.path.isfile(path):
-        create_dir = ask_question_yes_no("No pages directory found in the wurrent working directory. Would you like "
+        create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "
                                          "to create it ?")
         if create_dir:
-            os.mkdir(path)
-            with open(os.path.join(path, "chapter_index.rst"), "w+") as f:
-                f.write(chapter_index)
-            with open(os.path.join(path, "index.rst"), "w+") as f:
-                f.write(default_index)
+            shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
         else:
             print("Bye !")
             exit()
@@ -80,4 +65,5 @@ if __name__ == '__main__':
         with open(os.path.join(path, "toc.yaml"), "w+") as f:
             yaml.dump(default_toc, f)
     from syllabus.inginious_syllabus import main
+
     main()

@@ -4,3 +4,4 @@ include dependencies
 recursive-include syllabus/static *
 recursive-include syllabus/doc *
 recursive-include syllabus/templates *
+recursive-include syllabus/default *
