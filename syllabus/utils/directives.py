@@ -53,7 +53,7 @@ class InginiousDirective(Directive):
             <input type="text" name="taskid" class="taskid" value="{4}" hidden/>
             <input type="text" name="input" class="to-submit" hidden/>
         </form>
-        <button class="btn btn-primary button-inginious-task" id="{4}" value="Submit">Submit</button>
+        <button class="btn btn-primary button-inginious-task" id="{4}" value="Submit">Soumettre</button>
     </div>
 
     """
