@@ -65,7 +65,8 @@ def sanitize_filenames(f):
 
 
 @sanitize_filenames
-def render_page(chapter, page=None, toc=syllabus.get_toc()):
+def render_page(chapter, page=None, toc=None):
+    toc = syllabus.get_toc() if toc is None else toc
     if page is None:
         return render_rst_file("chapter_index.rst", chapter_name=chapter,
                                chapter_desc=get_chapter_desc(chapter, toc))
