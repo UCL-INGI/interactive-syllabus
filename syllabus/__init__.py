@@ -21,7 +21,7 @@
 
 import os
 import yaml
-import flask
+from flask import request
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 
 
@@ -39,5 +39,5 @@ def get_pages_path():
     :return: The path to the content of the "pages" directory
     """
     # SYLLABUS_PAGES_PATH can be set by mod_wsgi
-    path = os.environ.get("SYLLABUS_PAGES_PATH", os.getcwd())
+    path = request.environ.get("SYLLABUS_PAGES_PATH", os.getcwd())
     return os.path.join(path, "pages")
