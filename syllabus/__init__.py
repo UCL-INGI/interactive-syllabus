@@ -38,4 +38,6 @@ def get_pages_path():
     """
     :return: The path to the content of the "pages" directory
     """
-    return os.path.join(os.getcwd(), "pages")
+    # SYLLABUS_PAGES_PATH can be set by mod_wsgi
+    path = os.environ.get("SYLLABUS_PAGES_PATH", os.getcwd())
+    return os.path.join(path, "pages")
