@@ -6,7 +6,7 @@ function submitCode(url, taskID, questionID, code, feedbackContainer, task,edito
     container.removeClass("alert-success");
     container.removeClass("alert-danger");
     container.addClass("alert-info");
-    container.html("<i id='loading-spinner' class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i> Envoi de votre réponse pour correction...");
+    container.html("<i id='loading-spinner' class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i> Envoi de votre code...");
     container.show();
 
     $.post(url, {'taskid': taskID, 'input': JSON.stringify({[questionID]: code})}, function(data) {
