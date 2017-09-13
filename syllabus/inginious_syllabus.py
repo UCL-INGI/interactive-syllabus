@@ -43,7 +43,7 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 def index():
     toc = syllabus.get_toc()
     return render_template('rst_page.html',
-                           inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
+                           inginious_url=inginious_course_url,
                            chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
                            structure=syllabus.get_toc(), list=list,
                            toc=toc,
@@ -82,7 +82,7 @@ def render_web_page(chapter, page):
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
     return render_template('rst_page.html',
-                           inginious_url="http://%s:%d" % (inginious_instance_hostname, inginious_instance_port),
+                           inginious_url=inginious_course_url,
                            chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
                            toc=toc,
                            chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)

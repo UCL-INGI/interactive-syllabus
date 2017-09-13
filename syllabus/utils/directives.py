@@ -37,7 +37,7 @@ class InginiousDirective(Directive):
     required_arguments = 1
     optional_arguments = 1
     html = """
-    <div class="inginious-task" style="margin: 20px" data-language="{5}">
+    <div class="inginious-task" style="margin: 20px" data-language="{3}">
         <div class="loadingdiv">
             <span></span>
             <span></span>
@@ -48,19 +48,18 @@ class InginiousDirective(Directive):
         <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
             <strong>Success!</strong> Indicates a successful or positive action.
         </div>
-        <form method="post" action="http://{0}:{1}/{2}">
-            <textarea style="width:100%; height:150px;" class="inginious-code" name="code">{3}</textarea><br/>
-            <input type="text" name="taskid" class="taskid" value="{4}" hidden/>
+        <form method="post" action="{0}">
+            <textarea style="width:100%; height:150px;" class="inginious-code" name="code">{1}</textarea><br/>
+            <input type="text" name="taskid" class="taskid" value="{2}" hidden/>
             <input type="text" name="input" class="to-submit" hidden/>
         </form>
-        <button class="btn btn-primary button-inginious-task" id="{4}" value="Submit">Soumettre</button>
+        <button class="btn btn-primary button-inginious-task" id="{2}" value="Submit">Soumettre</button>
     </div>
 
     """
 
     def run(self):
-        par = nodes.raw('', self.html.format(inginious_instance_hostname, inginious_instance_port,
-                                             inginious_instance_course_id, '\n'.join(self.content),
+        par = nodes.raw('', self.html.format(inginious_course_url, '\n'.join(self.content),
                                              self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
                         format='html')
         return [par]

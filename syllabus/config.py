@@ -19,6 +19,4 @@
 
 
 
-inginious_instance_hostname = "localhost"
-inginious_instance_port = 8080
-inginious_instance_course_id = "tutorial"
+inginious_course_url = "http://localhost:8080/tutorial"
