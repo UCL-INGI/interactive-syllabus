@@ -18,5 +18,4 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 inginious_course_url = "http://localhost:8080/tutorial"
