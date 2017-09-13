@@ -59,7 +59,8 @@ class InginiousDirective(Directive):
     """
 
     def run(self):
-        par = nodes.raw('', self.html.format(inginious_course_url, '\n'.join(self.content),
+        par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
+                                             '\n'.join(self.content),
                                              self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
                         format='html')
         return [par]

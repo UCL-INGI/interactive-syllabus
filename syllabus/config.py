@@ -18,4 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-inginious_course_url = "http://localhost:8080/tutorial"
+inginious_course_url = "https://inginious.info.ucl.ac.be/java-syllabus"
+
+# if True, the INGInious POST requests will be sent to this server instead of the real
+# INGINious instance. This server will then do the request itself to the INGInious instance,
+# to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
+same_origin_proxy = False

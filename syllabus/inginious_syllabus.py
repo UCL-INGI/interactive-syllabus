@@ -16,17 +16,17 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
+import json
 import os
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, make_response
 import syllabus.utils.pages, syllabus.utils.directives
 from syllabus.utils.pages import get_chapter_content
 from docutils.core import publish_string
 from syllabus.config import *
 import syllabus
 from docutils.parsers.rst import directives
+from urllib import parse
+from urllib import request as urllib_request
 
 print(os.path.join(syllabus.get_root_path(), 'templates'))
 
@@ -43,7 +43,7 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 def index():
     toc = syllabus.get_toc()
     return render_template('rst_page.html',
-                           inginious_url=inginious_course_url,
+                           inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
                            chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
                            structure=syllabus.get_toc(), list=list,
                            toc=toc,
@@ -82,10 +82,21 @@ def render_web_page(chapter, page):
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
     return render_template('rst_page.html',
-                           inginious_url=inginious_course_url,
+                           inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
                            chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
                            toc=toc,
                            chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+
+
+@app.route('/postinginious', methods=['POST'])
+def post_inginious():
+    inpt = request.form
+    data = parse.urlencode(inpt).encode()
+    req = urllib_request.Request(inginious_course_url, data=data)
+    resp = urllib_request.urlopen(req)
+    response = make_response(resp.decode())
+    response.headers['Content-Type'] = 'text/json'
+    return response
 
 
 @app.route('/parserst', methods=['POST'])
