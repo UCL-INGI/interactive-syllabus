@@ -42,12 +42,15 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 @app.route('/index')
 def index():
     toc = syllabus.get_toc()
-    return render_template('rst_page.html',
-                           inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                           chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
-                           structure=syllabus.get_toc(), list=list,
-                           toc=toc,
-                           chapter_content=None, next=None, previous=None)
+    try:
+        return render_template('rst_page.html',
+                               inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
+                               chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
+                               structure=syllabus.get_toc(), list=list,
+                               toc=toc,
+                               chapter_content=None, next=None, previous=None)
+    except FileNotFoundError:
+        abort(404)
 
 
 @app.route('/favicon.ico')
@@ -81,11 +84,14 @@ def render_web_page(chapter, page):
         page_index = pages.index(page)
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
-    return render_template('rst_page.html',
-                           inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                           chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
-                           toc=toc,
-                           chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+    try:
+        return render_template('rst_page.html',
+                               inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
+                               chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
+                               toc=toc,
+                               chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+    except FileNotFoundError:
+        abort(404)
 
 
 @app.route('/postinginious', methods=['POST'])
