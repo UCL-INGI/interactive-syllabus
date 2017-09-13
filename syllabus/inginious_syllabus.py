@@ -94,7 +94,7 @@ def post_inginious():
     data = parse.urlencode(inpt).encode()
     req = urllib_request.Request(inginious_course_url, data=data)
     resp = urllib_request.urlopen(req)
-    response = make_response(resp.decode())
+    response = make_response(resp.read().decode())
     response.headers['Content-Type'] = 'text/json'
     return response
 
