@@ -40,6 +40,13 @@
             bottom: 0;
         }
 
+        #loading-spinner {
+            animation:spin 2s linear infinite;
+        }
+
+        @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+        @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+        @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
     </style>
 
 </head>
@@ -143,7 +150,6 @@
     $('.inginious-task').each(function(index, task){
         let area = $(task).find('.inginious-code').get(0);
         let language = $(task).attr("data-language");
-        console.log(language)
         let editor = CodeMirror.fromTextArea(area, {
             lineNumbers: true,
             matchBrackets: true,

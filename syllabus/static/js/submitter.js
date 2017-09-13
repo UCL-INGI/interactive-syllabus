@@ -2,7 +2,12 @@ function submitCode(url, taskID, questionID, code, feedbackContainer, task,edito
     $(task).not('.loadingdiv').css("opacity",0.5);
     editor.setOption("readOnly",true);
 
-    $(task).find('.loadingdiv').show();
+    var container = $(feedbackContainer);
+    container.removeClass("alert-success");
+    container.removeClass("alert-danger");
+    container.addClass("alert-info");
+    container.html("<i id='loading-spinner' class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i> Envoi de votre réponse pour correction...");
+    container.show();
 
     $.post(url, {'taskid': taskID, 'input': JSON.stringify({[questionID]: code})}, function(data) {
         let toParse = data.result[1];
@@ -16,19 +21,20 @@ function submitCode(url, taskID, questionID, code, feedbackContainer, task,edito
 
 function parseRST(rst, status, feedbackContainer, task, editor){
     $.post("/parserst", {rst: rst}, function(data){
-        let container = $(feedbackContainer);
-        let result = data["result"];
+        var container = $(feedbackContainer);
+        container.html('');
         if(status == "failed"){
             container.removeClass("alert-success");
+            container.removeClass("alert-info");
             container.addClass("alert-danger");
         }
         else if(status == "success"){
             container.removeClass("alert-danger");
+            container.removeClass("alert-info");
             container.addClass("alert-success");
         }
         $(task).css("opacity",1);
         editor.setOption("readOnly",false);
-        $(task).find('.loadingdiv').hide();
         container.html(data);
         container.show();
     })
