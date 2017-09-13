@@ -12,3 +12,6 @@ follow the instructions here:
 
  http://inginious.readthedocs.io/en/latest/install_doc/config_reference.html#simple-grader-plugin-webapp-lti
 
+You can then install this application with pip3.
+
+We currently support python3.5+.
