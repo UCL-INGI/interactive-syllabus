@@ -43,7 +43,7 @@ def get_pages_path():
     If none of these is set, the path will be in the current working directory (os.cwd())
     """
     # first check if the syllabus_pages_path variable is set
-    if has_request_context() and hasattr(request.environ, "SYLLABUS_PAGES_PATH"):
+    if has_request_context() and "SYLLABUS_PAGES_PATH" in request.environ:
         return request.environ["SYLLABUS_PAGES_PATH"]
     # SYLLABUS_PAGES_PATH can be set by mod_wsgi; If not, the path will be in the current working directory
     path = config.syllabus_pages_path if config.syllabus_pages_path is not None else os.getcwd()
