@@ -143,7 +143,6 @@
     </a>.
 </footer>
 </body>
-<script src="/static/js/submitter.js"></script>
 
 <script>
     $('.inginious-task').each(function(index, task){
@@ -161,6 +160,8 @@
             $(task).find('.to-submit').val(JSON.stringify({q1: toSubmit}));
             submitCode("{{ inginious_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor,);
         });
+        $(task).show();
     });
 </script>
+<script src="/static/js/submitter.js"></script>
 </html>
