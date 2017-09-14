@@ -1,5 +1,5 @@
 function submitCode(url, taskID, questionID, code, feedbackContainer, task,editor){
-    $(task).not('.loadingdiv').css("opacity",0.5);
+    $(task).children().not('.feedback-container').css("opacity",0.5);
     editor.setOption("readOnly",true);
 
     var container = $(feedbackContainer);
@@ -33,7 +33,7 @@ function parseRST(rst, status, feedbackContainer, task, editor){
             container.removeClass("alert-info");
             container.addClass("alert-success");
         }
-        $(task).css("opacity",1);
+        $(task).children().css("opacity",1);
         editor.setOption("readOnly",false);
         container.html(data);
         container.show();

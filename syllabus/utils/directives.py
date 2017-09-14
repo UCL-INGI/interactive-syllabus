@@ -38,13 +38,6 @@ class InginiousDirective(Directive):
     optional_arguments = 1
     html = """
     <div class="inginious-task" style="margin: 20px" data-language="{3}">
-        <div class="loadingdiv">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
         <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
             <strong>Success!</strong> Indicates a successful or positive action.
         </div>
