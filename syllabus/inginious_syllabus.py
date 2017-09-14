@@ -60,13 +60,19 @@ def favicon():
 
 @app.route('/<chapter>')
 def chapter_index(chapter):
-    return render_web_page(chapter, None)
+    try:
+        return render_web_page(chapter, None)
+    except ValueError:
+        abort(404)
 
 
 @app.route('/<chapter>/<page>')
 @syllabus.utils.pages.sanitize_filenames
 def get_page(chapter, page):
-    return render_web_page(chapter, page)
+    try:
+        return render_web_page(chapter, page)
+    except FileNotFoundError:
+        abort(404)
 
 
 def render_web_page(chapter, page):
@@ -84,14 +90,11 @@ def render_web_page(chapter, page):
         page_index = pages.index(page)
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
-    try:
         return render_template('rst_page.html',
                                inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
                                chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
                                toc=toc,
                                chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
-    except FileNotFoundError:
-        abort(404)
 
 
 @app.route('/postinginious', methods=['POST'])
