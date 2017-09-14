@@ -23,6 +23,7 @@ import os
 import yaml
 from flask import request, has_request_context
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
+import syllabus.config
 
 
 def get_toc():
@@ -36,8 +37,14 @@ def get_root_path():
 
 def get_pages_path():
     """
-    :return: The path to the content of the "pages" directory
+    :return: The path to the content of the "pages" directory. if the syllabus_pages_path variable is set in config.py,
+    or if the SYLLABUS_PAGES_PATH environment variable is set in a request context, the returned path will be in the
+    specified value (the environment variable has the highest priority)
+    If none of these is set, the path will be in the current working directory (os.cwd())
     """
-    # SYLLABUS_PAGES_PATH can be set by mod_wsgi
-    path = request.environ.get("SYLLABUS_PAGES_PATH", os.getcwd()) if has_request_context() else os.getcwd()
+    # first check if the syllabus_pages_path variable is set
+    if has_request_context() and hasattr(request.environ, "SYLLABUS_PAGES_PATH"):
+        return request.environ["SYLLABUS_PAGES_PATH"]
+    # SYLLABUS_PAGES_PATH can be set by mod_wsgi; If not, the path will be in the current working directory
+    path = config.syllabus_pages_path if config.syllabus_pages_path is not None else os.getcwd()
     return os.path.join(path, "pages")

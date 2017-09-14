@@ -20,6 +20,10 @@
 
 inginious_course_url = "https://inginious.info.ucl.ac.be/java-syllabus"
 
+# indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH
+# environment variable. If none of these is set, the path will be considered as in the current working directory.
+syllabus_pages_path = None
+
 # if True, the INGInious POST requests will be sent to this server instead of the real
 # INGINious instance. This server will then do the request itself to the INGInious instance,
 # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
