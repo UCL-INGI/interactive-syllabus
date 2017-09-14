@@ -90,11 +90,11 @@ def render_web_page(chapter, page):
         page_index = pages.index(page)
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
-        return render_template('rst_page.html',
-                               inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                               chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
-                               toc=toc,
-                               chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+    return render_template('rst_page.html',
+                           inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
+                           chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
+                           toc=toc,
+                           chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
 
 
 @app.route('/postinginious', methods=['POST'])
