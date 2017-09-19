@@ -158,7 +158,7 @@
             const toSubmit = editor.getValue();
             const taskID = $(task).find('.taskid').val();
             $(task).find('.to-submit').val(JSON.stringify({q1: toSubmit}));
-            submitCode("{{ inginious_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor,);
+            submitCode("{{ inginious_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor);
         });
         $(task).show();
     });
