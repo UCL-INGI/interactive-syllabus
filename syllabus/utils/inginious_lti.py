@@ -25,7 +25,6 @@ def get_lti_url(user_id, task_id):
     data = parse.urlencode(d).encode()
 
     req = urllib_request.Request('%s/lti/%s/%s' % (config.inginious_url, config.inginious_course_id, task_id), data=data)
-    print('%s/lti/%s/%s' % (config.inginious_url, config.inginious_course_id, task_id))
     resp: HTTPResponse = urllib_request.urlopen(req)
 
     task_url = resp.geturl()

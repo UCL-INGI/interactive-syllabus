@@ -20,6 +20,7 @@ import json
 import os
 from flask import Flask, render_template, request, abort, make_response
 import syllabus.utils.pages, syllabus.utils.directives
+from syllabus.database import init_db
 from syllabus.utils.pages import get_chapter_content
 from docutils.core import publish_string
 from syllabus.config import *
@@ -28,11 +29,10 @@ from docutils.parsers.rst import directives
 from urllib import parse
 from urllib import request as urllib_request
 
-print(os.path.join(syllabus.get_root_path(), 'templates'))
-
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
@@ -116,4 +116,5 @@ def parse_rst():
 
 
 def main():
+    init_db()
     app.run(host='0.0.0.0', port=5000)
