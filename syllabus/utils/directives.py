@@ -25,6 +25,7 @@ from docutils import nodes
 import syllabus.utils.pages
 
 from syllabus.config import *
+from syllabus.utils.inginious_lti import get_lti_url
 
 
 class InginiousDirective(Directive):
@@ -52,10 +53,16 @@ class InginiousDirective(Directive):
     """
 
     def run(self):
-        par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
-                                             '\n'.join(self.content),
-                                             self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
-                        format='html')
+        if not use_lti:
+            par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
+                                                 '\n'.join(self.content),
+                                                 self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
+                            format='html')
+        else:
+            lti_url = get_lti_url("aaaa", self.arguments[0])
+            par = nodes.raw('', '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                                ''
+                                ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % lti_url, format='html')
         return [par]
 
 

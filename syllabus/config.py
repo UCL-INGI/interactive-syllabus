@@ -18,7 +18,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-inginious_course_url = "localhost:8080/course-path"
+inginious_url = "http://localhost:8080"
+
+inginious_course_id = "tutorial"
+
+inginious_course_url = "%s/%s" % (inginious_url, inginious_course_id)
 
 # indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH
 # environment variable. If none of these is set, the path will be considered as in the current working directory.
@@ -27,4 +31,12 @@ syllabus_pages_path = None
 # if True, the INGInious POST requests will be sent to this server instead of the real
 # INGINious instance. This server will then do the request itself to the INGInious instance,
 # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
-same_origin_proxy = False
+same_origin_proxy = True
+
+### LTI RELATED CONFIG ###
+
+use_lti = True
+
+consumer_secret = 'my_super_key'
+
+consumer_key = 'syllabus'
