@@ -25,7 +25,7 @@ from collections import OrderedDict
 import sys
 from docutils.core import publish_string
 from flask.helpers import get_root_path
-from flask import render_template_string
+from flask import render_template_string, redirect
 from werkzeug.utils import secure_filename
 
 import syllabus
@@ -42,6 +42,10 @@ default_rst_opts = {
     'traceback': True,
     'halt_level': 5
 }
+
+
+def seeother(link):
+    return redirect(link, code=303)
 
 
 def get_chapter_content(chapter_name, toc=None):

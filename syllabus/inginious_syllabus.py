@@ -18,10 +18,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import os
-from flask import Flask, render_template, request, abort, make_response
+from flask import Flask, render_template, request, abort, make_response, session
+
 import syllabus.utils.pages, syllabus.utils.directives
-from syllabus.database import init_db
-from syllabus.utils.pages import get_chapter_content
+from syllabus.database import init_db, db_session
+from syllabus.models.user import hash_password, User
+from syllabus.utils.pages import get_chapter_content, seeother
 from docutils.core import publish_string
 from syllabus.config import *
 import syllabus
@@ -33,6 +35,7 @@ app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'te
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = os.urandom(24)
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
@@ -43,7 +46,7 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 def index():
     toc = syllabus.get_toc()
     try:
-        return render_template('rst_page.html',
+        return render_template('rst_page.html', logged_in=session.get("username", None),
                                inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
                                chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
                                structure=syllabus.get_toc(), list=list,
@@ -90,11 +93,59 @@ def render_web_page(chapter, page):
         page_index = pages.index(page)
         previous = None if page_index == 0 else pages[page_index - 1]
         next = None if page_index == len(pages) - 1 else pages[page_index + 1]
-    return render_template('rst_page.html',
+    return render_template('rst_page.html', logged_in=session.get("username", None),
                            inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
                            chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
                            toc=toc,
                            chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+
+
+@app.route("/resetpassword/<secret>", methods=["GET", "POST"])
+def reset_password(secret):
+    user = db_session.query(User).filter(User.change_password_url == secret).first()
+    if user is None:
+        # TODO: log
+        return seeother("/")
+    if request.method == "GET":
+        return render_template("reset_password.html", alert_hidden=True)
+    if request.method == "POST":
+        inpt = request.form
+        password = inpt["password"]
+        password_confirm = inpt["password_confirm"]
+        if password != password_confirm:
+            return render_template("reset_password.html", alert_hidden=False)
+        password_hash = hash_password(password.encode("utf-8"))
+        user.hash_password = password_hash
+        user.change_password_url = None
+        db_session.commit()
+        return seeother("/login")
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def log_in():
+    if request.method == "GET":
+        return render_template("login.html")
+    if request.method == "POST":
+        inpt = request.form
+        username = inpt["username"]
+        password = inpt["password"]
+        try:
+            password_hash = hash_password(password.encode("utf-8"))
+        except UnicodeEncodeError:
+            # TODO: log
+            return seeother("/login")
+
+        user = User.query.filter(User.name == username).first()
+        if user is None or user.hash_password != password_hash:
+            abort(403)
+        session['username'] = username
+        return seeother('/')
+
+
+@app.route("/logout")
+def log_out():
+    session.pop("username", None)
+    return seeother('/')
 
 
 @app.route('/postinginious', methods=['POST'])
