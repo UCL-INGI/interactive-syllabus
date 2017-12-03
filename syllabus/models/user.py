@@ -5,23 +5,21 @@ from hashlib import sha512
 
 class User(Base):
     __tablename__ = 'users'
-    name = Column(String(40), primary_key=True)
+    username = Column(String(40), primary_key=True)
     email = Column(String(120), unique=True, nullable=False)
-    first_name = Column(String(25))
-    last_name = Column(String(25))
+    full_name = Column(String(50))
     hash_password = Column(String(80))
     change_password_url = Column(String(50))
 
-    def __init__(self, name, email, hash_password, first_name=None, last_name=None, change_password_url=None):
-        self.name = name
+    def __init__(self, name, email, hash_password, full_name=None, change_password_url=None):
+        self.username = name
         self.email = email
         self.hash_password = hash_password
-        self.first_name = first_name
-        self.last_name = last_name
+        self.full_name = full_name
         self.change_password_url = change_password_url
 
     def __repr__(self):
-        return '<User %r>' % (self.name)
+        return '<User %r>' % (self.username)
 
 
 def hash_password(password):

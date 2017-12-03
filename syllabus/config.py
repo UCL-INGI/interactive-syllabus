@@ -33,6 +33,10 @@ syllabus_pages_path = None
 # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
 same_origin_proxy = True
 
+# list containing the authentication methods that can be used by the syllabus.
+# The list can contain "local", "saml" or both
+authentication_methods = ["local", "saml"]
+
 ### LTI RELATED CONFIG ###
 
 use_lti = True

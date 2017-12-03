@@ -2,3 +2,9 @@ flask
 pyyaml
 pygments
 docutils
+libxml(-devel)
+libxslt(-devel)
+xmlsec1(-devel)
+libtool-ltdl(-devel)
+xmlsec1-openssl(-devel)
+wkhtmltopdf (patched qt version is better)
