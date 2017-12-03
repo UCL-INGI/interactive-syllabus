@@ -31,12 +31,14 @@ from syllabus.utils.inginious_lti import get_lti_url
 class InginiousDirective(Directive):
     """
     required argument: the task id on which post the answer on INGInious
-    optional argument: the language mode supported by CodeMirror
+    optional argument 1: the language mode supported by CodeMirror
+    optional argument 2: the number of blank lines to display in print mode
     directive content: the prefilled code in the text area
     """
+    print = False
     has_content = True
     required_arguments = 1
-    optional_arguments = 1
+    optional_arguments = 2
     html = """
     <div class="inginious-task" style="margin: 20px" data-language="{3}">
         <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
@@ -53,16 +55,25 @@ class InginiousDirective(Directive):
     """
 
     def run(self):
-        if not use_lti:
-            par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
-                                                 '\n'.join(self.content),
-                                                 self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
-                            format='html')
+        if not self.print:
+            if not use_lti:
+                par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
+                                                     '\n'.join(self.content),
+                                                     self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
+                                format='html')
+            else:
+                lti_url = get_lti_url("aaaa", self.arguments[0])
+                par = nodes.raw('', '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                                    ''
+                                    ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % lti_url, format='html')
         else:
-            lti_url = get_lti_url("aaaa", self.arguments[0])
-            par = nodes.raw('', '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
-                                ''
-                                ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % lti_url, format='html')
+            n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
+            if self.content:
+                par = nodes.raw('', """<pre>%s%s</pre>""" % ('\n'.join(self.content), "\n"*n_blank_lines), format='html')
+            else:
+                if n_blank_lines == 0:
+                    n_blank_lines+=1
+                par = nodes.raw('', """<pre>%s</pre>""" % ("\n"*n_blank_lines), format='html')
         return [par]
 
 
