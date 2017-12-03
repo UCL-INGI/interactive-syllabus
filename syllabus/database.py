@@ -17,7 +17,7 @@ Base.query = db_session.query_property()
 
 def create_db():
     from syllabus.models.user import User
-    change_pwd_bytes: bytes = os.urandom(20)
+    change_pwd_bytes = os.urandom(20)
     change_pwd_hex = binascii.hexlify(change_pwd_bytes).decode()
     u = User('admin', 'admin@localhost', hash_password=None, change_password_url=change_pwd_hex)
     db_session.add(u)
