@@ -193,6 +193,7 @@ def saml():
     if "saml" not in authentication_methods:
         abort(404)
     req = prepare_request(request)
+    req['request_uri'] = request.path  # hack to ensure to have the correct path and to avoid RelayState loops
     auth = init_saml_auth(req, saml_config)
 
     # if 'sso' in request.args:
