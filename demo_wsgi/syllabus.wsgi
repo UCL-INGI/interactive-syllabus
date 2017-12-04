@@ -2,6 +2,7 @@ import shutil
 import os
 import yaml
 import syllabus
+from syllabus.database import init_db
 
 default_toc = \
     {
@@ -25,4 +26,5 @@ if not os.path.isdir(path) and not os.path.isfile(path):
 if not os.path.isfile(os.path.join(path, "toc.yaml")):
     with open(os.path.join(path, "toc.yaml"), "w+") as f:
         yaml.dump(default_toc, f)
+init_db()
 from syllabus.inginious_syllabus import app as application
