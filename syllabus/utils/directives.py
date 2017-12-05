@@ -16,11 +16,11 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
+from urllib.error import URLError, HTTPError
 
 from docutils.parsers.rst import Directive
 from docutils import nodes
+from flask import session
 
 import syllabus.utils.pages
 
@@ -62,17 +62,34 @@ class InginiousDirective(Directive):
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
                                 format='html')
             else:
-                lti_url = get_lti_url("aaaa", self.arguments[0])
-                par = nodes.raw('', '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                try:
+                    lti_url = get_lti_url(session.get("user", None), self.arguments[0])
+                    par = nodes.raw('',
+                                    '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
                                     ''
-                                    ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % lti_url, format='html')
+                                    ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % (
+                                    lti_url), format='html')
+                except (URLError, HTTPError) as e:
+                    message = str(e.errno)
+                    if "connection refused" in str(e.reason).lower():  # Handle connection refused
+                        message = "impossible to connect to INGInious: connection refused"
+                    elif type(e) is HTTPError:  # Handle HTTP errors from INGInious
+                        if e.errno == 303:
+                            message = "impossible to connect to INGInious: your account does not match an INGInious account"
+                        elif e.errno == 500:
+                            message = "impossible to connect to INGInious: INGInious internal error"
+
+                    par = nodes.raw('',
+                                    '<pre style="overflow: hidden; width: 100%%; height: 520px"> %s </pre>' % (
+                                        message), format='html')
+
         else:
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
             if self.content:
                 par = nodes.raw('', """<pre>%s%s</pre>""" % ('\n'.join(self.content), "\n"*n_blank_lines), format='html')
             else:
                 if n_blank_lines == 0:
-                    n_blank_lines+=1
+                    n_blank_lines = 1
                 par = nodes.raw('', """<pre>%s</pre>""" % ("\n"*n_blank_lines), format='html')
         return [par]
 
