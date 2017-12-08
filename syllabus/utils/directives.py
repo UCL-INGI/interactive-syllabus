@@ -26,6 +26,7 @@ import syllabus.utils.pages
 
 from syllabus.config import *
 from syllabus.utils.inginious_lti import get_lti_url
+from syllabus.utils.toc import Chapter
 
 
 class InginiousDirective(Directive):
@@ -106,21 +107,24 @@ class ToCDirective(Directive):
     def run(self):
         toc = syllabus.get_toc()
         if len(self.arguments) == 1:
-            self.html += "<h3> " + toc[self.arguments[0]]["title"] + "</h3>\n"
-            toc = toc[self.arguments[0]]["content"]
-            self.html += self.parse(toc, self.arguments[0] + "/")
+            chapter = toc.get_chapter_from_path(self.arguments[0])
+            self.html += "<h3> " + chapter.title + "</h3>\n"
+            self.html += self.parse(toc, chapter)
         else:
-            for keys in toc.keys():
-                self.html += "<h3> " + toc[keys]["title"] + "</h3>\n"
-                self.html += self.parse(toc[keys]["content"], keys + "/")
+            # for keys in toc.keys():
+            #     self.html += "<h3> " + toc[keys]["title"] + "</h3>\n"
+            #     self.html += self.parse(toc[keys]["content"], keys + "/")
+            self.html += self.parse(toc)
         return [nodes.raw(' ', self.html, format='html')]
 
-    def parse(self, dictio, pathTo):
+    def parse(self, toc, chapter=None):
+        top_level = toc.get_top_level_content() if chapter is None else toc.get_direct_content_of(chapter)
+
         tmp_html = "<ul>\n"
-        for key in dictio:
-            tmp_html += '<li style="list-style-type: none;"><a href=' + pathTo +key + '>' + dictio[key]["title"] + '</a></li>\n'
-            if "content" in dictio[key]:
-                tmp_html += self.parse(dictio[key]["content"],pathTo+key+"/")
+        for content in top_level:
+            tmp_html += '<li style="list-style-type: none;"><a href="/syllabus/' + content.request_path + '">' + content.title + '</a></li>\n'
+            if type(content) is Chapter:
+                tmp_html += self.parse(toc, content)
         tmp_html += "</ul>"
         return tmp_html
 

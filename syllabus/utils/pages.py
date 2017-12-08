@@ -18,20 +18,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-import os
-from collections import OrderedDict
-
-import sys
 from docutils.core import publish_string
-from flask.helpers import get_root_path
 from flask import render_template_string, redirect
+from flask.helpers import safe_join
 from werkzeug.utils import secure_filename
 
 import syllabus
-from syllabus.config import *
-import syllabus.utils.directives as directives
-from syllabus.utils import rst
+from syllabus.utils.toc import Chapter
 
 default_rst_opts = {
     'no_generator': True,
@@ -48,17 +41,12 @@ def seeother(link):
     return redirect(link, code=303)
 
 
-def get_chapter_content(chapter_name, toc=None):
-    toc = syllabus.get_toc() if toc is None else toc
-    return toc[chapter_name]
-
-
-def get_chapter_desc(chapter_name, toc):
-    file = toc[chapter_name].get("chapter_intro_file")
-    if file is not None:
-        with open(os.path.join(syllabus.get_pages_path(), chapter_name, file), 'r', encoding="utf-8") as f:
+def get_chapter_intro(chapter):
+    try:
+        with open(safe_join(syllabus.get_pages_path(), chapter.path, "chapter_introduction.rst"), 'r', encoding="utf-8") as f:
             return f.read()
-    return ""
+    except FileNotFoundError:
+        return ""
 
 
 def sanitize_filenames(f):
@@ -68,17 +56,21 @@ def sanitize_filenames(f):
     return wrapper
 
 
-@sanitize_filenames
-def render_page(chapter, page=None, toc=None):
-    toc = syllabus.get_toc() if toc is None else toc
-    if page is None:
-        return render_rst_file("chapter_index.rst", chapter_name=chapter,
-                               chapter_desc=get_chapter_desc(chapter, toc))
+def sanitize_path(f):
+    def wrapper(content_path, **kwargs):
+        return f(secure_filename(content_path), **kwargs)
+    return wrapper
+
+
+def render_content(content):
+    if type(content) is Chapter:
+        return render_rst_file("chapter_index.rst", chapter_path=content.path,
+                               chapter_desc=get_chapter_intro(content))
     else:
-        return render_rst_file(os.path.join(chapter, "%s.rst" % page))
+        return render_rst_file(content.path)
 
 
 def render_rst_file(page_path, **kwargs):
-    with open(os.path.join(syllabus.get_pages_path(), page_path), "r") as f:
+    with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
         return publish_string(render_template_string(f.read(), **kwargs),
                               writer_name='html', settings_overrides=default_rst_opts)

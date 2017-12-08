@@ -2,4 +2,4 @@
 
 {{ chapter_desc|safe }}
 
-.. table-of-contents:: {{ chapter_name }}
+.. table-of-contents:: {{ chapter_path }}

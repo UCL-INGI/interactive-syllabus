@@ -22,13 +22,19 @@
 import os
 import yaml
 from flask import request, has_request_context
+
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 import syllabus.config
 
 
 def get_toc():
-    with open(os.path.join(get_pages_path(), "toc.yaml")) as f:
-        return yaml.load(f, OrderedDictYAMLLoader)
+    # TODO: change this hack a bit ugly
+    try:
+        return get_toc.TOC
+    except AttributeError:
+        from syllabus.utils.toc import TableOfContent
+        get_toc.TOC = TableOfContent()
+        return get_toc.TOC
 
 
 def get_root_path():

@@ -16,7 +16,6 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import json
 import os
 
 import yaml
@@ -27,13 +26,15 @@ import syllabus.utils.pages, syllabus.utils.directives
 from syllabus.database import init_db, db_session
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.pages import get_chapter_content, seeother
+from syllabus.utils.pages import seeother
 from docutils.core import publish_string
 from syllabus.config import *
 import syllabus
 from docutils.parsers.rst import directives
 from urllib import parse
 from urllib import request as urllib_request
+
+from syllabus.utils.toc import TableOfContent, Page, Chapter, Content
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
@@ -44,21 +45,23 @@ directives.register_directive('inginious', syllabus.utils.directives.InginiousDi
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 
+TOC = syllabus.get_toc()
+
 if "saml" in authentication_methods:
     with open(os.path.join(syllabus.get_root_path(), "saml", "saml.yaml")) as f:
         saml_config = yaml.load(f)
 
+
 @app.route('/')
 @app.route('/index')
 def index():
-    toc = syllabus.get_toc()
     try:
         return render_template('rst_page.html', logged_in=session.get("user", None),
                                inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                               chapter="", page="index", render_rst=syllabus.utils.pages.render_page,
-                               structure=syllabus.get_toc(), list=list,
-                               toc=toc,
-                               chapter_content=None, next=None, previous=None)
+                               this_content=TOC.index, render_rst=syllabus.utils.pages.render_content,
+                               list=list,
+                               toc=TOC,
+                               containing_chapters=[], next=None, previous=None)
     except FileNotFoundError:
         abort(404)
 
@@ -68,52 +71,42 @@ def favicon():
     abort(404)
 
 
-@app.route('/<chapter>')
-def chapter_index(chapter):
+@app.route('/syllabus/<path:content_path>')
+def get_syllabus_content(content_path: str):
+    if content_path[-1] == "/":
+        content_path = content_path[:-1]
+    print_mode = request.args.get("print") is not None
     try:
-        print_mode = request.args.get("print") is not None
-        content = render_web_page(chapter, None, print_mode)
-        return content
-    except ValueError:
-        abort(404)
-
-
-@app.route('/<chapter>/<page>')
-@syllabus.utils.pages.sanitize_filenames
-def get_page(chapter, page):
-    try:
-        print_mode = request.args.get("print") is not None
-        content = render_web_page(chapter, page, print_mode)
-        return content
+        try:
+            # assume that it is an RST page
+            return render_web_page(TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+        except FileNotFoundError:
+            # it should be a chapter
+            return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
     except FileNotFoundError:
         abort(404)
 
 
-def render_web_page(chapter, page, print_mode=False):
-    syllabus.utils.directives.InginiousDirective.print = print_mode
-    toc = syllabus.get_toc()
-    # find previous/next page/chapter
-    if page is None:
-        # find previous/next chapter
-        chapters = list(toc.keys())
-        chapter_index = chapters.index(chapter)
-        previous = None if chapter_index == 0 else chapters[chapter_index - 1]
-        next = None if chapter_index == len(chapters) - 1 else chapters[chapter_index + 1]
-    else:
-        # find previous/next page
-        pages = list(toc[chapter]["content"].keys())
-        page_index = pages.index(page)
-        previous = None if page_index == 0 else pages[page_index - 1]
-        next = None if page_index == len(pages) - 1 else pages[page_index + 1]
-    content = render_template('rst_page.html' if not print_mode else 'print_page.html',
-                              logged_in=session.get("user", None),
-                              inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                              chapter=chapter, page=page, render_rst=syllabus.utils.pages.render_page,
-                              toc=toc,
-                              chapter_content=get_chapter_content(chapter, toc), next=next, previous=previous)
+def render_web_page(content: Content, print_mode=False):
+    try:
+        syllabus.utils.directives.InginiousDirective.print = print_mode
+        previous = TOC.get_previous_content(content)
+        next = TOC.get_next_content(content)
+        retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
+                                 logged_in=session.get("user", None),
+                                 inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
+                                 containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
+                                 render_rst=syllabus.utils.pages.render_content,
+                                 content_at_same_level=TOC.get_content_at_same_level(content),
+                                 toc=TOC,
+                                 direct_content=TOC.get_direct_content_of(content), next=next, previous=previous)
 
-    syllabus.utils.directives.InginiousDirective.print = False
-    return content
+        syllabus.utils.directives.InginiousDirective.print = False
+    except Exception:
+        # ensure that the print mode is disabled
+        syllabus.utils.directives.InginiousDirective.print = False
+        raise
+    return retval
 
 
 @app.route("/resetpassword/<secret>", methods=["GET", "POST"])
@@ -215,7 +208,8 @@ def saml():
             user = User.query.filter(User.email == email).first()
 
             if user is None:  # The user does not exist in our DB
-                user = User(name=username, full_name=realname, email=email, hash_password=None, change_password_url=None)
+                user = User(name=username, full_name=realname, email=email, hash_password=None,
+                            change_password_url=None)
                 db_session.add(user)
                 db_session.commit()
 

@@ -74,36 +74,51 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            {% if chapter_content is not none %}
                 <ul class="nav navbar-nav">
+                {% for chapter in containing_chapters %}
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["title"] }} <span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter.title }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            {% for (chapter_name, chapter_infos) in toc.items() %}
-                                <li><a href="/{{ chapter_name }}">{{ chapter_infos["title"] }}</a></li>
+                            {% for content in toc.get_content_at_same_level(chapter) %}
+                                <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
                                 {% if not loop.last %}
                                     <li role="separator" class="divider"></li>
                                 {% endif %}
                             {% endfor %}
                         </ul>
                     </li>
+                {% endfor %}
+                {% if this_content != toc.index %}
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter_content["content"][page]["title"] if page is not none else "Index du chapitre" }} <span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ this_content.title if "Page" in this_content.__class__.__name__ else "Index du chapitre" }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
+                            {% if "Page" in this_content.__class__.__name__ %}
+                                <li><a href="/syllabus/{{ containing_chapters[-1].request_path }}"> Index du chapitre </a></li>
 
-                            <li><a href="/{{ chapter }}"> Index du chapitre </a></li>
-                            <li role="separator" class="divider"></li>
+                                <li role="separator" class="divider"></li>
 
-                            {% for (page_name, page_infos) in chapter_content["content"].items() %}
-                            <li><a href="/{{ chapter }}/{{ page_name }}">{{ page_infos["title"] }}</a></li>
-                                {% if not loop.last %}
-                                    <li role="separator" class="divider"></li>
-                                {% endif %}
-                            {% endfor %}
+                                {% for content in content_at_same_level %}
+                                <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
+                                    {% if not loop.last %}
+                                        <li role="separator" class="divider"></li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <li><a href="/syllabus/{{ this_content.request_path }}"> Index du chapitre </a></li>
+
+                                <li role="separator" class="divider"></li>
+
+                                {% for content in toc.get_direct_content_of(this_content) %}
+                                    <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
+                                    {% if not loop.last %}
+                                        <li role="separator" class="divider"></li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
                         </ul>
                     </li>
+                {% endif %}
                 </ul>
-            {% endif %}
             {% if logged_in is not none %}
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
@@ -122,7 +137,7 @@
     <span id="maincontent"></span>
     <div class="box contents">
         <div class="no-overflow">
-            {{ render_rst(chapter, page, toc=toc)|safe }}
+            {{ render_rst(this_content)|safe }}
         </div>
     </div>
 
@@ -132,20 +147,12 @@
 {% endif %}
 <div style="display: flex; flex-direction: row; justify-content: space-between">
     {% if previous is not none %}
-        {% if page is not none %}
-            <a href="/{{ chapter }}/{{ previous }}" style="font-size: 120%; margin-left: 35px">Page précédente</a>
-        {% else %}
-            <a href="/{{ previous }}" style="font-size: 120%; margin-left: 35px">Chapitre précédent</a>
-        {% endif %}
+        <a href="/syllabus/{{ previous.request_path }}" style="font-size: 120%; margin-left: 35px">Page précédente</a>
     {% else %}
         <div></div>
     {% endif %}
     {% if next is not none %}
-        {% if page is not none %}
-            <a href="/{{ chapter }}/{{ next }}" style="font-size: 120%; margin-right: 35px">Page suivante</a>
-        {% else %}
-            <a href="/{{ next }}" style="font-size: 120%; margin-right: 35px">Chapitre suivant</a>
-        {% endif %}
+        <a href="/syllabus/{{ next.request_path }}" style="font-size: 120%; margin-right: 35px">Page suivante</a>
     {% else %}
         <div></div>
     {% endif %}

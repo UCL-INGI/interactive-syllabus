@@ -20,7 +20,7 @@
 
 inginious_url = "http://localhost:8080"
 
-inginious_course_id = "tutorial"
+inginious_course_id = "cours_python"
 
 inginious_course_url = "%s/%s" % (inginious_url, inginious_course_id)
 

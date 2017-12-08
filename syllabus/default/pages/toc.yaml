@@ -1,7 +1,7 @@
 contribuer:
   title: Contribuer
   content:
-    contribuer:
+    contribuer.rst:
       title: Contribuer au contenu du syllabus
-    create_task:
+    create_task.rst:
       title: Créer une tâche
