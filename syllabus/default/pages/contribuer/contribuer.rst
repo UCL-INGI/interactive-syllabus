@@ -66,7 +66,6 @@ Imaginons que le fichier ``toc.yaml`` contienne pour le moment ceci :
           title: "Exemple de théorie"   # Donner un nom human-readable à la page
         qcm:                # une autre page pour le chapitre "chapitre_exemple"
           title: "Exemple de QCM"
-      chapter_intro_file: "chapter_description.rst"     #   Fichier contenant un texte d'introduction qui sera affiché sur la page d'index du chapitre
     contribuer:             # un autre chapitre du syllabus
       title: Contribuer
       content:
@@ -82,7 +81,7 @@ et que le contenu du dossier ``pages/`` du syllabus soit celui-ci:
     ├── chapter_index.rst
     ├── index.rst
     ├── chapitre_exemple
-    │   ├── chapter_description.rst
+    │   ├── chapter_introduction.rst
     │   ├── qcm.rst
     │   └── theorie.rst
     └── contribuer
@@ -109,7 +108,7 @@ Voici ce à quoi ressemblera le contenu du dossier ``pages/`` après l'ajout du 
     ├── chapter_index.rst
     ├── index.rst
     ├── chapitre_exemple
-    │   ├── chapter_description.rst
+    │   ├── chapter_introduction.rst
     │   ├── qcm.rst
     │   └── theorie.rst
     ├── contribuer
@@ -142,7 +141,6 @@ Concrètement, voici à quoi ressemblera ``toc.yaml`` après l'ajout du chapitre
           title: "Exemple de théorie"
         qcm:
           title: "Exemple de QCM"
-      chapter_intro_file: "chapter_description.rst"
     contribuer:
       title: Contribuer
       content:
@@ -173,7 +171,6 @@ fichier ``toc.yaml`` final ? Voici le fichier ``toc.yaml`` de base, rajoutez-y l
           title: "Exemple de théorie"
         qcm:
           title: "Exemple de QCM"
-      chapter_intro_file: "chapter_description.rst"
     contribuer:
       title: Contribuer
       content:
