@@ -29,7 +29,8 @@ class Content(ABC):
 
 class Page(Content):
 
-    def __init__(self, path, title, pages_path=syllabus.get_pages_path()):
+    def __init__(self, path, title, pages_path=None):
+        pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
         # a page should be an rST file, and should have the .rst extension, for security purpose
         file_path = os.path.join(pages_path, path)
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
@@ -45,7 +46,8 @@ class Page(Content):
 
 class Chapter(Content):
 
-    def __init__(self, path, title, description=None, pages_path=syllabus.get_pages_path()):
+    def __init__(self, path, title, description=None, pages_path=None):
+        pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
         file_path = os.path.join(pages_path, path)
         if not os.path.isdir(file_path):
             raise FileNotFoundError(file_path)
@@ -58,7 +60,8 @@ class Chapter(Content):
 
 
 class TableOfContent(object):
-    def __init__(self, toc_file=os.path.join(get_pages_path(), "toc.yaml")):
+    def __init__(self, toc_file=None):
+        toc_file = toc_file if toc_file is not None else os.path.join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
             self.toc = yaml.load(f, OrderedDictYAMLLoader)
             self.ordered_content_indices = self._get_ordered_toc(self.toc)

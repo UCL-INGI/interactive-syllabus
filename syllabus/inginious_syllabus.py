@@ -34,7 +34,7 @@ from docutils.parsers.rst import directives
 from urllib import parse
 from urllib import request as urllib_request
 
-from syllabus.utils.toc import TableOfContent, Page, Chapter, Content
+from syllabus.utils.toc import Content
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
@@ -45,7 +45,6 @@ directives.register_directive('inginious', syllabus.utils.directives.InginiousDi
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 
-TOC = syllabus.get_toc()
 
 if "saml" in authentication_methods:
     with open(os.path.join(syllabus.get_root_path(), "saml", "saml.yaml")) as f:
@@ -55,6 +54,7 @@ if "saml" in authentication_methods:
 @app.route('/')
 @app.route('/index')
 def index():
+    TOC = syllabus.get_toc()
     try:
         return render_template('rst_page.html', logged_in=session.get("user", None),
                                inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
@@ -76,6 +76,7 @@ def get_syllabus_content(content_path: str):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
     print_mode = request.args.get("print") is not None
+    TOC = syllabus.get_toc()
     try:
         try:
             # assume that it is an RST page
@@ -89,6 +90,7 @@ def get_syllabus_content(content_path: str):
 
 def render_web_page(content: Content, print_mode=False):
     try:
+        TOC = syllabus.get_toc()
         syllabus.utils.directives.InginiousDirective.print = print_mode
         previous = TOC.get_previous_content(content)
         next = TOC.get_next_content(content)
