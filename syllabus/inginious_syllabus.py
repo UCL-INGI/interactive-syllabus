@@ -17,23 +17,23 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from urllib import parse
+from urllib import request as urllib_request
 
 import yaml
+from docutils.core import publish_string
+from docutils.parsers.rst import directives
 from flask import Flask, render_template, request, abort, make_response, session, redirect
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
-import syllabus.utils.pages, syllabus.utils.directives
+import syllabus
+import syllabus.utils.directives
+import syllabus.utils.pages
+from syllabus.config import *
 from syllabus.database import init_db, db_session
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother
-from docutils.core import publish_string
-from syllabus.config import *
-import syllabus
-from docutils.parsers.rst import directives
-from urllib import parse
-from urllib import request as urllib_request
-
 from syllabus.utils.toc import Content
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -49,6 +49,7 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 if "saml" in authentication_methods:
     with open(os.path.join(syllabus.get_root_path(), "saml", "saml.yaml")) as f:
         saml_config = yaml.load(f)
+
 
 
 @app.route('/')
@@ -72,10 +73,10 @@ def favicon():
 
 
 @app.route('/syllabus/<path:content_path>')
-def get_syllabus_content(content_path: str):
+def get_syllabus_content(content_path: str, print=False):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
-    print_mode = request.args.get("print") is not None
+    print_mode = print or request.args.get("print") is not None
     TOC = syllabus.get_toc()
     try:
         try:

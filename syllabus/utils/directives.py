@@ -20,6 +20,8 @@ from urllib.error import URLError, HTTPError
 
 from docutils.parsers.rst import Directive
 from docutils import nodes
+from docutils.parsers.rst.directives.body import CodeBlock
+from docutils.statemachine import ViewList, StringList
 from flask import session
 
 import syllabus.utils.pages
@@ -64,7 +66,8 @@ class InginiousDirective(Directive):
                                 format='html')
             else:
                 try:
-                    lti_url = get_lti_url(session.get("user", None), self.arguments[0])
+                    user = session.get("user", None)
+                    lti_url = get_lti_url(user.get("username", None) if user is not None else None, self.arguments[0])
                     par = nodes.raw('',
                                     '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
                                     ''
@@ -87,7 +90,13 @@ class InginiousDirective(Directive):
         else:
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
             if self.content:
-                par = nodes.raw('', """<pre>%s%s</pre>""" % ('\n'.join(self.content), "\n"*n_blank_lines), format='html')
+                sl = StringList(" "*n_blank_lines)
+                self.content.append(sl)
+                # par = nodes.literal_block('yaml',"%s%s" % ('\n'.join(self.content), "\n"*n_blank_lines), classes=["code", "yaml", "literal-block"])
+                cb = CodeBlock(arguments=["yaml"], content=self.content, lineno=self.lineno,
+                               block_text=self.block_text, content_offset=self.content_offset, name="code-block",
+                               options=self.options, state=self.state, state_machine=self.state_machine)
+                return cb.run()
             else:
                 if n_blank_lines == 0:
                     n_blank_lines = 1

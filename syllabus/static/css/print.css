@@ -1,12 +1,46 @@
-pre  {
-    background-color: white !important;
-    border: 1px solid black !important;
+body {
+    font-size: 10pt !important;
+    text-align: justify;
 }
 
-pre , tt {
+pre , code, .print  {
+    background-color: white !important;
+    border: 1px solid black !important;
+    page-break-inside: unset !important;
+    white-space:pre-wrap;
+}
+
+pre, code, tt, .print {
     font-family: "Liberation Mono" !important;
 }
 
 tt {
     background-color: #f1f1f1;
+}
+
+
+@media print {
+
+    @page {
+       size: 7in 9.25in;
+       margin: 27mm 16mm 27mm 16mm;
+    }
+    body {
+        font-size: 10pt !important;
+        text-align: justify;
+    }
+    pre , code, .print  {
+        background-color: white !important;
+        border: 1px solid black !important;
+        page-break-inside: unset !important;
+        white-space:pre-wrap;
+    }
+
+    pre, code, tt, .print {
+        font-family: "Liberation Mono" !important;
+    }
+
+    tt {
+        background-color: #f1f1f1;
+    }
 }
