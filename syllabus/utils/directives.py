@@ -18,14 +18,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from urllib.error import URLError, HTTPError
 
-from docutils.parsers.rst import Directive
 from docutils import nodes
+from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives.body import CodeBlock
-from docutils.statemachine import ViewList, StringList
+from docutils.statemachine import StringList
 from flask import session
 
 import syllabus.utils.pages
-
 from syllabus.config import *
 from syllabus.utils.inginious_lti import get_lti_url
 from syllabus.utils.toc import Chapter
@@ -57,7 +56,7 @@ class InginiousDirective(Directive):
 
     """
 
-    def run(self):
+    def get_html_content(self, use_lti):
         if not self.print:
             if not use_lti:
                 par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
@@ -102,6 +101,14 @@ class InginiousDirective(Directive):
                     n_blank_lines = 1
                 par = nodes.raw('', """<pre>%s</pre>""" % ("\n"*n_blank_lines), format='html')
         return [par]
+
+    def run(self):
+        return self.get_html_content(use_lti)
+
+
+class InginiousSandboxDirective(InginiousDirective):
+    def run(self):
+        return self.get_html_content(False)
 
 
 class ToCDirective(Directive):

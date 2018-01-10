@@ -42,6 +42,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.urandom(24)
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
+directives.register_directive('inginious-sandbox', syllabus.utils.directives.InginiousSandboxDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 
