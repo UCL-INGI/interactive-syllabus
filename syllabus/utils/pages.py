@@ -16,8 +16,9 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
 
-
+import yaml
 from docutils.core import publish_string
 from flask import render_template_string, redirect
 from flask.helpers import safe_join
@@ -74,3 +75,21 @@ def render_rst_file(page_path, **kwargs):
     with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
         return publish_string(render_template_string(f.read(), **kwargs),
                               writer_name='html', settings_overrides=default_rst_opts)
+
+
+def generate_toc_yaml():
+    def create_dict(path, name):
+        retval = {"title": name, "content": {}}
+        for entry in os.listdir(path):
+            if entry[0] != ".":
+                if os.path.isdir(os.path.join(path, entry)):
+                    retval["content"][entry] = create_dict(os.path.join(path, entry), entry)
+                elif entry[-4:] == ".rst" and entry not in ["chapter_introduction.rst"]:
+                    retval["content"][entry] = {"title": entry[:-4]}
+        return retval
+
+    path = syllabus.get_pages_path()
+    result = {}
+    for dir in [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]:
+        result[dir] = create_dict(os.path.join(path, dir), dir)
+    return str(yaml.dump(result))
