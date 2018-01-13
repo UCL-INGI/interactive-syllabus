@@ -23,7 +23,7 @@ from urllib import request as urllib_request
 import yaml
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect
+from flask import Flask, render_template, request, abort, make_response, session, redirect, Response
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -34,7 +34,7 @@ from syllabus.database import init_db, db_session
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother
-from syllabus.utils.toc import Content
+from syllabus.utils.toc import Content, Chapter, TableOfContent, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
@@ -58,12 +58,7 @@ if "saml" in authentication_methods:
 def index():
     TOC = syllabus.get_toc()
     try:
-        return render_template('rst_page.html', logged_in=session.get("user", None),
-                               inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
-                               this_content=TOC.index, render_rst=syllabus.utils.pages.render_content,
-                               list=list,
-                               toc=TOC,
-                               containing_chapters=[], next=None, previous=None)
+        return render_web_page(TOC.index, print_mode=request.args.get("print") is not None)
     except FileNotFoundError:
         abort(404)
 
@@ -85,17 +80,40 @@ def get_syllabus_content(content_path: str, print=False):
             return render_web_page(TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
         except FileNotFoundError:
             # it should be a chapter
+            if request.args.get("print") == "all_content":
+                # we want to print all the content of the chapter
+                return get_chapter_printable_content(TOC.get_chapter_from_path(content_path), TOC)
+            # we want to access the index of the chapter
             return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
     except FileNotFoundError:
         abort(404)
+
+
+def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
+    def fetch_content(chapter):
+        printable_content = [chapter]
+        for content in toc.get_direct_content_of(chapter):
+            if type(content) is Chapter:
+                printable_content += fetch_content(content)
+            else:
+                printable_content.append(content)
+        return printable_content
+    return render_template("print_full_chapter_content.html", chapter=fetch_content(chapter),
+                           render_rst=syllabus.utils.pages.render_content)
 
 
 def render_web_page(content: Content, print_mode=False):
     try:
         TOC = syllabus.get_toc()
         syllabus.utils.directives.InginiousDirective.print = print_mode
-        previous = TOC.get_previous_content(content)
-        next = TOC.get_next_content(content)
+        try:
+            previous = TOC.get_previous_content(content)
+        except KeyError:
+            previous = None
+        try:
+            next = TOC.get_next_content(content)
+        except KeyError:
+            next = None
         retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
                                  logged_in=session.get("user", None),
                                  inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",

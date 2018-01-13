@@ -128,6 +128,9 @@
                     </li>
                 {% endif %}
                 <li><a href="{{ "%s?print" % request.path }}" style="display: block">Print page</a></li>
+                {% if "Chapter" in this_content.__class__.__name__ %}
+                    <li><a href="{{ "%s?print=all_content" % request.path }}" style="display: block">Print chapter content</a></li>
+                {% endif %}
               </ul>
         </div>
     </div>
