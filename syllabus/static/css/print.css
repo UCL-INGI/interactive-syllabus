@@ -40,6 +40,10 @@ tt {
         font-family: "Liberation Mono" !important;
     }
 
+    a[href]:after { /* remove link when printing */
+        content: none !important;
+    }
+
     tt {
         background-color: #f1f1f1;
     }
