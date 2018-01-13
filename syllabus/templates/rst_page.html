@@ -119,17 +119,16 @@
                     </li>
                 {% endif %}
                 </ul>
-            {% if logged_in is not none %}
               <ul class="nav navbar-nav navbar-right">
-                <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
+                {% if logged_in is not none %}
+                    <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
+                {% else %}
+                    <li>
+                      <a href="/login">Log in</a>
+                    </li>
+                {% endif %}
+                <li><a href="{{ "%s?print" % request.path }}" style="display: block">Print page</a></li>
               </ul>
-            {% else %}
-              <ul class="nav navbar-nav navbar-right">
-                <li>
-                  <a href="/login">Log in</a>
-                </li>
-              </ul>
-            {% endif %}
         </div>
     </div>
 </nav>
