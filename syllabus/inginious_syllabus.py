@@ -30,7 +30,7 @@ import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
 from syllabus.config import *
-from syllabus.database import init_db, db_session
+from syllabus.database import init_db, db_session, update_database
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother
@@ -261,5 +261,6 @@ def metadata():
 
 
 def main():
+    update_database()
     init_db()
     app.run(host='0.0.0.0', port=5000)

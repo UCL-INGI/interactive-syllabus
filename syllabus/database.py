@@ -2,6 +2,7 @@ import os
 
 import binascii
 from sqlalchemy import create_engine
+from sqlalchemy.engine import ResultProxy
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from syllabus import get_root_path
@@ -35,3 +36,15 @@ def init_db():
     users = User.query.all()
     if len(users) == 0:
         create_db()
+
+
+def update_database():
+    actual_version = 1
+    connection = engine.connect()
+    version = connection.execute("PRAGMA main.user_version;").first()[0]
+    if version < actual_version:
+        print("database version (%d) is outdated, updating database to version %d", actual_version)
+    if version < 1:
+        print("updating to version 1")
+        connection.execute("ALTER TABLE users ADD COLUMN right STRING(30);")
+    connection.execute("PRAGMA main.user_version=%d;" % actual_version)
