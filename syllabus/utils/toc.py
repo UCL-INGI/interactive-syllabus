@@ -63,8 +63,8 @@ class TableOfContent(object):
     def __init__(self, toc_file=None):
         toc_file = toc_file if toc_file is not None else os.path.join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
-            self.toc = yaml.load(f, OrderedDictYAMLLoader)
-            self.ordered_content_indices = self._get_ordered_toc(self.toc)
+            self.toc_dict = yaml.load(f, OrderedDictYAMLLoader)
+            self.ordered_content_indices = self._get_ordered_toc(self.toc_dict)
             self.ordered_content_list = list(self.ordered_content_indices.keys())
             self.path_to_title_dict = {x.path: x.title
                                        for x in self.ordered_content_list}
@@ -113,7 +113,7 @@ class TableOfContent(object):
             return self.get_direct_content_of(parent)
         else:
             # we're at the top level
-            return [self.get_content_from_path(x) for x in self.toc.keys()]
+            return [self.get_content_from_path(x) for x in self.toc_dict.keys()]
 
     def get_next_content(self, actual_content: Content):
         """
@@ -149,7 +149,7 @@ class TableOfContent(object):
         if type(content) is Page:
             return None
         chapters_list = content.path.split("/")
-        toc = self.toc
+        toc = self.toc_dict
         # navigate in the TOC until the level of the specified chapter
         for chapter in chapters_list:
             toc = toc[chapter]["content"]
@@ -174,8 +174,8 @@ class TableOfContent(object):
 
     def get_top_level_content(self):
         res = []
-        for path in self.toc.keys():
-            if "content" in self.toc[path]:
+        for path in self.toc_dict.keys():
+            if "content" in self.toc_dict[path]:
                 res.append(Chapter(path, self.path_to_title_dict[path]))
             else:
                 res.append(Page(path, self.path_to_title_dict[path]))
@@ -212,7 +212,7 @@ class TableOfContent(object):
         return paths_ordered_dict
 
     def _traverse_toc(self, keys_list):
-        toc = self.toc[keys_list[0]]
+        toc = self.toc_dict[keys_list[0]]
         for key in keys_list[1:]:
             toc = toc["content"][key]
         return toc

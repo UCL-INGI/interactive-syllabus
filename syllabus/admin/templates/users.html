@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+    <section class="content-header">
+        <h1>
+            Page Header
+            <small>Optional description</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+            <li class="active">Here</li>
+        </ol>
+        <section class="content container-fluid">
+            <div class="box">
+                <div class="box-body">
+                    <table id="table" class="table table-hover table-bordered" cellspacing="0" width="100%"
+                           data-page-length='25'>
+                        <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+                        {% for u in users %}
+                            <tr data-username="{{ u.username }}">
+                                <td>{{ u.username }}</td>
+                                <td>{{ u.full_name if u.full_name is not none else "-" }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+    </section>
+    <script defer>
+        $(document).ready(function () {
+            $('#table').DataTable();
+        });
+    </script>
+{% endblock %}

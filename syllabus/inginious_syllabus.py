@@ -29,15 +29,17 @@ from onelogin.saml2.utils import OneLogin_Saml2_Utils
 import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
+from syllabus.admin import admin_blueprint
 from syllabus.config import *
 from syllabus.database import init_db, db_session, update_database
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.pages import seeother
+from syllabus.utils.pages import seeother, get_content_data, permission_admin
 from syllabus.utils.toc import Content, Chapter, TableOfContent, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
+app.register_blueprint(admin_blueprint, url_prefix='/admin')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.urandom(24)
@@ -72,8 +74,10 @@ def favicon():
 def get_syllabus_content(content_path: str, print=False):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
-    print_mode = print or request.args.get("print") is not None
     TOC = syllabus.get_toc()
+    if request.args.get("edit") is not None:
+        return edit_content(content_path, TOC)
+    print_mode = print or request.args.get("print") is not None
     try:
         try:
             # assume that it is an RST page
@@ -87,6 +91,15 @@ def get_syllabus_content(content_path: str, print=False):
             return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
     except FileNotFoundError:
         abort(404)
+
+
+@permission_admin
+def edit_content(content_path, toc: TableOfContent):
+    try:
+        content = toc.get_page_from_path("%s.rst" % content_path)
+    except FileNotFoundError:
+        content = toc.get_content_from_path(content_path)
+    return render_template("edit_page.html", content=get_content_data(content), content_path=content.path)
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
@@ -178,7 +191,7 @@ def log_out():
     if "user" in session:
         saml = session["user"].get("login_method", None) == "saml"
         session.pop("user", None)
-        if True or saml:
+        if saml:
             req = prepare_request(request)
             auth = init_saml_auth(req, saml_config)
             return redirect(auth.logout())
