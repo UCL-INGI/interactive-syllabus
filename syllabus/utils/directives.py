@@ -37,6 +37,8 @@ class InginiousDirective(Directive):
     optional argument 2: the number of blank lines to display in print mode
     directive content: the prefilled code in the text area
     """
+
+    # TODO: the print variable should be mutex-protected
     print = False
     has_content = True
     required_arguments = 1
