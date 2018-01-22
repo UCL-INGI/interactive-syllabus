@@ -27,14 +27,22 @@ from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 import syllabus.config
 
 
-def get_toc():
-    # TODO: change this hack a bit ugly
-    try:
-        return get_toc.TOC
-    except AttributeError:
+def get_toc(force=False):
+    def reload_toc():
+        """ loads the TOC explicitely """
+        # TODO: change this hack a bit ugly
         from syllabus.utils.toc import TableOfContent
         get_toc.TOC = TableOfContent()
         return get_toc.TOC
+
+    if force:
+        return reload_toc()
+    else:
+        # use cached version
+        try:
+            return get_toc.TOC
+        except AttributeError:
+            return reload_toc()
 
 
 def get_root_path():
