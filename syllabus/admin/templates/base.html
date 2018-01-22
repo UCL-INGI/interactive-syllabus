@@ -140,6 +140,15 @@ desired effect
     <div class="content-wrapper">
 
         <!-- Main content -->
+        {% if feedback is defined and feedback is not none %}
+            <div class="container-fluid" style="padding-top: 10px">
+                <div class="alert alert-{{ feedback.alert_color }} alert-dismissable">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <h4> <i class="fa {{ feedback.icon }}" style="padding-right: 5px"></i> {{ feedback.title }} </h4>
+                    {{ feedback.message }}
+                </div>
+            </div>
+        {% endif %}
         {% block content %}
             <!-- Content Header (Page header) -->
             <section class="content-header">
@@ -151,8 +160,6 @@ desired effect
                     <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
                     <li class="active">Here</li>
                 </ol>
-            </section>
-            <section class="content container-fluid">
             </section>
         {% endblock %}
         <!-- /.content -->
