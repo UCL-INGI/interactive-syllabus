@@ -193,7 +193,8 @@ class TableOfContent(object):
             return None
 
     @staticmethod
-    def _get_ordered_toc(toc_ordered_dict, actual_path=list(), actual_index=0) -> OrderedDict:
+    def _get_ordered_toc(toc_ordered_dict, actual_path=None, actual_index=0) -> OrderedDict:
+        actual_path = list() if actual_path is None else actual_path
         paths_ordered_dict = OrderedDict()
         for key, val in toc_ordered_dict.items():
             actual_path.append(key)
@@ -210,6 +211,20 @@ class TableOfContent(object):
                 paths_ordered_dict[Page(os.path.join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
             actual_path.pop()  # remove the actual chapter from the actual path as we go on to the next chapter
         return paths_ordered_dict
+
+    @staticmethod
+    def is_toc_dict_valid(toc_ordered_dict):
+        """
+        Returns True if the given OrderedDict represents a valid Table of Contents.
+        The Table of Contents is valid of all the pages and chapters exists in the page directory.
+        Returns False otherwise
+        """
+        try:
+            TableOfContent._get_ordered_toc(toc_ordered_dict)
+            return True
+        except:
+            return False
+
 
     def _traverse_toc(self, keys_list):
         toc = self.toc_dict[keys_list[0]]
