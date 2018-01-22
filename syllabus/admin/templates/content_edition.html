@@ -3,9 +3,6 @@
 
     <style>
         /* taken from https://jsfiddle.net/ann7tctp/ */
-        .just-padding {
-            padding: 15px;
-        }
 
         .list-group.list-group-root {
             padding: 0;
@@ -25,35 +22,47 @@
             border-top-width: 0;
         }
 
-
         .list-group-item .chevron {
             margin-right: 5px;
         }
     </style>
+    <section class="content-header">
+        <h1>
+            Content
+            <small>Manage the syllabus pages and chapters</small>
+        </h1>
+        <section class="content container-fluid">
+            <div class="just-padding">
 
-    <div class="just-padding">
+                <div class="list-group list-group-root well">
 
-        <div class="list-group list-group-root well">
+                    {% for content in TOC.get_top_level_content() recursive %}
+                        {% if "Chapter" in content.__class__.__name__ %}
+                            <div data-target="#{{ "%d%d" % (loop.depth0, loop.index) }}" class="list-group-item"
+                                 data-toggle="collapse"
+                                 style="cursor: pointer; padding-left: {{ loop.depth0*30 + 15 }}px">
+                                <i class="chevron fa fa-chevron-right"></i> {{ content.title }} <a
+                                    href="/syllabus/{{ content.request_path }}?edit"
+                                    class="btn btn-xs btn-default edit-button" style="margin-left: 5px"><i
+                                    class="fa fa-edit"></i></a>
+                            </div>
+                            <div class="list-group collapse" id="{{ "%d%d" % (loop.depth0, loop.index) }}">
+                                {{ loop(TOC.get_direct_content_of(content)) }}
+                            </div>
+                        {% else %}
+                            <a href="/syllabus/{{ content.request_path }}?edit" class="list-group-item" data-target="#"
+                               data-toggle="collapse" style="padding-left: {{ loop.depth0*30 + 15 }}px">
+                                {{ content.title }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
 
-            {% for content in TOC.get_top_level_content() recursive %}
-                {% if "Chapter" in content.__class__.__name__ %}
-                    <div data-target="#{{ "%d%d" % (loop.depth0, loop.index) }}" class="list-group-item" data-toggle="collapse" style="cursor: pointer; padding-left: {{ loop.depth0*30 + 15 }}px">
-                        <i class="chevron fa fa-chevron-right"></i> {{ content.title }} <a href="/syllabus/{{ content.request_path }}?edit" class="btn btn-xs btn-default edit-button" style="margin-left: 5px"><i class="fa fa-edit"></i></a>
-                    </div>
-                    <div class="list-group collapse" id="{{ "%d%d" % (loop.depth0, loop.index) }}">
-                        {{ loop(TOC.get_direct_content_of(content)) }}
-                    </div>
-                {% else %}
-                    <a href="/syllabus/{{ content.request_path }}?edit" class="list-group-item" data-target="#" data-toggle="collapse" style="padding-left: {{ loop.depth0*30 + 15 }}px">
-                        {{ content.title }}
-                    </a>
-                {% endif %}
-            {% endfor %}
 
+                </div>
 
-        </div>
-
-    </div>
+            </div>
+        </section>
+    </section>
 
     <script>
 
@@ -62,12 +71,12 @@
                 $('.chevron.fa', this)
                     .toggleClass('fa-chevron-right')
                     .toggleClass('fa-chevron-down');
-             })
+            })
 
         });
 
         // avoid the list group to collapse if the user clicked on the edit button
-        $('.edit-button').click(function(e){
+        $('.edit-button').click(function (e) {
             e.stopPropagation();
         })
     </script>
