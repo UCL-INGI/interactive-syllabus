@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="/static/js/jquery-3.1.1.min.js"></script>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/static/css/codemirror.css">
+    <script src="/static/js/codemirror.js"></script>
+    <script src="/static/js/codemirror-overlay.js"></script>
+    <script src="/static/js/codemirror-clike-style.js"></script>
+    <script src="/static/js/codemirror-yaml.js"></script>
+    <script src="/static/js/codemirror-rst.js"></script>
+    <script type="text/javascript" src="/static/js/rst-form.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-shuffle.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.min.js"></script>
+    <style>
+        .CodeMirror {
+            border: 1px solid #eee;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edition of {{ content_path }}</h1>
+        <div id="editor" style="margin: 20px" data-language="rst">
+            <form method="post">
+                <label for="content">New content</label>
+                <textarea id="content" name="new_content" style="width:100%; height:100%;">{{ content }}</textarea><br/>
+                <button type="submit" class="btn btn-primary">Soumettre</button>
+            </form>
+        </div>
+    </div>
+
+<script>
+
+        let area = $('#content').get(0);
+        CodeMirror.fromTextArea(area, {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "rst",
+            viewportMargin: Infinity
+        });
+</script>
+</body>
+</html>

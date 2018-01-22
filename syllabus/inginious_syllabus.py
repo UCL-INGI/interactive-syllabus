@@ -23,7 +23,7 @@ from urllib import request as urllib_request
 import yaml
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect, Response
+from flask import Flask, render_template, request, abort, make_response, session, redirect
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -70,7 +70,7 @@ def favicon():
     abort(404)
 
 
-@app.route('/syllabus/<path:content_path>')
+@app.route('/syllabus/<path:content_path>', methods=["GET", "POST"])
 def get_syllabus_content(content_path: str, print=False):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
@@ -99,7 +99,20 @@ def edit_content(content_path, toc: TableOfContent):
         content = toc.get_page_from_path("%s.rst" % content_path)
     except FileNotFoundError:
         content = toc.get_content_from_path(content_path)
-    return render_template("edit_page.html", content=get_content_data(content), content_path=content.path)
+    if request.method == "POST":
+        inpt = request.form
+        if "new_content" not in inpt:
+            return seeother(request.path)
+        else:
+            if type(content) is Chapter:
+                with open(os.path.join(syllabus.get_pages_path(), content.path, "chapter_introduction.rst"), "w") as f:
+                    f.write(inpt["new_content"])
+            else:
+                with open(os.path.join(syllabus.get_pages_path(), content.path), "w") as f:
+                    f.write(inpt["new_content"])
+            return seeother(request.path)
+    elif request.method == "GET":
+        return render_template("edit_page.html", content=get_content_data(content), content_path=content.path)
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):

@@ -44,7 +44,6 @@ def users():
 def content_edition():
     try:
         TOC = syllabus.get_toc()
-        print(TOC.get_top_level_content())
         return render_template('content_edition.html', active_element=sidebar['active_element'],
                                sidebar_elements=sidebar['elements'], TOC=TOC)
     except TemplateNotFound:
