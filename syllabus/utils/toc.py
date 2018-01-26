@@ -10,6 +10,10 @@ from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 from syllabus import get_pages_path
 
 
+class ContentNotFoundError(Exception):
+    pass
+
+
 class Content(ABC):
     def __init__(self, path, title):
         self.path = path
@@ -34,7 +38,7 @@ class Page(Content):
         # a page should be an rST file, and should have the .rst extension, for security purpose
         file_path = os.path.join(pages_path, path)
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
-            raise FileNotFoundError(file_path)
+            raise ContentNotFoundError(file_path)
         super().__init__(path, title)
 
     @property
@@ -50,7 +54,7 @@ class Chapter(Content):
         pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
         file_path = os.path.join(pages_path, path)
         if not os.path.isdir(file_path):
-            raise FileNotFoundError(file_path)
+            raise ContentNotFoundError(file_path)
         super().__init__(path, title)
         self.description = description
 
@@ -63,12 +67,16 @@ class TableOfContent(object):
     def __init__(self, toc_file=None):
         toc_file = toc_file if toc_file is not None else os.path.join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
-            self.toc_dict = yaml.load(f, OrderedDictYAMLLoader)
-            self.ordered_content_indices = self._get_ordered_toc(self.toc_dict)
-            self.ordered_content_list = list(self.ordered_content_indices.keys())
-            self.path_to_title_dict = {x.path: x.title
-                                       for x in self.ordered_content_list}
-            self.index = Page("index.rst", "Index")
+            toc_dict = yaml.load(f, OrderedDictYAMLLoader)
+            self._init_from_dict(toc_dict)
+
+    def _init_from_dict(self, toc_dict: OrderedDict):
+        self.toc_dict = toc_dict
+        self.ordered_content_indices = self._get_ordered_toc(self.toc_dict)
+        self.ordered_content_list = list(self.ordered_content_indices.keys())
+        self.path_to_title_dict = {x.path: x.title
+                                   for x in self.ordered_content_list}
+        self.index = Page("index.rst", "Index")
 
     def __contains__(self, item):
         """
@@ -81,30 +89,54 @@ class TableOfContent(object):
         return item in self.ordered_content_indices
 
     def get_content_from_path(self, path):
+        """
+        Returns the Content object related to the given path if there is a content located at this path
+        in the pages directory.
+        Raises a ContentNotFoundError if the content does not exist in the pages directory
+        or the content is not present in the Table of Contents
+        """
         try:
             content = Page(path, "")
-        except FileNotFoundError:
+        except ContentNotFoundError:
             content = Chapter(path, "")
         try:
             content.title = self.path_to_title_dict[path]
         except KeyError:
             raise Exception("no title for content at path %s" % path)
+        if content not in self:
+            raise ContentNotFoundError("The specified content in not in the Table of Contents")
         return content
 
     def get_page_from_path(self, path):
+        """
+        Returns the Page object related to the given path if there is a page located at this path
+        in the pages directory.
+        Raises a ContentNotFoundError if the page does not exist in the pages directory
+        or the page is not present in the Table of Contents
+        """
         page = Page(path, "")
         try:
             page.title = self.path_to_title_dict[path]
         except KeyError:
             raise Exception("no title for page at path %s" % path)
+        if page not in self:
+            raise ContentNotFoundError("The specified page in not in the Table of Contents")
         return page
 
     def get_chapter_from_path(self, path):
+        """
+        Returns the Chapter object related to the given path if there is a chapter located at this path
+        in the pages directory.
+        Raises a ContentNotFoundError if the chapter does not exist in the pages directory
+        or the chapter is not present in the Table of Contents
+        """
         chapter = Chapter(path, "")
         try:
             chapter.title = self.path_to_title_dict[path]
         except KeyError:
             raise Exception("no title for chapter at path %s" % path)
+        if chapter not in self:
+            raise ContentNotFoundError("The specified chapter in not in the Table of Contents")
         return chapter
 
     def get_content_at_same_level(self, content):
@@ -189,7 +221,7 @@ class TableOfContent(object):
         new_path = content.path[:last_separator]
         try:
             return Chapter(new_path, self.path_to_title_dict[new_path])
-        except (FileNotFoundError, KeyError):
+        except (ContentNotFoundError, KeyError):
             return None
 
     @staticmethod
@@ -225,8 +257,26 @@ class TableOfContent(object):
         except:
             return False
 
+    def add_content_in_toc(self, content: Content):
+        """ Adds the specified chapter at the last position of the specified containing chapter. """
+        *keys, filename = content.path.split(os.sep)
+        if not keys:
+            # the content will be added at the top level of the ToC
+            containing_chapter_dict = self.toc_dict
+        else:
+            containing_chapter_dict = self._traverse_toc(keys)["content"]
+
+        if type(content) is Chapter:
+            containing_chapter_dict[filename] = {"title": content.title, "content": None}
+        else:
+            containing_chapter_dict[filename] = {"title": content.title}
+
+        # recompute the other data structures of the ToC
+        self._init_from_dict(self.toc_dict)
 
     def _traverse_toc(self, keys_list):
+        if len(keys_list) == 0:
+            return self.toc_dict
         toc = self.toc_dict[keys_list[0]]
         for key in keys_list[1:]:
             toc = toc["content"][key]

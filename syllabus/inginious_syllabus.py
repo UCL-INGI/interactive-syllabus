@@ -35,7 +35,7 @@ from syllabus.database import init_db, db_session, update_database
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother, get_content_data, permission_admin
-from syllabus.utils.toc import Content, Chapter, TableOfContent, Page
+from syllabus.utils.toc import Content, Chapter, TableOfContent, Page, ContentNotFoundError
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
@@ -61,7 +61,7 @@ def index():
     TOC = syllabus.get_toc()
     try:
         return render_web_page(TOC.index, print_mode=request.args.get("print") is not None)
-    except FileNotFoundError:
+    except ContentNotFoundError:
         abort(404)
 
 
@@ -82,14 +82,14 @@ def get_syllabus_content(content_path: str, print=False):
         try:
             # assume that it is an RST page
             return render_web_page(TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
-        except FileNotFoundError:
+        except ContentNotFoundError:
             # it should be a chapter
             if request.args.get("print") == "all_content":
                 # we want to print all the content of the chapter
                 return get_chapter_printable_content(TOC.get_chapter_from_path(content_path), TOC)
             # we want to access the index of the chapter
             return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
-    except FileNotFoundError:
+    except ContentNotFoundError:
         abort(404)
 
 
@@ -97,7 +97,7 @@ def get_syllabus_content(content_path: str, print=False):
 def edit_content(content_path, toc: TableOfContent):
     try:
         content = toc.get_page_from_path("%s.rst" % content_path)
-    except FileNotFoundError:
+    except ContentNotFoundError:
         content = toc.get_content_from_path(content_path)
     if request.method == "POST":
         inpt = request.form
