@@ -41,10 +41,20 @@
                             <div data-target="#{{ "%d%d" % (loop.depth0, loop.index) }}" class="list-group-item"
                                  data-toggle="collapse"
                                  style="cursor: pointer; padding-left: {{ loop.depth0*30 + 15 }}px">
-                                <i class="chevron fa fa-chevron-right"></i> {{ content.title }} <a
-                                    href="/syllabus/{{ content.request_path }}?edit"
-                                    class="btn btn-xs btn-default edit-button" style="margin-left: 5px"><i
-                                    class="fa fa-edit"></i></a>
+                                <i class="chevron fa fa-chevron-right"></i>
+                                {{ content.title }}
+                                <a href="/syllabus/{{ content.request_path }}?edit"
+                                    class="btn btn-xs btn-default edit-button" style="margin-left: 5px">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <button class="btn btn-xs btn-info new-page-button" style="margin-left: 15px;"
+                                        data-toggle="modal" data-target="#modal-new-page"
+                                        data-containing-chapter="{{ content.request_path if loop.depth0 != 0 else "" }}">
+                                    <i class="fa fa-plus" style="padding-right: 5px"></i> New Page
+                                </button>
+                                <button class="btn btn-xs btn-success new-chapter-button" style="margin-left: 15px;">
+                                    <i class="fa fa-plus" style="padding-right: 5px"></i> New Chapter
+                                </button>
                             </div>
                             <div class="list-group collapse" id="{{ "%d%d" % (loop.depth0, loop.index) }}">
                                 {{ loop(TOC.get_direct_content_of(content)) }}
@@ -64,6 +74,38 @@
         </section>
     </section>
 
+
+    <div id="modal-new-page" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Create a new page</h4>
+                </div>
+                <form method="post">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="page-title">Page title</label>
+                            <input type="text" id="page-title" name="title" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="page-filename">Page filename</label>
+                            <input type="text" id="page-filename" name="name" class="form-control">
+                        </div>
+                        <input type="text" id="page-containing-chapter" name="containing-chapter" hidden>
+                        <input type="text" name="action" value="create_page" hidden>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="button-new-page-submit" type="submit" class="btn btn-info">Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
 
         $(document).ready(function () {
@@ -71,13 +113,28 @@
                 $('.chevron.fa', this)
                     .toggleClass('fa-chevron-right')
                     .toggleClass('fa-chevron-down');
-            })
+            });
 
+            var $modalNewPage = $('#modal-new-page');
+
+            // avoid the list group to collapse if the user clicked on the edit button
+            $('.edit-button').click(function (e) {
+                e.stopPropagation();
+            });
+            // avoid the list group to collapse if the user clicked on the edit button
+            $('.new-page-button').click(function (e) {
+                e.stopPropagation();
+
+                $modalNewPage.find('#page-containing-chapter').val($(this).attr('data-containing-chapter'));
+                console.log($(this));
+                $modalNewPage.modal('show');
+            });
+
+            // avoid the list group to collapse if the user clicked on the edit button
+            $('.new-chapter-button').click(function (e) {
+                e.stopPropagation();
+            });
         });
 
-        // avoid the list group to collapse if the user clicked on the edit button
-        $('.edit-button').click(function (e) {
-            e.stopPropagation();
-        })
     </script>
 {% endblock %}
