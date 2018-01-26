@@ -1,5 +1,5 @@
 
-# https://gist.githubusercontent.com/enaeseth/844388/raw/bf8b171f0a2964237cc2c1c1323e46d8082a70d5/yaml_ordered_dict.py
+# OrderedDictYAMLLoader comes from https://gist.githubusercontent.com/enaeseth/844388/raw/bf8b171f0a2964237cc2c1c1323e46d8082a70d5/yaml_ordered_dict.py
 
 import yaml
 import yaml.constructor
@@ -43,3 +43,18 @@ class OrderedDictYAMLLoader(yaml.Loader):
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping
+
+
+# what follows is highly inspired from https://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
+
+class OrderedDumper(yaml.Dumper):
+    pass
+
+
+def _dict_representer(dumper, data):
+    return dumper.represent_mapping(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        data.items())
+
+
+OrderedDumper.add_representer(OrderedDict, _dict_representer)

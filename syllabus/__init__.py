@@ -23,7 +23,7 @@ import os
 import yaml
 from flask import request, has_request_context
 
-from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
+from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader, OrderedDumper
 import syllabus.config
 
 
@@ -43,6 +43,13 @@ def get_toc(force=False):
             return get_toc.TOC
         except AttributeError:
             return reload_toc()
+
+
+def save_toc(TOC):
+    from syllabus.utils.toc import TableOfContent
+    """ Dumps the content of the specified TableOfContent in the toc.yaml file. """
+    with open(os.path.join(get_pages_path(), "toc.yaml"), "w") as f:
+        yaml.dump(TOC.toc_dict, f, OrderedDumper, default_flow_style=False, allow_unicode=True)
 
 
 def get_root_path():
