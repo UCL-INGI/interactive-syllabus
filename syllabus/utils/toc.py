@@ -267,7 +267,7 @@ class TableOfContent(object):
             containing_chapter_dict = self._traverse_toc(keys)["content"]
 
         if type(content) is Chapter:
-            containing_chapter_dict[filename] = {"title": content.title, "content": None}
+            containing_chapter_dict[filename] = {"title": content.title, "content": {}}
         else:
             containing_chapter_dict[filename] = {"title": content.title}
 
