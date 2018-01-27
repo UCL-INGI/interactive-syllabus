@@ -86,7 +86,7 @@ class TableOfContent(object):
         returns False otherwise
         """
         item = Content(item, "") if type(item) is str else item
-        return item in self.ordered_content_indices
+        return item == self.index or item in self.ordered_content_indices
 
     def get_content_from_path(self, path):
         """
@@ -99,12 +99,13 @@ class TableOfContent(object):
             content = Page(path, "")
         except ContentNotFoundError:
             content = Chapter(path, "")
+        if content not in self:
+            raise ContentNotFoundError("The specified content in not in the Table of Contents")
         try:
             content.title = self.path_to_title_dict[path]
         except KeyError:
-            raise Exception("no title for content at path %s" % path)
-        if content not in self:
-            raise ContentNotFoundError("The specified content in not in the Table of Contents")
+            if content != self.index:
+                raise Exception("no title for content at path %s" % path)
         return content
 
     def get_page_from_path(self, path):
