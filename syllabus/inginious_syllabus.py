@@ -54,11 +54,12 @@ if "saml" in authentication_methods:
         saml_config = yaml.load(f)
 
 
-
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=["GET", "POST"])
+@app.route('/index', methods=["GET", "POST"])
 def index():
     TOC = syllabus.get_toc()
+    if request.args.get("edit") is not None:
+        return edit_content(TOC.index.path, TOC)
     try:
         return render_web_page(TOC.index, print_mode=request.args.get("print") is not None)
     except ContentNotFoundError:
@@ -94,11 +95,11 @@ def get_syllabus_content(content_path: str, print=False):
 
 
 @permission_admin
-def edit_content(content_path, toc: TableOfContent):
+def edit_content(content_path, TOC: TableOfContent):
     try:
-        content = toc.get_page_from_path("%s.rst" % content_path)
+        content = TOC.get_page_from_path("%s.rst" % content_path)
     except ContentNotFoundError:
-        content = toc.get_content_from_path(content_path)
+        content = TOC.get_content_from_path(content_path)
     if request.method == "POST":
         inpt = request.form
         if "new_content" not in inpt:
@@ -112,7 +113,7 @@ def edit_content(content_path, toc: TableOfContent):
                     f.write(inpt["new_content"])
             return seeother(request.path)
     elif request.method == "GET":
-        return render_template("edit_page.html", content=get_content_data(content), content_path=content.path)
+        return render_template("edit_page.html", content_data=get_content_data(content), content=content, TOC=TOC)
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):

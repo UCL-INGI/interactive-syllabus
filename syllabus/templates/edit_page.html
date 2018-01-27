@@ -23,11 +23,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Edition of {{ content_path }}</h1>
+        <h1>Edition of {{ content.path if content != TOC.index else "Syllabus index" }}</h1>
         <div id="editor" style="margin: 20px" data-language="rst">
             <form method="post">
                 <label for="content">New content</label>
-                <textarea id="content" name="new_content" style="width:100%; height:100%;">{{ content }}</textarea><br/>
+                <textarea id="content" name="new_content" style="width:100%; height:100%;">{{ content_data }}</textarea><br/>
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
