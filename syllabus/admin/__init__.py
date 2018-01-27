@@ -78,8 +78,32 @@ def content_edition():
         content_path = os.path.join(containing_chapter.path, inpt["name"]) if containing_chapter is not None else inpt["name"]
         path = os.path.join(pages_path, content_path)
 
-        # TODO: handle case when file already exists
+        # ensure that we do not create a page at the top level
+        if containing_chapter is None and inpt["action"] == "create_page":
+            set_feedback(session, Feedback(feedback_type="error", message="Pages cannot be at the top level of the "
+                                                                          "syllabus."))
+            return seeother(request.path)
+
+        # check that there is no chapter with the same title in the containing chapter
+        if containing_chapter is None:
+            for content in TOC.get_top_level_content():
+                if content.title == inpt["title"]:
+                    set_feedback(session, Feedback(feedback_type="error", message="There is already a top level "
+                                                                                  "chapter with this title."))
+                    return seeother(request.path)
+        else:
+            for content in TOC.get_direct_content_of(containing_chapter):
+                if content.title == inpt["title"]:
+                    set_feedback(session, Feedback(feedback_type="error", message="There is already a chapter/page "
+                                                                                  "with this title in this chapter."))
+                    return seeother(request.path)
+
         if inpt["action"] == "create_page":
+            # when file/directory already exists
+            if os.path.isdir(path) or os.path.isfile(path):
+                set_feedback(session, Feedback(feedback_type="error", message="A file or directory with this name "
+                                                                              "already exists."))
+                return seeother(request.path)
             # creating a new page
             open(path, "w").close()
 
@@ -87,7 +111,12 @@ def content_edition():
             TOC.add_content_in_toc(page)
         elif inpt["action"] == "create_chapter":
             # creating a new chapter
-            os.mkdir(path)
+            try:
+                os.mkdir(path)
+            except FileExistsError:
+                set_feedback(session, Feedback(feedback_type="error", message="A file or directory with this name "
+                                                                              "already exists."))
+                return seeother(request.path)
             chapter = Chapter(path=content_path, title=inpt["title"])
             TOC.add_content_in_toc(chapter)
         # dump the TOC and reload it

@@ -30,9 +30,22 @@
         <h1>
             Content
             <small>Manage the syllabus pages and chapters</small>
+            <button class="btn btn-sm btn-success new-chapter-button" style="margin-left: 15px"
+                    data-toggle="modal" data-target="#modal-new-page"
+                    data-containing-chapter="">
+                <i class="fa fa-plus" style="padding-right: 5px"></i>
+                <b>New top-level chapter</b>
+            </button>
         </h1>
         <section class="content container-fluid">
             <div class="just-padding">
+
+                <div class="list-group list-group-root well">
+                    <a href="/index?edit" class="list-group-item" data-target="#"
+                       data-toggle="collapse" style="padding-left: 15px">
+                        Syllabus index
+                    </a>
+                </div>
 
                 <div class="list-group list-group-root well">
 
@@ -49,10 +62,12 @@
                                 </a>
                                 <button class="btn btn-xs btn-info new-page-button" style="margin-left: 15px;"
                                         data-toggle="modal" data-target="#modal-new-page"
-                                        data-containing-chapter="{{ content.request_path if loop.depth0 != 0 else "" }}">
+                                        data-containing-chapter="{{ content.request_path }}">
                                     <i class="fa fa-plus" style="padding-right: 5px"></i> New Page
                                 </button>
-                                <button class="btn btn-xs btn-success new-chapter-button" style="margin-left: 15px;">
+                                <button class="btn btn-xs btn-success new-chapter-button" style="margin-left: 15px;"
+                                        data-toggle="modal" data-target="#modal-new-chapter"
+                                        data-containing-chapter="{{ content.request_path }}">
                                     <i class="fa fa-plus" style="padding-right: 5px"></i> New Chapter
                                 </button>
                             </div>
@@ -75,30 +90,30 @@
     </section>
 
 
-    <div id="modal-new-page" class="modal fade" role="dialog">
+    <div id="modal-new" class="modal fade" role="dialog">
         <div class="modal-dialog">
 
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Create a new page</h4>
+                    <h4 class="modal-title">Create a new <span id="to-create"></span></h4>
                 </div>
                 <form method="post">
                     <div class="modal-body">
                         <div class="form-group">
-                            <label for="page-title">Page title</label>
-                            <input type="text" id="page-title" name="title" class="form-control">
+                            <label for="title">Title</label>
+                            <input type="text" id="title" name="title" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="page-filename">Page filename</label>
-                            <input type="text" id="page-filename" name="name" class="form-control">
+                            <label for="filename">Filename</label>
+                            <input type="text" id="filename" name="name" class="form-control">
                         </div>
-                        <input type="text" id="page-containing-chapter" name="containing-chapter" hidden>
-                        <input type="text" name="action" value="create_page" hidden>
+                        <input type="text" id="containing-chapter" name="containing-chapter" hidden>
+                        <input type="text" id="action" name="action" value="create_page" hidden>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button id="button-new-page-submit" type="submit" class="btn btn-info">Submit
+                        <button id="button-submit" type="submit" class="btn btn-info">Submit
                         </button>
                     </div>
                 </form>
@@ -115,7 +130,7 @@
                     .toggleClass('fa-chevron-down');
             });
 
-            var $modalNewPage = $('#modal-new-page');
+            var $modalNew = $('#modal-new');
 
             // avoid the list group to collapse if the user clicked on the edit button
             $('.edit-button').click(function (e) {
@@ -125,14 +140,20 @@
             $('.new-page-button').click(function (e) {
                 e.stopPropagation();
 
-                $modalNewPage.find('#page-containing-chapter').val($(this).attr('data-containing-chapter'));
-                console.log($(this));
-                $modalNewPage.modal('show');
+                $modalNew.find('#containing-chapter').val($(this).attr('data-containing-chapter'));
+                $('#to-create').html('page');
+                $('#action').val("create_page");
+                $modalNew.modal('show');
             });
 
             // avoid the list group to collapse if the user clicked on the edit button
             $('.new-chapter-button').click(function (e) {
                 e.stopPropagation();
+
+                $modalNew.find('#containing-chapter').val($(this).attr('data-containing-chapter'));
+                $('#to-create').html('chapter');
+                $('#action').val("create_chapter");
+                $modalNew.modal('show');
             });
         });
 
