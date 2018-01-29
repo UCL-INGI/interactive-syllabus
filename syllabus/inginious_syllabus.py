@@ -105,7 +105,7 @@ def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
 def render_web_page(content: Content, print_mode=False):
     try:
         TOC = syllabus.get_toc()
-        syllabus.utils.directives.InginiousDirective.print = print_mode
+        session["print_mode"] = print_mode
         try:
             previous = TOC.get_previous_content(content)
         except KeyError:
@@ -123,10 +123,10 @@ def render_web_page(content: Content, print_mode=False):
                                  toc=TOC,
                                  direct_content=TOC.get_direct_content_of(content), next=next, previous=previous)
 
-        syllabus.utils.directives.InginiousDirective.print = False
+        session["print_mode"] = False
     except Exception:
         # ensure that the print mode is disabled
-        syllabus.utils.directives.InginiousDirective.print = False
+        session["print_mode"] = False
         raise
     return retval
 

@@ -36,8 +36,9 @@ class InginiousDirective(Directive):
     optional argument 1: the language mode supported by CodeMirror
     optional argument 2: the number of blank lines to display in print mode
     directive content: the prefilled code in the text area
+
+    The directive will display the content in print mode if the "print" attribute is set to True in the session.
     """
-    print = False
     has_content = True
     required_arguments = 1
     optional_arguments = 2
@@ -57,7 +58,7 @@ class InginiousDirective(Directive):
     """
 
     def get_html_content(self, use_lti):
-        if not self.print:
+        if not session.get("print", False):
             if not use_lti:
                 par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
                                                      '\n'.join(self.content),
