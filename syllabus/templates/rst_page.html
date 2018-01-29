@@ -121,6 +121,9 @@
                 </ul>
               <ul class="nav navbar-nav navbar-right">
                 {% if logged_in is not none %}
+                    {% if logged_in["right"] == "admin" %}
+                        <li><a href="/admin/users" style="display: block">Admin Panel</a></li>
+                    {% endif %}
                     <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
                 {% else %}
                     <li>
