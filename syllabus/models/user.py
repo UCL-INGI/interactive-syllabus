@@ -20,6 +20,9 @@ class User(Base):
         self.change_password_url = change_password_url
         self.right = right
 
+    def to_dict(self):
+        return {"username": self.username, "email": self.email, "right": self.right}
+
     def __repr__(self):
         return '<User %r>' % (self.username)
 

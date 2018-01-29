@@ -196,7 +196,7 @@ def log_in():
         user = User.query.filter(User.username == username).first()
         if user is None or user.hash_password != password_hash:
             abort(403)
-        session['user'] = {"username": username}
+        session['user'] = user.to_dict()
         return seeother('/')
 
 
@@ -262,7 +262,7 @@ def saml():
                 db_session.add(user)
                 db_session.commit()
 
-            session["user"] = {"username": user.username, "email": user.email, "login_method": "saml"}
+            session["user"] = user.to_dict() + {"login_method": "saml"}
 
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
