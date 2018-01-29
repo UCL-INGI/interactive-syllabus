@@ -54,31 +54,51 @@
                             <div data-target="#{{ "%d%d" % (loop.depth0, loop.index) }}" class="list-group-item"
                                  data-toggle="collapse"
                                  style="cursor: pointer; padding-left: {{ loop.depth0*30 + 15 }}px">
-                                <i class="chevron fa fa-chevron-right"></i>
+                                <i class="chevron fa fa-chevron-down"></i>
                                 {{ content.title }}
+                                <span class="pull-right">
                                 <a href="/syllabus/{{ content.request_path }}?edit"
-                                    class="btn btn-xs btn-default edit-button" style="margin-left: 5px">
+                                   target="_blank"
+                                   class="btn btn-xs btn-default edit-button" style="margin-left: 5px">
                                     <i class="fa fa-edit"></i>
                                 </a>
-                                <button class="btn btn-xs btn-info new-page-button" style="margin-left: 15px;"
-                                        data-toggle="modal" data-target="#modal-new-page"
-                                        data-containing-chapter="{{ content.request_path }}">
-                                    <i class="fa fa-plus" style="padding-right: 5px"></i> New Page
+                                <button class="btn btn-xs btn-default delete-button" style="margin-left: 5px;"
+                                        data-toggle="modal" data-target="#modal-delete"
+                                        data-content-path="{{ content.path }}">
+                                    <i class="fa fa-trash-o" style=""></i>
                                 </button>
-                                <button class="btn btn-xs btn-success new-chapter-button" style="margin-left: 15px;"
-                                        data-toggle="modal" data-target="#modal-new-chapter"
-                                        data-containing-chapter="{{ content.request_path }}">
-                                    <i class="fa fa-plus" style="padding-right: 5px"></i> New Chapter
-                                </button>
+                                </span>
+                                    <button class="btn btn-xs btn-info new-page-button" style="margin-left: 15px;"
+                                            data-toggle="modal" data-target="#modal-new"
+                                            data-containing-chapter="{{ content.request_path }}">
+                                        <i class="fa fa-plus" style="padding-right: 5px"></i> New Page
+                                    </button>
+                                    <button class="btn btn-xs btn-success new-chapter-button" style="margin-left: 15px;"
+                                            data-toggle="modal" data-target="#modal-new"
+                                            data-containing-chapter="{{ content.request_path }}">
+                                        <i class="fa fa-plus" style="padding-right: 5px"></i> New Chapter
+                                    </button>
                             </div>
-                            <div class="list-group collapse" id="{{ "%d%d" % (loop.depth0, loop.index) }}">
+                            <div class="list-group collapse in" id="{{ "%d%d" % (loop.depth0, loop.index) }}">
                                 {{ loop(TOC.get_direct_content_of(content)) }}
                             </div>
                         {% else %}
-                            <a href="/syllabus/{{ content.request_path }}?edit" class="list-group-item" data-target="#"
-                               data-toggle="collapse" style="padding-left: {{ loop.depth0*30 + 15 }}px">
+                            <div style="padding-left: {{ loop.depth0*30 + 15 }}px" class="list-group-item">
                                 {{ content.title }}
-                            </a>
+                                <span class="pull-right">
+                                    <a class="btn btn-xs btn-default edit-button"
+                                       href="/syllabus/{{ content.request_path }}?edit"
+                                       target="_blank"
+                                       style="margin-left: 5px">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-xs btn-default delete-button" style="margin-left: 5px;"
+                                            data-toggle="modal" data-target="#modal-delete"
+                                            data-content-path="{{ content.path }}">
+                                        <i class="fa fa-trash-o" style=""></i>
+                                    </button>
+                                </span>
+                            </div>
                         {% endif %}
                     {% endfor %}
 
@@ -106,7 +126,9 @@
                         </div>
                         <div class="form-group">
                             <label for="filename">Filename</label>
-                            <input type="text" id="filename" name="name" class="form-control">
+                            <span class="input-group"><input type="text" id="filename" name="name" class="form-control">
+                                <span class="input-group-addon" id="extension"></span>
+                            </span>
                         </div>
                         <input type="text" id="containing-chapter" name="containing-chapter" hidden>
                         <input type="text" id="action" name="action" value="create_page" hidden>
@@ -114,6 +136,32 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                         <button id="button-submit" type="submit" class="btn btn-info">Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="modal-delete" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Delete <span id="to-delete"></span></h4>
+                </div>
+                <form method="post">
+                    <div class="modal-body">
+                        <input type="checkbox" name="delete-files" style="margin-right: 5px"> Also delete the files related to this content on the
+                        file system.
+                        <input type="text" id="content-path" name="content-path" hidden>
+                        <input type="text" id="action" name="action" value="delete_content" hidden>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="button-submit" type="submit" class="btn btn-danger">Delete
                         </button>
                     </div>
                 </form>
@@ -131,6 +179,7 @@
             });
 
             var $modalNew = $('#modal-new');
+            var $modalDelete = $('#modal-delete');
 
             // avoid the list group to collapse if the user clicked on the edit button
             $('.edit-button').click(function (e) {
@@ -142,6 +191,7 @@
 
                 $modalNew.find('#containing-chapter').val($(this).attr('data-containing-chapter'));
                 $('#to-create').html('page');
+                $('#extension').html('.rst');
                 $('#action').val("create_page");
                 $modalNew.modal('show');
             });
@@ -152,9 +202,18 @@
 
                 $modalNew.find('#containing-chapter').val($(this).attr('data-containing-chapter'));
                 $('#to-create').html('chapter');
+                $('#extension').html('');
                 $('#action').val("create_chapter");
                 $modalNew.modal('show');
             });
+
+            $('.delete-button').click(function (e) {
+                e.stopPropagation();
+
+                $modalDelete.find('#content-path').val($(this).attr('data-content-path'));
+                $('#action').val("delete-content");
+                $modalDelete.modal('show');
+            })
         });
 
     </script>

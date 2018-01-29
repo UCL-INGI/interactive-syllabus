@@ -1,3 +1,4 @@
+import shutil
 from functools import wraps
 
 import os
@@ -55,6 +56,8 @@ def content_edition():
     TOC = syllabus.get_toc()
     if request.method == "POST":
         inpt = request.form
+        if inpt["action"] == "delete_content":
+            return delete_content(inpt, TOC)
         containing_chapter = None
         try:
             if inpt["containing-chapter"] != "":
@@ -99,14 +102,19 @@ def content_edition():
                     return seeother(request.path)
 
         if inpt["action"] == "create_page":
+
+            # add the extension to the page filename
+            content_path += ".rst"
+            path += ".rst"
+
             # when file/directory already exists
             if os.path.isdir(path) or os.path.isfile(path):
                 set_feedback(session, Feedback(feedback_type="error", message="A file or directory with this name "
                                                                               "already exists."))
                 return seeother(request.path)
-            # creating a new page
-            open(path, "w").close()
 
+            # create a new page
+            open(path, "w").close()
             page = Page(path=content_path, title=inpt["title"])
             TOC.add_content_in_toc(page)
         elif inpt["action"] == "create_chapter":
@@ -119,6 +127,7 @@ def content_edition():
                 return seeother(request.path)
             chapter = Chapter(path=content_path, title=inpt["title"])
             TOC.add_content_in_toc(chapter)
+
         # dump the TOC and reload it
         syllabus.save_toc(TOC)
         syllabus.get_toc(force=True)
@@ -128,6 +137,31 @@ def content_edition():
                                sidebar_elements=sidebar['elements'], TOC=TOC, feedback=pop_feeback(session))
     except TemplateNotFound:
         abort(404)
+
+
+def delete_content(inpt, TOC):
+    pages_path = syllabus.get_pages_path()
+    content_path = inpt["content-path"]
+    path = os.path.join(pages_path, content_path)
+
+    content_to_delete = TOC.get_content_from_path(content_path)
+    TOC.remove_content_from_toc(content_to_delete)
+
+    # dump the TOC and reload it
+    syllabus.save_toc(TOC)
+    syllabus.get_toc(force=True)
+
+    # remove the files if asked
+    if inpt.get("delete-files", None) == "on":
+        if type(content_to_delete) is Chapter:
+            # delete a chapter
+            shutil.rmtree(os.path.join(path))
+        else:
+            # delete a page
+            os.remove(path)
+
+    set_feedback(session, Feedback(feedback_type="success", message="The content has been successfully deleted"))
+    return seeother(request.path)
 
 
 @admin_blueprint.route('/toc_edition', methods=['GET', 'POST'])

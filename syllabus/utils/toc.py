@@ -41,6 +41,9 @@ class Page(Content):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
 
+    def __repr__(self):
+        return "Page %s" % self.path
+
     @property
     def request_path(self):
         if self.path[-4:] == ".rst":
@@ -57,6 +60,9 @@ class Chapter(Content):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
         self.description = description
+
+    def __repr__(self):
+        return "Chapter %s" % self.path
 
     @property
     def request_path(self):
@@ -91,7 +97,8 @@ class TableOfContent(object):
     def get_content_from_path(self, path):
         """
         Returns the Content object related to the given path if there is a content located at this path
-        in the pages directory.
+        in the pages directory. If the content is a page, a Page object will be returned. Otherwise, a Chapter will be
+        returned.
         Raises a ContentNotFoundError if the content does not exist in the pages directory
         or the content is not present in the Table of Contents
         """
@@ -100,7 +107,7 @@ class TableOfContent(object):
         except ContentNotFoundError:
             content = Chapter(path, "")
         if content not in self:
-            raise ContentNotFoundError("The specified content in not in the Table of Contents")
+            raise ContentNotFoundError("The specified content in not in the Table of Contents: %s", path)
         try:
             content.title = self.path_to_title_dict[path]
         except KeyError:
@@ -116,12 +123,12 @@ class TableOfContent(object):
         or the page is not present in the Table of Contents
         """
         page = Page(path, "")
+        if page not in self:
+            raise ContentNotFoundError("The specified page in not in the Table of Contents")
         try:
             page.title = self.path_to_title_dict[path]
         except KeyError:
             raise Exception("no title for page at path %s" % path)
-        if page not in self:
-            raise ContentNotFoundError("The specified page in not in the Table of Contents")
         return page
 
     def get_chapter_from_path(self, path):
@@ -132,12 +139,12 @@ class TableOfContent(object):
         or the chapter is not present in the Table of Contents
         """
         chapter = Chapter(path, "")
+        if chapter not in self:
+            raise ContentNotFoundError("The specified chapter in not in the Table of Contents")
         try:
             chapter.title = self.path_to_title_dict[path]
         except KeyError:
             raise Exception("no title for chapter at path %s" % path)
-        if chapter not in self:
-            raise ContentNotFoundError("The specified chapter in not in the Table of Contents")
         return chapter
 
     def get_content_at_same_level(self, content):
@@ -259,7 +266,7 @@ class TableOfContent(object):
             return False
 
     def add_content_in_toc(self, content: Content):
-        """ Adds the specified chapter at the last position of the specified containing chapter. """
+        """ Adds the specified content at the last position of the specified containing chapter. """
         *keys, filename = content.path.split(os.sep)
         if not keys:
             # the content will be added at the top level of the ToC
@@ -272,6 +279,20 @@ class TableOfContent(object):
         else:
             containing_chapter_dict[filename] = {"title": content.title}
 
+        # recompute the other data structures of the ToC
+        self._init_from_dict(self.toc_dict)
+
+    def remove_content_from_toc(self, content: Content):
+        """
+        Removes the specified content from the ToC.
+        Raises a KeyError is te content was already not present in the ToC.
+        """
+        *keys, filename = content.path.split(os.sep)
+        if len(keys) > 0:
+            containing_chapter = self._traverse_toc(keys)
+            containing_chapter["content"].pop(filename)
+        else:
+            self.toc_dict.pop(filename)
         # recompute the other data structures of the ToC
         self._init_from_dict(self.toc_dict)
 
