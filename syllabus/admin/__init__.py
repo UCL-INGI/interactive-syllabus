@@ -21,9 +21,9 @@ admin_blueprint = Blueprint('admin', __name__,
                             template_folder='templates',
                             static_folder='static')
 
-sidebar_elements = [{'id': 'users', 'name': 'Users'},
-                    {'id': 'content_edition', 'name': 'Content Edition'},
-                    {'id': 'toc_edition', 'name': 'ToC Edition'}]
+sidebar_elements = [{'id': 'users', 'name': 'Users', 'icon': 'users'},
+                    {'id': 'content_edition', 'name': 'Content Edition', 'icon': 'edit'},
+                    {'id': 'toc_edition', 'name': 'ToC Edition', 'icon': 'list'}]
 
 sidebar = {'active_element': 'users', 'elements': sidebar_elements}
 

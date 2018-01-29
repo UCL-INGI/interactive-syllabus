@@ -92,7 +92,7 @@
             <ul class="sidebar-menu" data-widget="tree">
                 {% for element in sidebar_elements %}
                     <li {{ 'class="active"'|safe if active_element == element['id'] else '' }}><a
-                            href="{{ '/admin/%s' % element['id'] }}"><i class="fa fa-link"></i>
+                            href="{{ '/admin/%s' % element['id'] }}"><i class="fa fa-{{ element['icon'] }}"></i>
                         <span>{{ element['name'] }}</span></a></li>
                 {% endfor %}
 
