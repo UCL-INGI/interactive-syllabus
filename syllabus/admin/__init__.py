@@ -6,6 +6,7 @@ import os
 import re
 import yaml
 
+from syllabus.database import db_session
 from syllabus.utils.feedbacks import *
 from syllabus.utils.toc import TableOfContent, ContentNotFoundError, Page, Chapter
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
@@ -38,13 +39,24 @@ def sidebar_page(element):
     return decorator
 
 
-@admin_blueprint.route('/users')
+@admin_blueprint.route('/users', methods=['GET', 'POST'])
 @permission_admin
 @sidebar_page('users')
 def users():
+    if request.method == 'POST':
+        inpt = request.form
+        if inpt["action"] == "change_right":
+            user = User.query.filter(User.username == inpt["username"]).first()
+            if user.username == session["user"]["username"]:
+                return seeother(request.path)
+            user.right = "admin" if "admin" in inpt and inpt["admin"] == "on" else None
+            db_session.commit()
+            return seeother(request.path, SuccessFeedback("The rights of %s have been successfully edited" % user.username))
+        return seeother(request.path)
     try:
         return render_template('users.html', active_element=sidebar['active_element'],
-                               sidebar_elements=sidebar['elements'], users=User.query.all())
+                               sidebar_elements=sidebar['elements'], users=User.query.all(),
+                               feedback=pop_feeback(session))
     except TemplateNotFound:
         abort(404)
 
