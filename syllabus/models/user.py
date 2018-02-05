@@ -10,16 +10,25 @@ class User(Base):
     full_name = Column(String(50))
     hash_password = Column(String(80))
     change_password_url = Column(String(50))
+    right = Column(String(30))
 
-    def __init__(self, name, email, hash_password, full_name=None, change_password_url=None):
+    def __init__(self, name, email, hash_password, full_name=None, change_password_url=None, right=None):
         self.username = name
         self.email = email
         self.hash_password = hash_password
         self.full_name = full_name
         self.change_password_url = change_password_url
+        self.right = right
+
+    def to_dict(self):
+        return {"username": self.username, "email": self.email, "right": self.right}
 
     def __repr__(self):
         return '<User %r>' % (self.username)
+
+    @property
+    def admin(self):
+        return self.right == "admin"
 
 
 def hash_password(password):

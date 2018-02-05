@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>AdminLTE 2 | Starter</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="/admin/static/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/admin/static/css/AdminLTE.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/admin/static/css/skin-blue.css">
+
+    <link rel="stylesheet" href="/admin/static/css/dataTables.bootstrap.min.css">
+
+    <link rel="stylesheet" href="/admin/static/css/skins/skin-blue.min.css">
+
+
+    <!-- REQUIRED JS SCRIPTS -->
+
+    <!-- jQuery 3 -->
+    <script src="/static/js/jquery-3.1.1.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.0/jquery-ui.js"></script>
+    <!-- Bootstrap 3.3.7 -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="/admin/static/js/adminlte.min.js"></script>
+
+    <script src="/admin/static/js/jquery.dataTables.min.js"></script>
+    <script src="/admin/static/js/dataTables.bootstrap.min.js"></script>
+
+
+    <!-- Google Font -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+
+    <!-- Main Header -->
+    <header class="main-header">
+
+        <!-- Logo -->
+        <a href="/admin/users" class="logo">
+            <!-- mini logo for sidebar mini 50x50 pixels -->
+            <span class="logo-mini">ADM</span>
+            <!-- logo for regular state and mobile devices -->
+            <span class="logo-lg">Admin Panel</span>
+        </a>
+
+        <!-- Header Navbar -->
+        <nav class="navbar navbar-static-top" role="navigation">
+            <!-- Sidebar toggle button-->
+            <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
+                <span class="sr-only">Toggle navigation</span>
+            </a>
+            <!-- Navbar Right Menu -->
+            <div class="navbar-custom-menu">
+                <ul class="nav navbar-nav">
+                    <!-- User Account Menu -->
+                    <li class="dropdown user user-menu">
+                        <!-- Menu Toggle Button -->
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="hidden-xs">{{ session["user"]["username"] }}</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- Menu Footer-->
+                            <li class="user-footer">
+                                <a href="/" class="btn btn-default btn-flat">Syllabus Homepage</a>
+                                <br>
+                                <a href="/logout" class="btn btn-default btn-flat">Log out</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    <!-- Left side column. contains the logo and sidebar -->
+    <aside class="main-sidebar">
+
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+
+            <!-- Sidebar Menu -->
+            <ul class="sidebar-menu" data-widget="tree">
+                {% for element in sidebar_elements %}
+                    <li {{ 'class="active"'|safe if active_element == element['id'] else '' }}><a
+                            href="{{ '/admin/%s' % element['id'] }}"><i class="fa fa-{{ element['icon'] }}"></i>
+                        <span>{{ element['name'] }}</span></a></li>
+                {% endfor %}
+
+            </ul>
+            <!-- /.sidebar-menu -->
+        </section>
+        <!-- /.sidebar -->
+    </aside>
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <!-- Main content -->
+        {% if feedback is defined and feedback is not none %}
+            <div class="container-fluid" style="padding-top: 10px">
+                <div class="alert alert-{{ feedback.alert_color }} alert-dismissable">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <h4> <i class="fa {{ feedback.icon }}" style="padding-right: 5px"></i> {{ feedback.title }} </h4>
+                    {{ feedback.message }}
+                </div>
+            </div>
+        {% endif %}
+        {% block content %}
+            <!-- Content Header (Page header) -->
+            <section class="content-header">
+                <h1>
+                    Page Header
+                    <small>Optional description</small>
+                </h1>
+                <ol class="breadcrumb">
+                    <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+                    <li class="active">Here</li>
+                </ol>
+            </section>
+        {% endblock %}
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <!-- Main Footer -->
+    <footer class="main-footer">
+{#        <!-- To the right -->#}
+{#        <div class="pull-right hidden-xs">#}
+{#            Anything you want#}
+{#        </div>#}
+{#        <!-- Default to the left -->#}
+{#        <strong>Copyright &copy; 2018 <a href="#">Company</a>.</strong> All rights reserved.#}
+    </footer>
+
+</div>
+<!-- ./wrapper -->
+</body>
+</html>

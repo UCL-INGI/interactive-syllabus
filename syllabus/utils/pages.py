@@ -17,15 +17,17 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from functools import wraps
 
 import yaml
 from docutils.core import publish_string
-from flask import render_template_string, redirect
+from flask import render_template_string, redirect, session, abort
 from flask.helpers import safe_join
 from werkzeug.utils import secure_filename
 
 import syllabus
-from syllabus.utils.toc import Chapter
+from syllabus.models.user import User
+from syllabus.utils.toc import Chapter, Content, Page
 
 default_rst_opts = {
     'no_generator': True,
@@ -63,6 +65,19 @@ def sanitize_path(f):
     return wrapper
 
 
+def permission_admin(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        username = session["user"]["username"] if "user" in session else None
+        if username is None:
+            abort(403)
+        user = User.query.filter(User.username == username).first()
+        if not user.admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapper
+
+
 def render_content(content):
     if type(content) is Chapter:
         return render_rst_file("chapter_index.rst", chapter_path=content.path,
@@ -75,6 +90,15 @@ def render_rst_file(page_path, **kwargs):
     with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
         return publish_string(render_template_string(f.read(), **kwargs),
                               writer_name='html', settings_overrides=default_rst_opts)
+
+
+def get_content_data(content: Content):
+    path = content.path if type(content) is Page else safe_join(content.path, "chapter_introduction.rst")
+    try:
+        with open(safe_join(syllabus.get_pages_path(), path), "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
 
 
 def generate_toc_yaml():

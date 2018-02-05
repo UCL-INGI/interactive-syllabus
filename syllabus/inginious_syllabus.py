@@ -23,21 +23,23 @@ from urllib import request as urllib_request
 import yaml
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect, Response
+from flask import Flask, render_template, request, abort, make_response, session, redirect
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
+from syllabus.admin import admin_blueprint
 from syllabus.config import *
-from syllabus.database import init_db, db_session
+from syllabus.database import init_db, db_session, update_database
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.pages import seeother
-from syllabus.utils.toc import Content, Chapter, TableOfContent, Page
+from syllabus.utils.pages import seeother, get_content_data, permission_admin
+from syllabus.utils.toc import Content, Chapter, TableOfContent, Page, ContentNotFoundError
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
+app.register_blueprint(admin_blueprint, url_prefix='/admin')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.urandom(24)
@@ -52,14 +54,15 @@ if "saml" in authentication_methods:
         saml_config = yaml.load(f)
 
 
-
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=["GET", "POST"])
+@app.route('/index', methods=["GET", "POST"])
 def index():
     TOC = syllabus.get_toc()
+    if request.args.get("edit") is not None:
+        return edit_content(TOC.index.path, TOC)
     try:
         return render_web_page(TOC.index, print_mode=request.args.get("print") is not None)
-    except FileNotFoundError:
+    except ContentNotFoundError:
         abort(404)
 
 
@@ -68,25 +71,49 @@ def favicon():
     abort(404)
 
 
-@app.route('/syllabus/<path:content_path>')
+@app.route('/syllabus/<path:content_path>', methods=["GET", "POST"])
 def get_syllabus_content(content_path: str, print=False):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
-    print_mode = print or request.args.get("print") is not None
     TOC = syllabus.get_toc()
+    if request.args.get("edit") is not None:
+        return edit_content(content_path, TOC)
+    print_mode = print or request.args.get("print") is not None
     try:
         try:
             # assume that it is an RST page
             return render_web_page(TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
-        except FileNotFoundError:
+        except ContentNotFoundError:
             # it should be a chapter
             if request.args.get("print") == "all_content":
                 # we want to print all the content of the chapter
                 return get_chapter_printable_content(TOC.get_chapter_from_path(content_path), TOC)
             # we want to access the index of the chapter
             return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
-    except FileNotFoundError:
+    except ContentNotFoundError:
         abort(404)
+
+
+@permission_admin
+def edit_content(content_path, TOC: TableOfContent):
+    try:
+        content = TOC.get_page_from_path("%s.rst" % content_path)
+    except ContentNotFoundError:
+        content = TOC.get_content_from_path(content_path)
+    if request.method == "POST":
+        inpt = request.form
+        if "new_content" not in inpt:
+            return seeother(request.path)
+        else:
+            if type(content) is Chapter:
+                with open(os.path.join(syllabus.get_pages_path(), content.path, "chapter_introduction.rst"), "w") as f:
+                    f.write(inpt["new_content"])
+            else:
+                with open(os.path.join(syllabus.get_pages_path(), content.path), "w") as f:
+                    f.write(inpt["new_content"])
+            return seeother(request.path)
+    elif request.method == "GET":
+        return render_template("edit_page.html", content_data=get_content_data(content), content=content, TOC=TOC)
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
@@ -169,7 +196,7 @@ def log_in():
         user = User.query.filter(User.username == username).first()
         if user is None or user.hash_password != password_hash:
             abort(403)
-        session['user'] = {"username": username}
+        session['user'] = user.to_dict()
         return seeother('/')
 
 
@@ -178,7 +205,7 @@ def log_out():
     if "user" in session:
         saml = session["user"].get("login_method", None) == "saml"
         session.pop("user", None)
-        if True or saml:
+        if saml:
             req = prepare_request(request)
             auth = init_saml_auth(req, saml_config)
             return redirect(auth.logout())
@@ -235,7 +262,7 @@ def saml():
                 db_session.add(user)
                 db_session.commit()
 
-            session["user"] = {"username": user.username, "email": user.email, "login_method": "saml"}
+            session["user"] = user.to_dict() + {"login_method": "saml"}
 
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
@@ -261,5 +288,6 @@ def metadata():
 
 
 def main():
+    update_database()
     init_db()
     app.run(host='0.0.0.0', port=5000)

@@ -10,6 +10,10 @@ from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
 from syllabus import get_pages_path
 
 
+class ContentNotFoundError(Exception):
+    pass
+
+
 class Content(ABC):
     def __init__(self, path, title):
         self.path = path
@@ -34,8 +38,11 @@ class Page(Content):
         # a page should be an rST file, and should have the .rst extension, for security purpose
         file_path = os.path.join(pages_path, path)
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
-            raise FileNotFoundError(file_path)
+            raise ContentNotFoundError(file_path)
         super().__init__(path, title)
+
+    def __repr__(self):
+        return "Page %s" % self.path
 
     @property
     def request_path(self):
@@ -50,9 +57,12 @@ class Chapter(Content):
         pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
         file_path = os.path.join(pages_path, path)
         if not os.path.isdir(file_path):
-            raise FileNotFoundError(file_path)
+            raise ContentNotFoundError(file_path)
         super().__init__(path, title)
         self.description = description
+
+    def __repr__(self):
+        return "Chapter %s" % self.path
 
     @property
     def request_path(self):
@@ -63,12 +73,16 @@ class TableOfContent(object):
     def __init__(self, toc_file=None):
         toc_file = toc_file if toc_file is not None else os.path.join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
-            self.toc = yaml.load(f, OrderedDictYAMLLoader)
-            self.ordered_content_indices = self._get_ordered_toc(self.toc)
-            self.ordered_content_list = list(self.ordered_content_indices.keys())
-            self.path_to_title_dict = {x.path: x.title
-                                       for x in self.ordered_content_list}
-            self.index = Page("index.rst", "Index")
+            toc_dict = yaml.load(f, OrderedDictYAMLLoader)
+            self._init_from_dict(toc_dict)
+
+    def _init_from_dict(self, toc_dict: OrderedDict):
+        self.toc_dict = toc_dict
+        self.ordered_content_indices = self._get_ordered_toc(self.toc_dict)
+        self.ordered_content_list = list(self.ordered_content_indices.keys())
+        self.path_to_title_dict = {x.path: x.title
+                                   for x in self.ordered_content_list}
+        self.index = Page("index.rst", "Index")
 
     def __contains__(self, item):
         """
@@ -78,21 +92,39 @@ class TableOfContent(object):
         returns False otherwise
         """
         item = Content(item, "") if type(item) is str else item
-        return item in self.ordered_content_indices
+        return item == self.index or item in self.ordered_content_indices
 
     def get_content_from_path(self, path):
+        """
+        Returns the Content object related to the given path if there is a content located at this path
+        in the pages directory. If the content is a page, a Page object will be returned. Otherwise, a Chapter will be
+        returned.
+        Raises a ContentNotFoundError if the content does not exist in the pages directory
+        or the content is not present in the Table of Contents
+        """
         try:
             content = Page(path, "")
-        except FileNotFoundError:
+        except ContentNotFoundError:
             content = Chapter(path, "")
+        if content not in self:
+            raise ContentNotFoundError("The specified content in not in the Table of Contents: %s", path)
         try:
             content.title = self.path_to_title_dict[path]
         except KeyError:
-            raise Exception("no title for content at path %s" % path)
+            if content != self.index:
+                raise Exception("no title for content at path %s" % path)
         return content
 
     def get_page_from_path(self, path):
+        """
+        Returns the Page object related to the given path if there is a page located at this path
+        in the pages directory.
+        Raises a ContentNotFoundError if the page does not exist in the pages directory
+        or the page is not present in the Table of Contents
+        """
         page = Page(path, "")
+        if page not in self:
+            raise ContentNotFoundError("The specified page in not in the Table of Contents")
         try:
             page.title = self.path_to_title_dict[path]
         except KeyError:
@@ -100,7 +132,15 @@ class TableOfContent(object):
         return page
 
     def get_chapter_from_path(self, path):
+        """
+        Returns the Chapter object related to the given path if there is a chapter located at this path
+        in the pages directory.
+        Raises a ContentNotFoundError if the chapter does not exist in the pages directory
+        or the chapter is not present in the Table of Contents
+        """
         chapter = Chapter(path, "")
+        if chapter not in self:
+            raise ContentNotFoundError("The specified chapter in not in the Table of Contents")
         try:
             chapter.title = self.path_to_title_dict[path]
         except KeyError:
@@ -113,7 +153,7 @@ class TableOfContent(object):
             return self.get_direct_content_of(parent)
         else:
             # we're at the top level
-            return [self.get_content_from_path(x) for x in self.toc.keys()]
+            return [self.get_content_from_path(x) for x in self.toc_dict.keys()]
 
     def get_next_content(self, actual_content: Content):
         """
@@ -149,7 +189,7 @@ class TableOfContent(object):
         if type(content) is Page:
             return None
         chapters_list = content.path.split("/")
-        toc = self.toc
+        toc = self.toc_dict
         # navigate in the TOC until the level of the specified chapter
         for chapter in chapters_list:
             toc = toc[chapter]["content"]
@@ -174,8 +214,8 @@ class TableOfContent(object):
 
     def get_top_level_content(self):
         res = []
-        for path in self.toc.keys():
-            if "content" in self.toc[path]:
+        for path in self.toc_dict.keys():
+            if "content" in self.toc_dict[path]:
                 res.append(Chapter(path, self.path_to_title_dict[path]))
             else:
                 res.append(Page(path, self.path_to_title_dict[path]))
@@ -189,11 +229,12 @@ class TableOfContent(object):
         new_path = content.path[:last_separator]
         try:
             return Chapter(new_path, self.path_to_title_dict[new_path])
-        except (FileNotFoundError, KeyError):
+        except (ContentNotFoundError, KeyError):
             return None
 
     @staticmethod
-    def _get_ordered_toc(toc_ordered_dict, actual_path=list(), actual_index=0) -> OrderedDict:
+    def _get_ordered_toc(toc_ordered_dict, actual_path=None, actual_index=0) -> OrderedDict:
+        actual_path = list() if actual_path is None else actual_path
         paths_ordered_dict = OrderedDict()
         for key, val in toc_ordered_dict.items():
             actual_path.append(key)
@@ -211,8 +252,54 @@ class TableOfContent(object):
             actual_path.pop()  # remove the actual chapter from the actual path as we go on to the next chapter
         return paths_ordered_dict
 
+    @staticmethod
+    def is_toc_dict_valid(toc_ordered_dict):
+        """
+        Returns True if the given OrderedDict represents a valid Table of Contents.
+        The Table of Contents is valid of all the pages and chapters exists in the page directory.
+        Returns False otherwise
+        """
+        try:
+            TableOfContent._get_ordered_toc(toc_ordered_dict)
+            return True
+        except:
+            return False
+
+    def add_content_in_toc(self, content: Content):
+        """ Adds the specified content at the last position of the specified containing chapter. """
+        *keys, filename = content.path.split(os.sep)
+        if not keys:
+            # the content will be added at the top level of the ToC
+            containing_chapter_dict = self.toc_dict
+        else:
+            containing_chapter_dict = self._traverse_toc(keys)["content"]
+
+        if type(content) is Chapter:
+            containing_chapter_dict[filename] = {"title": content.title, "content": {}}
+        else:
+            containing_chapter_dict[filename] = {"title": content.title}
+
+        # recompute the other data structures of the ToC
+        self._init_from_dict(self.toc_dict)
+
+    def remove_content_from_toc(self, content: Content):
+        """
+        Removes the specified content from the ToC.
+        Raises a KeyError is te content was already not present in the ToC.
+        """
+        *keys, filename = content.path.split(os.sep)
+        if len(keys) > 0:
+            containing_chapter = self._traverse_toc(keys)
+            containing_chapter["content"].pop(filename)
+        else:
+            self.toc_dict.pop(filename)
+        # recompute the other data structures of the ToC
+        self._init_from_dict(self.toc_dict)
+
     def _traverse_toc(self, keys_list):
-        toc = self.toc[keys_list[0]]
+        if len(keys_list) == 0:
+            return self.toc_dict
+        toc = self.toc_dict[keys_list[0]]
         for key in keys_list[1:]:
             toc = toc["content"][key]
         return toc
