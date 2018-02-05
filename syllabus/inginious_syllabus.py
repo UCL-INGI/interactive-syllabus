@@ -61,7 +61,8 @@ def index():
     if request.args.get("edit") is not None:
         return edit_content(TOC.index.path, TOC)
     try:
-        return render_web_page(TOC.index, print_mode=request.args.get("print") is not None)
+        # only display the button to print the whole syllabus in the index
+        return render_web_page(TOC.index, print_mode=request.args.get("print") is not None, display_print_all=True)
     except ContentNotFoundError:
         abort(404)
 
@@ -116,6 +117,12 @@ def edit_content(content_path, TOC: TableOfContent):
         return render_template("edit_page.html", content_data=get_content_data(content), content=content, TOC=TOC)
 
 
+@app.route('/print_all')
+def print_all_syllabus():
+    return render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
+                           render_rst=syllabus.utils.pages.render_content)
+
+
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
     def fetch_content(chapter):
         printable_content = [chapter]
@@ -125,11 +132,19 @@ def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
             else:
                 printable_content.append(content)
         return printable_content
-    return render_template("print_full_chapter_content.html", chapter=fetch_content(chapter),
-                           render_rst=syllabus.utils.pages.render_content)
+
+    session["print_mode"] = True
+    try:
+        retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter),
+                                 render_rst=syllabus.utils.pages.render_content)
+        session["print_mode"] = False
+        return retval
+    except:
+        session["print_mode"] = False
+        raise
 
 
-def render_web_page(content: Content, print_mode=False):
+def render_web_page(content: Content, print_mode=False, display_print_all=False):
     try:
         TOC = syllabus.get_toc()
         session["print_mode"] = print_mode
@@ -148,7 +163,8 @@ def render_web_page(content: Content, print_mode=False):
                                  render_rst=syllabus.utils.pages.render_content,
                                  content_at_same_level=TOC.get_content_at_same_level(content),
                                  toc=TOC,
-                                 direct_content=TOC.get_direct_content_of(content), next=next, previous=previous)
+                                 direct_content=TOC.get_direct_content_of(content), next=next, previous=previous,
+                                 display_print_all=display_print_all)
 
         session["print_mode"] = False
     except Exception:

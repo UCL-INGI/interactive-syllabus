@@ -130,6 +130,9 @@
                       <a href="/login">Log in</a>
                     </li>
                 {% endif %}
+                {% if display_print_all %}
+                    <li><a href="/print_all" style="display: block"> Print syllabus </a></li>
+                {% endif %}
                 <li><a href="{{ "%s?print" % request.path }}" style="display: block">Print page</a></li>
                 {% if "Chapter" in this_content.__class__.__name__ %}
                     <li><a href="{{ "%s?print=all_content" % request.path }}" style="display: block">Print chapter content</a></li>

@@ -94,6 +94,9 @@ class TableOfContent(object):
         item = Content(item, "") if type(item) is str else item
         return item == self.index or item in self.ordered_content_indices
 
+    def __iter__(self):
+        return self.ordered_content_list.__iter__()
+
     def get_content_from_path(self, path):
         """
         Returns the Content object related to the given path if there is a content located at this path

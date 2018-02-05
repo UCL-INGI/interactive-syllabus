@@ -67,7 +67,7 @@
     <span id="maincontent"></span>
     <div class="box contents">
         <div class="no-overflow">
-            {% for content in chapter %}
+            {% for content in contents %}
                 {{ render_rst(content)|safe }}
 
             {% endfor %}
