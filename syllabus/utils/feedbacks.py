@@ -16,6 +16,16 @@ class Feedback(object):
         return None
 
 
+class ErrorFeedback(Feedback):
+    def __init__(self, message):
+        super().__init__(feedback_type="error", message=message)
+
+
+class SuccessFeedback(Feedback):
+    def __init__(self, message):
+        super().__init__(feedback_type="success", message=message)
+
+
 def set_feedback(session, feedback):
     """ adds the feedback to the session """
     session["feedback"] = feedback.__dict__()

@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 
 import syllabus
 from syllabus.models.user import User
+from syllabus.utils.feedbacks import set_feedback
 from syllabus.utils.toc import Chapter, Content, Page
 
 default_rst_opts = {
@@ -40,7 +41,9 @@ default_rst_opts = {
 }
 
 
-def seeother(link):
+def seeother(link, feedback=None):
+    if feedback is not None:
+        set_feedback(session, feedback)
     return redirect(link, code=303)
 
 
