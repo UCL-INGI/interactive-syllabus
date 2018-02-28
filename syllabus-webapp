@@ -24,6 +24,8 @@ import syllabus
 import os
 import yaml
 
+from syllabus.utils import pages
+
 default_toc = \
     {
         "contribuer": {
@@ -52,6 +54,8 @@ def ask_question_yes_no(question):
 
 if __name__ == '__main__':
     path = syllabus.get_pages_path()
+    if syllabus.config.syllabus_pages_repo_remote is not None:
+        pages.init_repo()
     create_toc = False
     if not os.path.isdir(path) and not os.path.isfile(path):
         create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "

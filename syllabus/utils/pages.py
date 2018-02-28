@@ -23,6 +23,7 @@ import yaml
 from docutils.core import publish_string
 from flask import render_template_string, redirect, session, abort
 from flask.helpers import safe_join
+from git import Repo, InvalidGitRepositoryError
 from werkzeug.utils import secure_filename
 
 import syllabus
@@ -120,3 +121,17 @@ def generate_toc_yaml():
     for dir in [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]:
         result[dir] = create_dict(os.path.join(path, dir), dir)
     return str(yaml.dump(result))
+
+
+def init_repo():
+    path = os.path.join(syllabus.get_root_path(), syllabus.get_pages_path())
+    try:
+        repo = Repo(path)
+    except InvalidGitRepositoryError:
+        # this is currently not a git repo
+        repo = Repo.init(path)
+    try:
+        origin = repo.remote("origin")
+    except:
+        origin = repo.create_remote("origin", syllabus.config.syllabus_pages_repo_remote)
+    origin.pull("master", force=True)
