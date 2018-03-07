@@ -22,7 +22,7 @@ default_toc = \
 # default pages directory location
 path = os.path.join(syllabus.get_root_path(), "pages")
 if syllabus.config.syllabus_pages_repo_origin is not None:
-    pages.init_repo()
+    pages.init_and_sync_repo()
 if not os.path.isdir(path) and not os.path.isfile(path):
         shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
 if not os.path.isfile(os.path.join(path, "toc.yaml")):

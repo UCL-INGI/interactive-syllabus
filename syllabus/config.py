@@ -28,10 +28,6 @@ inginious_course_url = "%s/%s" % (inginious_url, inginious_course_id)
 # environment variable. If none of these is set, the path will be considered as in the current working directory.
 syllabus_pages_path = None
 
-# url of the git remote that will be used to get the pages of the syllabus.
-# the git repo will be force-pulled from the remote
-syllabus_pages_repo_remote = None
-
 # if True, the INGInious POST requests will be sent to this server instead of the real
 # INGINious instance. This server will then do the request itself to the INGInious instance,
 # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
@@ -48,3 +44,13 @@ use_lti = True
 consumer_secret = 'my_super_key'
 
 consumer_key = 'syllabus'
+
+### GIT RELATED CONFIG ###
+
+# url of the git remote that will be used to get the pages of the syllabus.
+# the git repo will be force-pulled from the remote
+# if a deployment key is specified and github is used, the string must be in the following format:
+# "git@github.com:user/repo.git
+syllabus_pages_repo_remote = None
+
+repo_private_key = None
