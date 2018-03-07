@@ -15,10 +15,10 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base = declarative_base()
 Base.query = db_session.query_property()
 
-current_version = 1
+current_version = 2
 
 
-def create_db():
+def create_db_user():
     from syllabus.models.user import User
     change_pwd_bytes = os.urandom(20)
     change_pwd_hex = binascii.hexlify(change_pwd_bytes).decode()
@@ -29,25 +29,53 @@ def create_db():
     connection.execute("PRAGMA main.user_version=%d;" % current_version)
 
 
+def generate_github_hook():
+    from syllabus.models.params import Params
+    params = Params.query.first()
+    if params is None or params.git_hook_url is None:
+        hook_address = os.urandom(20)
+        hook_address_hex = binascii.hexlify(hook_address).decode()
+        if params is None:
+            params = Params(hook_address_hex)
+            db_session.add(params)
+        else:
+            params.git_hook_url = hook_address_hex
+        db_session.commit()
+
 def init_db():
     # import all modules here that might define models so that
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
     import syllabus.models.user
+    import syllabus.models.params
 
     Base.metadata.create_all(bind=engine)
     from syllabus.models.user import User
     users = User.query.all()
     if len(users) == 0:
-        create_db()
+        create_db_user()
+    if syllabus.config.syllabus_pages_repo_remote is not None:
+        generate_github_hook()
 
 
 def update_database():
     connection = engine.connect()
     version = connection.execute("PRAGMA main.user_version;").first()[0]
     if version < current_version:
-        print("database version (%d) is outdated, updating database to version %d", current_version)
+        print("database version (%d) is outdated, updating database to version %d" % (version, current_version))
     if version < 1:
         print("updating to version 1")
         connection.execute("ALTER TABLE users ADD COLUMN right STRING(30);")
+    if version < 2:
+        print("updating to version 2")
+        connection.execute("""
+        CREATE TABLE params(
+           git_hook_url STRING(80),
+           id           INTEGER PRIMARY KEY
+        );
+        """)
+        connection.execute("""
+        INSERT INTO params (git_hook_url, id)
+        VALUES (NULL, 1);
+        """)
     connection.execute("PRAGMA main.user_version=%d;" % current_version)
