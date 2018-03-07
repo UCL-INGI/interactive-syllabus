@@ -32,6 +32,7 @@ import syllabus.utils.pages
 from syllabus.admin import admin_blueprint
 from syllabus.config import *
 from syllabus.database import init_db, db_session, update_database
+from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother, get_content_data, permission_admin
@@ -301,6 +302,15 @@ def metadata():
     else:
         resp = make_response(', '.join(errors), 500)
     return resp
+
+
+@app.route('/update_pages/<secret>', methods=['GET', 'POST'])
+def update_pages(secret):
+    params = Params.query.one()
+    if secret != params.git_hook_url or syllabus.config.syllabus_pages_repo_remote is None:
+        return seeother("/")
+    syllabus.utils.pages.init_and_sync_repo(force_sync=True)
+    return "done"
 
 
 def main():
