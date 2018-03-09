@@ -1,18 +1,20 @@
 from http.client import HTTPResponse
 
+import syllabus
 from lti import ToolConsumer
 import syllabus.config as config
 from urllib import request as urllib_request, parse
 import re
 
-lti_url_regex = re.compile("%s/@[0-9a-fA-F]+@/lti/task/?" % config.inginious_url)
+lti_url_regex = re.compile("%s/@[0-9a-fA-F]+@/lti/task/?" % syllabus.get_config()['inginious']['url'])
 
 
 def get_lti_url(user_id, task_id):
+    config = syllabus.get_config()
     consumer = ToolConsumer(
-        consumer_key=config.consumer_key,
-        consumer_secret=config.consumer_secret,
-        launch_url='%s/lti/%s/%s' % (config.inginious_url, config.inginious_course_id, task_id),
+        consumer_key=config['inginious']['lti']['consumer_key'],
+        consumer_secret=config['inginious']['lti']['consumer_secret'],
+        launch_url='%s/lti/%s/%s' % (config['inginious']['url'], config['inginious']['course_id'], task_id),
         params={
             'lti_message_type': 'basic-lti-launch-request',
             'lti_version': "1.1",
@@ -24,7 +26,7 @@ def get_lti_url(user_id, task_id):
     d = consumer.generate_launch_data()
     data = parse.urlencode(d).encode()
 
-    req = urllib_request.Request('%s/lti/%s/%s' % (config.inginious_url, config.inginious_course_id, task_id), data=data)
+    req = urllib_request.Request('%s/lti/%s/%s' % (config['inginious']['url'], config['inginious']['course_id'], task_id), data=data)
     resp = urllib_request.urlopen(req)
 
     task_url = resp.geturl()

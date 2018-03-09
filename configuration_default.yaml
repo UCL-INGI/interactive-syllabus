@@ -1,0 +1,159 @@
+inginious:
+  url: http://inginious_instance.example:port
+  course_id: id
+
+  # if yes, the INGInious POST requests will be sent to this server instead of the real
+  # INGINious instance. This server will then do the request itself to the INGInious instance,
+  # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
+  same_origin_proxy: yes
+
+  # LTI-related config. If you want to use LTI, uncomment the following lines:
+
+  #lti:
+  #  consumer_secret: my_super_key
+  #  consumer_key: my_super_consumer_key
+
+pages:
+  # indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH
+  # environment variable. If none of these is set, the path will be considered as in the current working directory.
+  path: ~
+
+  # Git related config. Allows to synchronize the syllabus pages directory with a Git repository.
+  # If you want to use this feature, uncomment the following lines.
+  #git:
+  #  # url of the git remote that will be used to get the pages of the syllabus.
+  #  # the git repo will be force-pulled from the remote
+  #  # if a deployment key is specified and github is used, the string must be in the following format:
+  #  # "git@github.com:user/repo.git"
+  #  remote: ~
+  #  branch: master
+  #  repository_private_key: ~
+
+
+# Specifies the authentication methods that can be used by the syllabus.
+# The list can contain "local", "saml" or both
+# The saml configuration file can be found in syllabus/saml/saml.yaml
+authentication_methods:
+  - local
+  - saml
+
+
+
+# SAML-related configuration
+saml:
+  sp:
+      # Identifier of the SP entity  (must be a URI)
+      entityId: "https://your_instance_hostname/saml"
+      # Specifies info about where and how the <AuthnResponse> message MUST be
+      # returned to the requester, in this case our SP.
+      assertionConsumerService:
+          # URL Location where the <Response> from the IdP will be returned
+          url: "https://your_instance_hostname/saml"
+          # SAML protocol binding to be used when returning the <Response>
+          # message. OneLogin Toolkit supports this endpoint for the
+          # HTTP-POST binding only.
+          binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+
+      # If you need to specify requested attributes, set a
+      # attributeConsumingService. nameFormat, attributeValue and
+      # friendlyName can be omitted
+  #        attributeConsumingService:
+  #                serviceName: "SP test"
+  #                serviceDescription: "Test Service"
+  #                requestedAttributes:
+  #                      - name: ""
+  #                        isRequired: false
+  #                        nameFormat: ""
+  #                        friendlyName: ""
+  #                        attributeValue: []
+
+
+      # Specifies info about where and how the <Logout Response> message MUST be
+      # returned to the requester, in this case our SP.
+      singleLogoutService:
+          # URL Location where the <Response> from the IdP will be returned
+          url: "https://your_instance_hostname/saml"
+          # SAML protocol binding to be used when returning the <Response>
+          # message. OneLogin Toolkit supports the HTTP-Redirect binding
+          # only for this endpoint.
+          binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+
+      # Specifies the constraints on the name identifier to be used to
+      # represent the requested subject.
+      # Take a look on src/onelogin/saml2/constants.py to see the NameIdFormat that are supported.
+      NameIDFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+      # Usually x509cert and privateKey of the SP are provided by files placed at
+      # the certs folder. But we can also provide them with the following parameters
+      x509cert: ""
+      privateKey: ""
+
+      attrs:
+        username: 'urn:oid:2.5.4.4'
+        realname: 'urn:oid:2.5.4.3'
+        email: 'urn:oid:1.3.6.1.4.1.5923.1.1.1.6'
+
+       # Key rollover
+       # If you plan to update the SP x509cert and privateKey
+       # you can define here the new x509cert and it will be
+       # published on the SP metadata so Identity Providers can
+       # read them and get ready for rollover.
+       #
+       # 'x509certNew': '',
+
+
+    # Identity Provider Data that we want connected with our SP.
+  idp:
+      # Identifier of the IdP entity  (must be a URI)
+      entityId: 'https://idp.testshib.org/idp/shibboleth'
+      # SSO endpoint info of the IdP. (Authentication Request protocol)
+      singleSignOnService:
+          # URL Target of the IdP where the Authentication Request Message
+          # will be sent.
+          url: 'https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO'
+          # SAML protocol binding to be used when returning the <Response>
+          # message. OneLogin Toolkit supports the HTTP-Redirect binding
+          # only for this endpoint.
+          binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+
+      # SLO endpoint info of the IdP.
+      singleLogoutService:
+          # URL Location of the IdP where SLO Request will be sent.
+          url: 'https://idp.testshib.org/idp/profile/SAML2/Redirect/SLO'
+          # SAML protocol binding to be used when returning the <Response>
+          # message. OneLogin Toolkit supports the HTTP-Redirect binding
+          # only for this endpoint.
+          binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+
+      # Public x509 certificate of the IdP
+      x509cert: 'MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEB CwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0 WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIB IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryh m3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEm lGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBn xoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB 3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTH ot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQID AQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQw EoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzR OZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QP dRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS 80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOT MVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhO RkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqX MLRKhDgdmA=='
+       #  Instead of using the whole x509cert you can use a fingerprint in order to
+       #  validate a SAMLResponse, but you will need it to validate LogoutRequest and LogoutResponse using the HTTP-Redirect binding.
+       #
+       #  (openssl x509 -noout -fingerprint -in "idp.crt" to generate it,
+       #  or add for example the -sha256 , -sha384 or -sha512 parameter)
+       #
+       #  If a fingerprint is provided, then the certFingerprintAlgorithm is required in order to
+       #  let the toolkit know which algorithm was used. Possible values: sha1, sha256, sha384 or sha512
+       #  'sha1' is the default value.
+       #
+       #  Notice that if you want to validate any SAML Message sent by the HTTP-Redirect binding, you
+       #  will need to provide the whole x509cert.
+       #
+      # 'certFingerprint': '',
+      # 'certFingerprintAlgorithm': 'sha1',
+
+       # In some scenarios the IdP uses different certificates for
+       # signing/encryption, or is under key rollover phase and
+       # more than one certificate is published on IdP metadata.
+       # In order to handle that the toolkit offers that parameter.
+       # (when used, 'x509cert' and 'certFingerprint' values are
+       # ignored).
+       #
+      # 'x509certMulti': {
+      #      'signing': [
+      #          '<cert1-string>'
+      #      ],
+      #      'encryption': [
+      #          '<cert2-string>'
+      #      ]
+      # }

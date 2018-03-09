@@ -54,7 +54,7 @@ def ask_question_yes_no(question):
 
 if __name__ == '__main__':
     path = syllabus.get_pages_path()
-    if syllabus.config.syllabus_pages_repo_remote is not None:
+    if 'git' in syllabus.get_config()['pages']:
         pages.init_and_sync_repo()
     create_toc = False
     if not os.path.isdir(path) and not os.path.isfile(path):

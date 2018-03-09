@@ -67,5 +67,22 @@ def get_pages_path():
     if has_request_context() and "SYLLABUS_PAGES_PATH" in request.environ:
         return os.path.join(request.environ["SYLLABUS_PAGES_PATH"], "pages")
     # SYLLABUS_PAGES_PATH can be set by mod_wsgi; If not, the path will be in the current working directory
-    path = config.syllabus_pages_path if config.syllabus_pages_path is not None else os.getcwd()
+    syllabus_pages_path = get_config()['pages']['path']
+    path = syllabus_pages_path if syllabus_pages_path is not None else os.getcwd()
     return os.path.join(path, "pages")
+
+
+def get_config(force=False):
+    def reload_config():
+        if has_request_context() and "SYLLABUS_CONFIG_PATH" in request.environ:
+            path = os.path.join(request.environ["SYLLABUS_CONFIG_PATH"], "configuration.yaml")
+        else:
+            path = os.path.join(os.path.curdir, "configuration.yaml")
+        with open(path, "r") as f:
+            get_config.cached = yaml.load(f)
+            return get_config.cached
+
+    try:
+        return get_config.cached
+    except AttributeError:
+        return reload_config()

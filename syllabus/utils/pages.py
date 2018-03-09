@@ -126,21 +126,22 @@ def generate_toc_yaml():
 def init_and_sync_repo(force_sync=False):
     """
     Initializes a git repository in the pages folder if no repository already exists, then
-    synchronizes it with the remote specified in config.syllabus_pages_repo_remote if the
+    synchronizes it with the remote specified in the configuration file if the
     origin didn't exist before or if force_sync is True.
     Warning: the local changes will be overwritten.
     :return:
     """
     path = os.path.join(syllabus.get_root_path(), syllabus.get_pages_path())
+    git_config = syllabus.get_config()['pages']['git']
     try:
         repo = Repo(path)
     except InvalidGitRepositoryError:
         # this is currently not a git repo
         repo = Repo.init(path)
     try:
-        origin = repo.remote("origin").set_url(syllabus.config.syllabus_pages_repo_remote)
+        origin = repo.remote("origin").set_url(git_config['remote'])
     except:
-        origin = repo.create_remote("origin", syllabus.config.syllabus_pages_repo_remote)
+        origin = repo.create_remote("origin", git_config['remote'])
         # sync the repo if the origin wasn't already there
         force_sync = True
     if force_sync:
@@ -148,12 +149,15 @@ def init_and_sync_repo(force_sync=False):
 
 
 def git_force_sync(origin, repo: Repo):
-    if syllabus.config.repo_private_key is not None:
-        with repo.git.custom_environment(GIT_SSH_COMMAND='ssh -i %s -o StrictHostKeyChecking=no' % syllabus.config.repo_private_key):
-            origin.fetch("master")
+    git_config = syllabus.get_config()['pages']['git']
+    private_key_path = git_config['repository_private_key']
+    branch = git_config['branch']
+    if private_key_path is not None:
+        with repo.git.custom_environment(GIT_SSH_COMMAND='ssh -i %s -o StrictHostKeyChecking=no' % private_key_path):
+            origin.fetch(branch)
             # complete synchronization (local changes will be overwritten)
-            repo.git.reset('--hard', 'origin/master')
+            repo.git.reset('--hard', 'origin/%s' % branch)
     else:
-        origin.fetch("master")
+        origin.fetch(branch)
         # complete synchronization (local changes will be overwritten)
-        repo.git.reset('--hard', 'origin/master')
+        repo.git.reset('--hard', 'origin/%s' % branch)

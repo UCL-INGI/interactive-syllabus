@@ -1,6 +1,7 @@
 include LICENSE.txt
 include README.md
 include dependencies
+include configuration_default.yaml
 recursive-include syllabus/static *
 recursive-include syllabus/doc *
 recursive-include syllabus/templates *

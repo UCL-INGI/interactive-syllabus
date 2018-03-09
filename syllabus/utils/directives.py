@@ -60,6 +60,9 @@ class InginiousDirective(Directive):
     def get_html_content(self, use_lti):
         if not session.get("print", False):
             if not use_lti:
+                inginious_config = syllabus.get_config()['inginious']
+                inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+                same_origin_proxy = inginious_config['same_origin_proxy']
                 par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
                                                      '\n'.join(self.content),
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
@@ -104,7 +107,7 @@ class InginiousDirective(Directive):
         return [par]
 
     def run(self):
-        return self.get_html_content(use_lti)
+        return self.get_html_content("lti" in syllabus.get_config()["inginious"])
 
 
 class InginiousSandboxDirective(InginiousDirective):

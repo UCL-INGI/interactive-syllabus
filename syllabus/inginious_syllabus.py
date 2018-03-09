@@ -50,9 +50,8 @@ directives.register_directive('table-of-contents', syllabus.utils.directives.ToC
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 
 
-if "saml" in authentication_methods:
-    with open(os.path.join(syllabus.get_root_path(), "saml", "saml.yaml")) as f:
-        saml_config = yaml.load(f)
+if "saml" in syllabus.get_config()['authentication_methods']:
+    saml_config = syllabus.get_config()['saml']
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -157,6 +156,10 @@ def render_web_page(content: Content, print_mode=False, display_print_all=False)
             next = TOC.get_next_content(content)
         except KeyError:
             next = None
+
+        inginious_config = syllabus.get_config()['inginious']
+        inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        same_origin_proxy = inginious_config['same_origin_proxy']
         retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
                                  logged_in=session.get("user", None),
                                  inginious_url=inginious_course_url if not same_origin_proxy else "/postinginious",
@@ -199,7 +202,7 @@ def reset_password(secret):
 @app.route("/login", methods=['GET', 'POST'])
 def log_in():
     if request.method == "GET":
-        return render_template("login.html", auth_methods=authentication_methods)
+        return render_template("login.html", auth_methods=syllabus.get_config()['authentication_methods'])
     if request.method == "POST":
         inpt = request.form
         username = inpt["username"]
@@ -233,6 +236,8 @@ def log_out():
 def post_inginious():
     inpt = request.form
     data = parse.urlencode(inpt).encode()
+    inginious_config = syllabus.get_config()['inginious']
+    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
     req = urllib_request.Request(inginious_course_url, data=data)
     resp = urllib_request.urlopen(req)
     response = make_response(resp.read().decode())
@@ -249,7 +254,7 @@ def parse_rst():
 
 @app.route('/saml', methods=['GET', 'POST'])
 def saml():
-    if "saml" not in authentication_methods:
+    if "saml" not in syllabus.get_config()['authentication_methods']:
         abort(404)
     req = prepare_request(request)
     req['request_uri'] = request.path  # hack to ensure to have the correct path and to avoid RelayState loops
@@ -307,7 +312,7 @@ def metadata():
 @app.route('/update_pages/<secret>', methods=['GET', 'POST'])
 def update_pages(secret):
     params = Params.query.one()
-    if secret != params.git_hook_url or syllabus.config.syllabus_pages_repo_remote is None:
+    if secret != params.git_hook_url or 'git' not in syllabus.get_config()['pages']:
         return seeother("/")
     syllabus.utils.pages.init_and_sync_repo(force_sync=True)
     return "done"
