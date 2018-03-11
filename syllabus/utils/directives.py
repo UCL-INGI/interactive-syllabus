@@ -25,7 +25,6 @@ from docutils.statemachine import StringList
 from flask import session
 
 import syllabus.utils.pages
-from syllabus.config import *
 from syllabus.utils.inginious_lti import get_lti_url
 from syllabus.utils.toc import Chapter
 

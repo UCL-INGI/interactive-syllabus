@@ -20,7 +20,6 @@ import os
 from urllib import parse
 from urllib import request as urllib_request
 
-import yaml
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
 from flask import Flask, render_template, request, abort, make_response, session, redirect
@@ -30,13 +29,12 @@ import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
 from syllabus.admin import admin_blueprint
-from syllabus.config import *
 from syllabus.database import init_db, db_session, update_database
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother, get_content_data, permission_admin
-from syllabus.utils.toc import Content, Chapter, TableOfContent, Page, ContentNotFoundError
+from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))

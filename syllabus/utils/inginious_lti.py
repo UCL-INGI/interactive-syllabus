@@ -1,10 +1,9 @@
-from http.client import HTTPResponse
+import re
+from urllib import request as urllib_request, parse
+
+from lti import ToolConsumer
 
 import syllabus
-from lti import ToolConsumer
-import syllabus.config as config
-from urllib import request as urllib_request, parse
-import re
 
 lti_url_regex = re.compile("%s/@[0-9a-fA-F]+@/lti/task/?" % syllabus.get_config()['inginious']['url'])
 
