@@ -148,7 +148,7 @@ def init_and_sync_repo(force_sync=False):
         git_force_sync(origin, repo)
 
 
-def git_force_sync(origin, repo: Repo):
+def git_force_sync(origin, repo):
     git_config = syllabus.get_config()['pages']['git']
     private_key_path = git_config['repository_private_key']
     branch = git_config['branch']
