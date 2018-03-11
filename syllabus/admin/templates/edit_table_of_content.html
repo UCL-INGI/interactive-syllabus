@@ -26,21 +26,21 @@
         </h1>
         <section class="content container-fluid">
             <div id="editor" style="margin: 20px; max-width: 95%" data-language="rst">
-                <div id="parsing-feedback-success" class="alert alert-success" hidden><i style="padding-right: 5px"
-                                                                                         class="fa fa-check"></i>
-                    Parsing success !
-                </div>
-                <div id="parsing-feedback-error" class="alert alert-danger" hidden><i style="padding-right: 5px"
-                                                                                      class="fa fa-times"></i> Parsing
-                    error :
-                    <pre style="margin-top: 10px" id="parsing-error-message">
-
-                    </pre>
-                </div>
                 <form id="to-submit" method="post">
                     <label for="content">New Table of Content</label>
                     <textarea id="content" name="new_content"
                               style="width:100%; height:100%;">{{ content }}</textarea><br/>
+                    <div id="parsing-feedback-success" class="alert alert-success" hidden><i style="padding-right: 5px"
+                                                                                             class="fa fa-check"></i>
+                        Parsing success !
+                    </div>
+                    <div id="parsing-feedback-error" class="alert alert-danger" hidden><i style="padding-right: 5px"
+                                                                                          class="fa fa-times"></i> Parsing
+                        error :
+                        <pre style="margin-top: 10px" id="parsing-error-message">
+
+                        </pre>
+                    </div>
                     <button id="submit-toc" data-toggle="modal" data-target="#modal-confirm" type="button"
                             class="btn btn-md btn-primary">Submit
                     </button>
