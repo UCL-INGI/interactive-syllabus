@@ -24,7 +24,6 @@ import yaml
 from flask import request, has_request_context
 
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader, OrderedDumper
-import syllabus.config
 
 
 def get_toc(force=False):
@@ -74,15 +73,31 @@ def get_pages_path():
 
 def get_config(force=False):
     def reload_config():
-        if has_request_context() and "SYLLABUS_CONFIG_PATH" in request.environ:
-            path = os.path.join(request.environ["SYLLABUS_CONFIG_PATH"], "configuration.yaml")
-        else:
-            path = os.path.join(os.path.curdir, "configuration.yaml")
+        path = get_config_path()
         with open(path, "r") as f:
             get_config.cached = yaml.load(f)
             return get_config.cached
-
+    if force:
+        return reload_config()
     try:
         return get_config.cached
     except AttributeError:
         return reload_config()
+
+
+def get_config_path():
+    if has_request_context() and "SYLLABUS_CONFIG_PATH" in request.environ:
+        return os.path.join(request.environ["SYLLABUS_CONFIG_PATH"], "configuration.yaml")
+    else:
+        return os.path.join(os.path.curdir, "configuration.yaml")
+
+
+def set_config(config):
+    path = get_config_path()
+    with open(path, "w") as f:
+        if type(config) is str:
+            f.write(config)
+        else:
+            yaml.dump(config, f)
+    # update the cached config
+    get_config(True)
