@@ -7,6 +7,7 @@ import re
 import yaml
 
 from syllabus.database import db_session
+from syllabus.models.params import Params
 from syllabus.utils.feedbacks import *
 from syllabus.utils.toc import TableOfContent, ContentNotFoundError, Page, Chapter
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader
@@ -24,7 +25,8 @@ admin_blueprint = Blueprint('admin', __name__,
 
 sidebar_elements = [{'id': 'users', 'name': 'Users', 'icon': 'users'},
                     {'id': 'content_edition', 'name': 'Content Edition', 'icon': 'edit'},
-                    {'id': 'toc_edition', 'name': 'ToC Edition', 'icon': 'list'}]
+                    {'id': 'toc_edition', 'name': 'ToC Edition', 'icon': 'list'},
+                    {'id': 'config_edition', 'name': 'Configuration Edition', 'icon': 'cog'}]
 
 sidebar = {'active_element': 'users', 'elements': sidebar_elements}
 
@@ -210,3 +212,48 @@ def toc_edition():
                                        feedback=pop_feeback(session))
             except TemplateNotFound:
                 abort(404)
+
+
+@admin_blueprint.route('/config_edition', methods=['GET', 'POST'])
+@permission_admin
+@sidebar_page('config_edition')
+def config_edition():
+    if request.method == "POST":
+        inpt = request.form
+        if "new_config" in inpt:
+            try:
+                # check YAML validity
+                config = yaml.load(inpt["new_config"])
+                # TODO: check that the configuration has the appropriate fields
+                # update the config
+                old_config = syllabus.get_config()
+                syllabus.set_config(inpt["new_config"])
+                # sync the git repo if it has changed
+                try:
+                    if ("git" not in old_config["pages"] and "git" in config["pages"]) or old_config["pages"]["git"] != config["pages"]["git"]:
+                        syllabus.utils.pages.init_and_sync_repo(force_sync=True)
+                except KeyError as e:
+                    pass
+                except AttributeError:
+                    return seeother(request.path, Feedback(feedback_type="error", message="The git repository has "
+                                                                                            "failed to synchronize. "
+                                                                                            "Please check your "
+                                                                                            "configuration."))
+                return seeother(request.path, Feedback(feedback_type="success", message="The table of contents has been"
+                                                                                        " modified successfully !"))
+            except yaml.YAMLError:
+                return seeother(request.path, feedback=Feedback(feedback_type="error",
+                                                                message="The submitted configuration is not "
+                                                                        "written in valid YAML."))
+    else:
+        params = Params.query.one()
+        config = syllabus.get_config()
+        hook_path = ("/update_pages/%s" % params.git_hook_url) if "git" in config["pages"] and params.git_hook_url is not None else None
+        try:
+            with open(syllabus.get_config_path(), 'r') as f:
+                return render_template('edit_configuration.html', active_element=sidebar['active_element'],
+                                       sidebar_elements=sidebar['elements'], config=f.read(),
+                                       hook_path=hook_path,
+                                       feedback=pop_feeback(session))
+        except TemplateNotFound:
+            abort(404)
