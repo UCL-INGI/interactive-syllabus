@@ -28,6 +28,6 @@ if not os.path.isdir(path) and not os.path.isfile(path):
 if not os.path.isfile(os.path.join(path, "toc.yaml")):
     with open(os.path.join(path, "toc.yaml"), "w+") as f:
         yaml.dump(default_toc, f)
-init_db()
 update_database()
+init_db()
 from syllabus.inginious_syllabus import app as application
