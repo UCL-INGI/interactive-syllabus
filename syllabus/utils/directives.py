@@ -25,7 +25,7 @@ from docutils.statemachine import StringList
 from flask import session
 
 import syllabus.utils.pages
-from syllabus.utils.inginious_lti import get_lti_url
+from syllabus.utils.inginious_lti import get_lti_url, get_lti_data
 from syllabus.utils.toc import Chapter
 
 
@@ -67,27 +67,31 @@ class InginiousDirective(Directive):
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
                                 format='html')
             else:
-                try:
-                    user = session.get("user", None)
-                    lti_url = get_lti_url(user.get("username", None) if user is not None else None, self.arguments[0])
+                user = session.get("user", None)
+                if user is not None:
+                    data, launch_url = get_lti_data(user.get("username", None) if user is not None else None, self.arguments[0])
+                    form_inputs = '\n'.join(['<input type="hidden" name="%s" value="%s"/>' % (key, value) for key, value in data.items()])
                     par = nodes.raw('',
-                                    '<iframe frameborder="0" onload="resizeIframe(this)" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                                    '<iframe name="myIframe%d" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
                                     ''
-                                    ' style="overflow: hidden; width: 100%%; height: 520px" src="%s"></iframe>' % (
-                                    lti_url), format='html')
-                except (URLError, HTTPError) as e:
-                    message = str(e.errno)
-                    if "connection refused" in str(e.reason).lower():  # Handle connection refused
-                        message = "impossible to connect to INGInious: connection refused"
-                    elif type(e) is HTTPError:  # Handle HTTP errors from INGInious
-                        if e.errno == 303:
-                            message = "impossible to connect to INGInious: your account does not match an INGInious account"
-                        elif e.errno == 500:
-                            message = "impossible to connect to INGInious: INGInious internal error"
+                                    ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
+                                    """
+                                    <form action="%s"
+                                          name="ltiLaunchForm"
+                                          class="ltiLaunchForm"
+                                          method="POST"
+                                          encType="application/x-www-form-urlencoded"
+                                          target="myIframe%s">
+                                      %s
+                                      <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
+                                    </form>
+                                    """ % (self.arguments[0], launch_url, self.arguments[0], form_inputs),
 
+                                    format='html')
+                else:
                     par = nodes.raw('',
-                                    '<pre style="overflow: hidden; width: 100%%; height: 520px"> %s </pre>' % (
-                                        message), format='html')
+                                    '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please log in to see this exercise </pre>',
+                                    format='html')
 
         else:
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0

@@ -30,10 +30,20 @@
     <script type="text/javascript" src="/static/js/rst-form.js"></script>
     <script type="text/javascript" src="/static/js/jquery-shuffle.js"></script>
     <script>
-      function resizeIframe(obj) {
-        obj.style.height = obj.contentWindow.document.body.scrollHeight + 'px';
 
-      }
+        window.addEventListener('message', function(e) {
+            var height = e.data.height;
+            if(e.origin === "{{ inginious_course_url }}") {
+                var iFrames = document.getElementsByTagName("iframe");
+                for(var i in iFrames) {
+                    if(e.source === iFrames[i].contentWindow) {
+                        $(iFrames[i]).height(height);
+                        break;
+                    }
+                }
+            }
+        }, false);
+
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -192,10 +202,12 @@
             const toSubmit = editor.getValue();
             const taskID = $(task).find('.taskid').val();
             $(task).find('.to-submit').val(JSON.stringify({q1: toSubmit}));
-            submitCode("{{ inginious_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor);
+            submitCode("{{ inginious_course_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor);
         });
         $(task).show();
     });
+    $('.inginious-submitter').hide();
+    $('.inginious-submitter').click();
 </script>
 <script src="/static/js/submitter.js"></script>
 </html>

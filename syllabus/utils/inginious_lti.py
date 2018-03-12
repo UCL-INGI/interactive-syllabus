@@ -36,3 +36,21 @@ def get_lti_url(user_id, task_id):
     return task_url
 
 
+def get_lti_data(user_id, task_id):
+    config = syllabus.get_config()
+    consumer = ToolConsumer(
+        consumer_key=config['inginious']['lti']['consumer_key'],
+        consumer_secret=config['inginious']['lti']['consumer_secret'],
+        launch_url='%s/lti/%s/%s' % (config['inginious']['url'], config['inginious']['course_id'], task_id),
+        params={
+            'lti_message_type': 'basic-lti-launch-request',
+            'lti_version': "1.1",
+            'resource_link_id': "syllabus_%s" % task_id,
+            'user_id': user_id,
+        }
+    )
+
+    d = consumer.generate_launch_data()
+    return d, consumer.launch_url
+
+
