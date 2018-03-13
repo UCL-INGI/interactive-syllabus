@@ -72,7 +72,7 @@ class InginiousDirective(Directive):
                     data, launch_url = get_lti_data(user.get("username", None) if user is not None else None, self.arguments[0])
                     form_inputs = '\n'.join(['<input type="hidden" name="%s" value="%s"/>' % (key, value) for key, value in data.items()])
                     par = nodes.raw('',
-                                    '<iframe name="myIframe%d" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                                    '<iframe name="myIframe%s" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
                                     ''
                                     ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
                                     """
