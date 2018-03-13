@@ -4,6 +4,8 @@ import yaml
 import syllabus
 from syllabus.database import init_db, update_database
 
+from syllabus.utils import pages
+
 default_toc = \
     {
         "contribuer": {
