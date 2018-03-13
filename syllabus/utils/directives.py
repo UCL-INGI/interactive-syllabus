@@ -25,7 +25,7 @@ from docutils.statemachine import StringList
 from flask import session
 
 import syllabus.utils.pages
-from syllabus.utils.inginious_lti import get_lti_url, get_lti_data
+from syllabus.utils.inginious_lti import get_lti_url, get_lti_data, get_lti_submission
 from syllabus.utils.toc import Chapter
 
 
@@ -57,7 +57,8 @@ class InginiousDirective(Directive):
     """
 
     def get_html_content(self, use_lti):
-        if not session.get("print", False):
+        user = session.get("user", None)
+        if not session.get("print_mode", False):
             if not use_lti:
                 inginious_config = syllabus.get_config()['inginious']
                 inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
@@ -67,7 +68,6 @@ class InginiousDirective(Directive):
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
                                 format='html')
             else:
-                user = session.get("user", None)
                 if user is not None:
                     data, launch_url = get_lti_data(user.get("username", None) if user is not None else None, self.arguments[0])
                     form_inputs = '\n'.join(['<input type="hidden" name="%s" value="%s"/>' % (key, value) for key, value in data.items()])
@@ -94,11 +94,14 @@ class InginiousDirective(Directive):
                                     format='html')
 
         else:
+            if user is not None:
+                submission = get_lti_submission(user.get("username", None), self.arguments[0])
+            else:
+                submission = None
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
-            if self.content:
+            if submission is None and self.content:
                 sl = StringList(" "*n_blank_lines)
                 self.content.append(sl)
-                # par = nodes.literal_block('yaml',"%s%s" % ('\n'.join(self.content), "\n"*n_blank_lines), classes=["code", "yaml", "literal-block"])
                 cb = CodeBlock(arguments=["yaml"], content=self.content, lineno=self.lineno,
                                block_text=self.block_text, content_offset=self.content_offset, name="code-block",
                                options=self.options, state=self.state, state_machine=self.state_machine)
@@ -106,7 +109,8 @@ class InginiousDirective(Directive):
             else:
                 if n_blank_lines == 0:
                     n_blank_lines = 1
-                par = nodes.raw('', """<pre>%s</pre>""" % ("\n"*n_blank_lines), format='html')
+                content = submission if submission is not None else ("\n"*n_blank_lines)
+                par = nodes.raw('', """<pre>%s</pre>""" % content, format='html')
         return [par]
 
     def run(self):

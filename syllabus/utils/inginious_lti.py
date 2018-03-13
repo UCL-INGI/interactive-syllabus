@@ -1,3 +1,4 @@
+import json
 import re
 from urllib import request as urllib_request, parse
 
@@ -6,6 +7,7 @@ from lti import ToolConsumer
 import syllabus
 
 lti_url_regex = re.compile("%s/@[0-9a-fA-F]+@/lti/task/?" % syllabus.get_config()['inginious']['url'])
+lti_regex_match = re.compile('/@([0-9a-fA-F]+?)@/')
 
 
 def get_lti_url(user_id, task_id):
@@ -35,6 +37,17 @@ def get_lti_url(user_id, task_id):
         #raise Exception("INGInious returned the wrong url: %s vs %s" % (task_url, str(lti_url_regex)))
     return task_url
 
+
+def get_lti_submission(user_id, task_id):
+    config = syllabus.get_config()
+    lti_url = get_lti_url(user_id, task_id)
+    match = lti_regex_match.findall(lti_url)
+    if len(match) == 1:
+        cookie = match[0]
+        response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['inginious']['url'], cookie)).read().decode("utf-8"))
+        if response["status"] == "success" and response["submission"] is not None:
+            return response["submission"]["input"]['q1']
+    return None
 
 def get_lti_data(user_id, task_id):
     config = syllabus.get_config()
