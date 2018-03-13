@@ -1,11 +1,14 @@
 from urllib.parse import urlparse
 
+import os
+
+import syllabus
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 
 def init_saml_auth(req, saml_config):
-    auth = OneLogin_Saml2_Auth(req, saml_config)
+    auth = OneLogin_Saml2_Auth(req, saml_config, custom_base_path=os.path.join(syllabus.get_root_path(), "saml"))
     return auth
 
 
