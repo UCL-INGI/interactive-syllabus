@@ -283,7 +283,8 @@ def saml():
                 db_session.add(user)
                 db_session.commit()
 
-            session["user"] = user.to_dict() + {"login_method": "saml"}
+            session["user"] = user.to_dict()
+            session["user"].update({"login_method": "saml"})
 
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
