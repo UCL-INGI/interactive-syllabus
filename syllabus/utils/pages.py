@@ -146,6 +146,7 @@ def init_and_sync_repo(force_sync=False):
         force_sync = True
     if force_sync:
         git_force_sync(origin, repo)
+        syllabus.get_toc(True)
 
 
 def git_force_sync(origin, repo):
@@ -153,11 +154,24 @@ def git_force_sync(origin, repo):
     private_key_path = git_config['repository_private_key']
     branch = git_config['branch']
     if private_key_path is not None:
-        with repo.git.custom_environment(GIT_SSH_COMMAND='ssh -i %s -o StrictHostKeyChecking=no' % private_key_path):
-            origin.fetch(branch)
+        # We need to be compatible with git < 2.3 as CentOS7 uses an older version, so here is an ugly code
+        # to use a deployment key that will work with old git versions
+
+        # set the ssh executable
+        ssh_executable_path = os.path.join(syllabus.get_root_path(), "ssh_executable.sh")
+        with open(ssh_executable_path, "w") as f:
+            f.write('#!/bin/sh\nID_RSA=%s\nssh -o StrictHostKeyChecking=no -i $ID_RSA "$@"' % private_key_path)
+        os.system("chmod +x %s" % ssh_executable_path)
+        with repo.git.custom_environment(GIT_SSH=ssh_executable_path):
+            origin.fetch()
             # complete synchronization (local changes will be overwritten)
             repo.git.reset('--hard', 'origin/%s' % branch)
+        # Hereunder is a more pretty version, uncomment it when the git version is >= 2.3
+        # with repo.git.custom_environment(GIT_SSH_COMMAND='ssh -i %s -o StrictHostKeyChecking=no' % private_key_path):
+        #     origin.fetch()
+        #     # complete synchronization (local changes will be overwritten)
+        #     repo.git.reset('--hard', 'origin/%s' % branch)
     else:
-        origin.fetch(branch)
+        origin.fetch()
         # complete synchronization (local changes will be overwritten)
         repo.git.reset('--hard', 'origin/%s' % branch)
