@@ -27,7 +27,8 @@ pages:
   #  # "git@github.com:user/repo.git"
   #  remote: ~
   #  branch: master
-  #  repository_private_key: ~
+  #  # The path to the private key used to pull the specified repository
+  #  repository_private_key_path: ~
 
 
 # Specifies the authentication methods that can be used by the syllabus.
