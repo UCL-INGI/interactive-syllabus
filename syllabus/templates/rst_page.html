@@ -33,7 +33,7 @@
 
         window.addEventListener('message', function(e) {
             var height = e.data.height;
-            if(e.origin === "{{ inginious_course_url }}") {
+            if(e.origin === "{{ inginious_url }}") {
                 var iFrames = document.getElementsByTagName("iframe");
                 for(var i in iFrames) {
                     if(e.source === iFrames[i].contentWindow) {
