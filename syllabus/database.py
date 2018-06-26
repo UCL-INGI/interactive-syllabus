@@ -49,6 +49,8 @@ def init_db():
     import syllabus.models.user
     import syllabus.models.params
 
+    if not os.path.isfile(database_path):
+        print("Init the database.")
     Base.metadata.create_all(bind=engine)
     from syllabus.models.user import User
     users = User.query.all()
@@ -59,23 +61,26 @@ def init_db():
 
 
 def update_database():
-    connection = engine.connect()
-    version = connection.execute("PRAGMA main.user_version;").first()[0]
-    if version < current_version:
-        print("database version (%d) is outdated, updating database to version %d" % (version, current_version))
-    if version < 1:
-        print("updating to version 1")
-        connection.execute("ALTER TABLE users ADD COLUMN right STRING(30);")
-    if version < 2:
-        print("updating to version 2")
-        connection.execute("""
-        CREATE TABLE params(
-           git_hook_url STRING(80),
-           id           INTEGER PRIMARY KEY
-        );
-        """)
-        connection.execute("""
-        INSERT INTO params (git_hook_url, id)
-        VALUES (NULL, 1);
-        """)
-    connection.execute("PRAGMA main.user_version=%d;" % current_version)
+    if os.path.isfile(database_path):
+        connection = engine.connect()
+        version = connection.execute("PRAGMA main.user_version;").first()[0]
+        if version < current_version:
+            print("database version (%d) is outdated, updating database to version %d" % (version, current_version))
+        if version < 1:
+            print("updating to version 1")
+            connection.execute("ALTER TABLE users ADD COLUMN right STRING(30);")
+        if version < 2:
+            print("updating to version 2")
+            connection.execute("""
+            CREATE TABLE params(
+               git_hook_url STRING(80),
+               id           INTEGER PRIMARY KEY
+            );
+            """)
+            connection.execute("""
+            INSERT INTO params (git_hook_url, id)
+            VALUES (NULL, 1);
+            """)
+        connection.execute("PRAGMA main.user_version=%d;" % current_version)
+    else:
+        print("The database does not exist yet.")
