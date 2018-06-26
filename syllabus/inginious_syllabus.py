@@ -54,13 +54,14 @@ if "saml" in syllabus.get_config()['authentication_methods']:
 
 @app.route('/', methods=["GET", "POST"])
 @app.route('/index', methods=["GET", "POST"])
-def index():
+def index(print=False):
     TOC = syllabus.get_toc()
     if request.args.get("edit") is not None:
         return edit_content(TOC.index.path, TOC)
+    print_mode = print or request.args.get("print") is not None
     try:
         # only display the button to print the whole syllabus in the index
-        return render_web_page(TOC.index, print_mode=request.args.get("print") is not None, display_print_all=True)
+        return render_web_page(TOC.index, print_mode=print_mode, display_print_all=True)
     except ContentNotFoundError:
         abort(404)
 

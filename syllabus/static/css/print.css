@@ -18,6 +18,11 @@ tt {
     background-color: #f1f1f1;
 }
 
+li a {
+    color: black;
+}
+
+
 
 @media print {
 
@@ -38,6 +43,10 @@ tt {
 
     pre, code, tt, .print {
         font-family: "Liberation Mono" !important;
+    }
+
+    li a {
+        color: black;
     }
 
     a[href]:after { /* remove link when printing */
