@@ -6,6 +6,17 @@ from syllabus.database import init_db, update_database
 
 from syllabus.utils import pages
 
+# use it to set environment variables with WSGI outside the request context
+# it is mostly useful if you want several instances of the syllabus having
+# different values for these variables: you only need to duplicate this file
+# and change these variables
+
+ENV_VARS = {"SYLLABUS_PAGES_PATH": None, "SYLLABUS_CONFIG_PATH": None}
+
+for name, val in ENV_VARS.items():
+    if val is not None:
+        os.environ[name] = val
+
 default_toc = \
     {
         "contribuer": {
