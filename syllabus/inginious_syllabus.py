@@ -33,7 +33,7 @@ from syllabus.database import init_db, db_session, update_database
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.pages import seeother, get_content_data, permission_admin
+from syllabus.utils.pages import seeother, get_content_data, permission_admin, render_content, default_rst_opts
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -93,6 +93,12 @@ def get_syllabus_content(content_path: str, print=False):
     except ContentNotFoundError:
         abort(404)
 
+@app.route('/syllabus/refresh', methods=["POST"])
+def refresh():
+    data = request.form['content']
+    code_html = publish_string(data, writer_name='html', settings_overrides=default_rst_opts)
+    return "<div id=\"preview\" style=\"overflow-y: scroll\">"+code_html+"</div>"
+
 
 @permission_admin
 def edit_content(content_path, TOC: TableOfContent):
@@ -113,7 +119,7 @@ def edit_content(content_path, TOC: TableOfContent):
                     f.write(inpt["new_content"])
             return seeother(request.path)
     elif request.method == "GET":
-        return render_template("edit_page.html", content_data=get_content_data(content), content=content, TOC=TOC)
+        return render_template("edit_page.html", content_data=get_content_data(content), preview_data=render_content(content), content=content, TOC=TOC)
 
 
 @app.route('/print_all')
