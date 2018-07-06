@@ -40,9 +40,11 @@
                     </div>
                     <div class="col-md-6">
                         <div id="editor_menu_left" style="height: 50px">
-
+                            <button id="preview_button" type="button" class="btn btn-default">Preview</button>
+                            <button id="cheat_sheet_button" type="button" class="btn btn-info">Cheat sheet</button>
                         </div>
                         <div id="preview"></div>
+                        <div id="cheat_sheet"></div>
                     </div>
                 </div>
 
@@ -76,6 +78,7 @@
             success: function(code_html) {
                 $(code_html).replaceAll("#preview");
                 $("#preview").height(windows_size-header_size-editor_menu_size_left-75);
+                set_position_preview();
             },
             error: function() {
                 alert('Error while refreshing the .rst preview');
@@ -89,6 +92,39 @@
 
     refresh_preview();
 
+    function cheat_sheet() {
+        $.ajax({
+            type: 'GET',
+            url: '/syllabus/cheat_sheet',
+            dataType: 'html',
+            timeout: 3000,
+            success: function(code_html) {
+                $(code_html).replaceAll("#cheat_sheet");
+                $("#cheat_sheet").height(windows_size-header_size-editor_menu_size_left-75);
+                $('#cheat_sheet').css('display','none'); // Set invisible initially
+            },
+            error: function() {
+                alert('Error while loading the .rst cheat sheet');
+            }
+        });
+    }
+
+    $("#preview_button").click(function() {
+        $('#cheat_sheet').css('display','none');
+        $('#preview').css('display','block');
+        /*
+        $("#preview").toggle();
+        $("#cheat_sheet").toggle();
+        */
+    });
+
+    $("#cheat_sheet_button").click(function() {
+        $('#preview').css('display','none');
+        $('#cheat_sheet').css('display','block');
+    });
+
+    cheat_sheet();
+
     $(window).resize(function() {
         let header_size = $("#title").height();
         let editor_menu_size_left = $("#editor_menu_left").height();
@@ -97,19 +133,20 @@
         $("#preview").height(windows_size-header_size-editor_menu_size_left-75);
     });
 
-    var userScroll1 = true;
-    var userScroll2 = true;
-    var timer;
-
     $('.CodeMirror-scroll').scroll(function() {
-        if(userScroll2) {
-            userScroll1 = false;
-            clearTimeout(timer);
-            $("#preview").scrollTop($('.CodeMirror-scroll').scrollTop());
-            timer = setTimeout(function() {
-                userScroll1 = true;
-            }, 100);
-        }
+            set_position_preview();
+    });
+
+    function set_position_preview(){
+        let editor_position = content_cm.getScrollInfo().top / ((content_cm.getScrollInfo().height)-(content_cm.getScrollInfo().clientHeight));
+
+        let preview_position = editor_position * ($("#preview").prop('scrollHeight')-$("#preview").height());
+        // Set the position for the preview proportionally
+        $("#preview").scrollTop(preview_position);
+    }
+
+    $(window).on('beforeunload', function(){
+        return 'Changes have not been saved, are you sure you want to leave?';
     });
 
 </script>
