@@ -34,7 +34,7 @@
                 <div class="modal-body rowr">
                     <div class="col-md-6">
                         <div id="editor_menu_left" style="height: 50px">
-                            <button type="submit" class="btn btn-primary">Submit</button><br /><br />
+                            <button type="submit" name="commit" class="btn btn-primary">Submit</button><br /><br />
                         </div>
                         <textarea id="content" name="new_content">{{ content_data }}</textarea>
                     </div>
@@ -112,10 +112,6 @@
     $("#preview_button").click(function() {
         $('#cheat_sheet').css('display','none');
         $('#preview').css('display','block');
-        /*
-        $("#preview").toggle();
-        $("#cheat_sheet").toggle();
-        */
     });
 
     $("#cheat_sheet_button").click(function() {
@@ -131,6 +127,7 @@
         let windows_size = $(window).height();
         content_cm.setSize("100%", windows_size-header_size-editor_menu_size_left-75);
         $("#preview").height(windows_size-header_size-editor_menu_size_left-75);
+        $("#cheat_sheet").height(windows_size-header_size-editor_menu_size_left-75);
     });
 
     $('.CodeMirror-scroll').scroll(function() {
@@ -147,6 +144,10 @@
 
     $(window).on('beforeunload', function(){
         return 'Changes have not been saved, are you sure you want to leave?';
+    });
+
+    $('form').submit(function() {
+        $(window).unbind('beforeunload');
     });
 
 </script>
