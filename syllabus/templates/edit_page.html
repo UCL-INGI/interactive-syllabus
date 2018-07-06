@@ -52,10 +52,12 @@
         </div>
 
 <script>
+    // Get the necessary heights to compute elements size
     let header_size = $("#title").height();
     let editor_menu_size_left = $("#editor_menu_left").height();
     let windows_size = $(window).height();
 
+    // Transforms textarea to CodeMirror for rst
     let area_content = $('#content').get(0);
     let area_preview = $("#preview");
     content_cm = CodeMirror.fromTextArea(area_content, {
@@ -65,9 +67,11 @@
         viewportMargin: Infinity
     });
 
+    // Set the sizes for code editor and preview so it does not exceed the window size
     content_cm.setSize("100%", windows_size-header_size-editor_menu_size_left-75);
     area_preview.height(windows_size-header_size-editor_menu_size_left-75);
 
+    // Refresh the HTML preview of the rst code
     function refresh_preview() {
         $.ajax({
             type: 'POST',
@@ -86,12 +90,15 @@
         });
     }
 
+    // Behavior defined: Refresh each time a single change is made to the rst code
     content_cm.on("change", function() {
         refresh_preview()
     });
 
+    // Initially render the preview
     refresh_preview();
 
+    // Defines the cheat sheet (static) at the same place as the preview (one displayed at the same time, preview first)
     function cheat_sheet() {
         $.ajax({
             type: 'GET',
@@ -109,18 +116,23 @@
         });
     }
 
-    $("#preview_button").click(function() {
-        $('#cheat_sheet').css('display','none');
-        $('#preview').css('display','block');
-    });
-
+    // Switch from preview to cheat sheet
     $("#cheat_sheet_button").click(function() {
         $('#preview').css('display','none');
         $('#cheat_sheet').css('display','block');
     });
 
+
+    // Switch from cheat sheet to preview
+    $("#preview_button").click(function() {
+        $('#cheat_sheet').css('display','none');
+        $('#preview').css('display','block');
+    });
+
+    // Load the cheat sheet at the page generation (but not displayed yet)
     cheat_sheet();
 
+    // When window is resized, adapt elements size dynamically
     $(window).resize(function() {
         let header_size = $("#title").height();
         let editor_menu_size_left = $("#editor_menu_left").height();
@@ -130,10 +142,12 @@
         $("#cheat_sheet").height(windows_size-header_size-editor_menu_size_left-75);
     });
 
+    // When rst code is scrolled, preview is also scrolled
     $('.CodeMirror-scroll').scroll(function() {
             set_position_preview();
     });
 
+    // Synchronizes the scrolls: When rst code is scrolled, preview is scrolled accordingly to keep corresponding texts side by side
     function set_position_preview(){
         let editor_position = content_cm.getScrollInfo().top / ((content_cm.getScrollInfo().height)-(content_cm.getScrollInfo().clientHeight));
 
@@ -142,10 +156,10 @@
         $("#preview").scrollTop(preview_position);
     }
 
+    // Prevent leaving/refreshing the page if changes have been made, except if the action is submitting the form
     $(window).on('beforeunload', function(){
         return 'Changes have not been saved, are you sure you want to leave?';
     });
-
     $('form').submit(function() {
         $(window).unbind('beforeunload');
     });
