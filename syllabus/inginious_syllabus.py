@@ -22,7 +22,8 @@ from urllib import request as urllib_request
 
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join
+from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join, \
+    send_from_directory
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -90,6 +91,21 @@ def get_syllabus_content(content_path: str, print=False):
                 return get_chapter_printable_content(TOC.get_chapter_from_path(content_path), TOC)
             # we want to access the index of the chapter
             return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
+    except ContentNotFoundError:
+        abort(404)
+
+
+@app.route('/syllabus/<path:content_path>/assets/<path:asset_path>', methods=["GET", "POST"])
+def get_syllabus_asset(content_path: str, asset_path: str, print=False):
+    if content_path[-1] == "/":
+        content_path = content_path[:-1]
+    TOC = syllabus.get_toc()
+    try:
+        # explicitly check that the chapter exists
+        chapter = TOC.get_chapter_from_path(content_path)
+        # secured way to serve a static file
+        # TODO: use X-Sendfile with this method to be efficient
+        return send_from_directory(TOC.get_asset_directory(chapter), asset_path)
     except ContentNotFoundError:
         abort(404)
 

@@ -70,6 +70,10 @@ class Chapter(Content):
     def request_path(self):
         return self.path
 
+    @property
+    def absolute_path(self):
+        return safe_join(syllabus.get_pages_path(), self.path)
+
 
 class TableOfContent(object):
     def __init__(self, toc_file=None):
@@ -151,6 +155,16 @@ class TableOfContent(object):
         except KeyError:
             raise Exception("no title for chapter at path %s" % path)
         return chapter
+
+    def get_asset_directory(self, chapter: Chapter):
+        """
+        Returns the absolute directory path of the desired chapter if it exists.
+        Raises a ContentNotFoundError otherwise.
+        :param chapter:
+        :param asset_path:
+        :return:
+        """
+        return os.path.join(chapter.absolute_path, "assets")
 
     def get_content_at_same_level(self, content):
         parent = self.get_parent_of(content)
