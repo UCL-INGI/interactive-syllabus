@@ -2,6 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 
+from flask import safe_join
+
 import syllabus
 import yaml
 
@@ -36,7 +38,7 @@ class Page(Content):
     def __init__(self, path, title, pages_path=None):
         pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
         # a page should be an rST file, and should have the .rst extension, for security purpose
-        file_path = os.path.join(pages_path, path)
+        file_path = safe_join(pages_path, path)
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
@@ -55,7 +57,7 @@ class Chapter(Content):
 
     def __init__(self, path, title, description=None, pages_path=None):
         pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
-        file_path = os.path.join(pages_path, path)
+        file_path = safe_join(pages_path, path)
         if not os.path.isdir(file_path):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
@@ -71,7 +73,7 @@ class Chapter(Content):
 
 class TableOfContent(object):
     def __init__(self, toc_file=None):
-        toc_file = toc_file if toc_file is not None else os.path.join(get_pages_path(), "toc.yaml")
+        toc_file = toc_file if toc_file is not None else safe_join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
             toc_dict = yaml.load(f, OrderedDictYAMLLoader)
             self._init_from_dict(toc_dict)
@@ -200,9 +202,9 @@ class TableOfContent(object):
         retval = []
         for x in toc.keys():
             if "content" in toc[x]:
-                retval.append(Chapter(os.path.join(content.path, x), self.path_to_title_dict[os.path.join(content.path, x)]))
+                retval.append(Chapter(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)]))
             else:
-                retval.append(Page(os.path.join(content.path, x), self.path_to_title_dict[os.path.join(content.path, x)]))
+                retval.append(Page(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)]))
         return retval
 
     def get_containing_chapters_of(self, content):
@@ -211,7 +213,7 @@ class TableOfContent(object):
         actual_path = []
         for chapter_str in str_containing_chapters:
             actual_path.append(chapter_str)
-            joined_path = os.path.join(*actual_path)
+            joined_path = safe_join(*actual_path)
             result.append(Chapter(joined_path, self.path_to_title_dict[joined_path]))
         return result
 
@@ -245,13 +247,13 @@ class TableOfContent(object):
             # add the path from the root until here
             if "content" in val:
                 # chapter
-                paths_ordered_dict[Chapter(os.path.join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
+                paths_ordered_dict[Chapter(safe_join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
                 # continue to explore the TOC and add the result to the paths_list
                 paths_ordered_dict.update(TableOfContent._get_ordered_toc(val["content"], actual_path,
                                                                           actual_index + len(paths_ordered_dict)))
             else:
                 # page
-                paths_ordered_dict[Page(os.path.join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
+                paths_ordered_dict[Page(safe_join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
             actual_path.pop()  # remove the actual chapter from the actual path as we go on to the next chapter
         return paths_ordered_dict
 

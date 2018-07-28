@@ -22,7 +22,7 @@ from urllib import request as urllib_request
 
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect
+from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -106,10 +106,10 @@ def edit_content(content_path, TOC: TableOfContent):
             return seeother(request.path)
         else:
             if type(content) is Chapter:
-                with open(os.path.join(syllabus.get_pages_path(), content.path, "chapter_introduction.rst"), "w") as f:
+                with open(safe_join(syllabus.get_pages_path(), content.path, "chapter_introduction.rst"), "w") as f:
                     f.write(inpt["new_content"])
             else:
-                with open(os.path.join(syllabus.get_pages_path(), content.path), "w") as f:
+                with open(safe_join(syllabus.get_pages_path(), content.path), "w") as f:
                     f.write(inpt["new_content"])
             return seeother(request.path)
     elif request.method == "GET":
