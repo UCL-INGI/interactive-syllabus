@@ -158,13 +158,20 @@ class TableOfContent(object):
 
     def get_asset_directory(self, chapter: Chapter):
         """
-        Returns the absolute directory path of the desired chapter if it exists.
+        Returns the absolute directory path of the assets of the desired chapter if it exists.
         Raises a ContentNotFoundError otherwise.
         :param chapter:
-        :param asset_path:
         :return:
         """
         return os.path.join(chapter.absolute_path, "assets")
+
+    def get_global_asset_directory(self):
+        """
+        Returns the absolute path of the global assets directory.
+        Raises a ContentNotFoundError otherwise.
+        :return:
+        """
+        return os.path.join(syllabus.get_pages_path(), "assets")
 
     def get_content_at_same_level(self, content):
         parent = self.get_parent_of(content)

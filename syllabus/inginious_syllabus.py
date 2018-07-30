@@ -95,11 +95,15 @@ def get_syllabus_content(content_path: str, print=False):
         abort(404)
 
 
+# maybe use @cache.cached(timeout=seconds) here
+@app.route('/assets/<path:asset_path>', methods=["GET", "POST"])
 @app.route('/syllabus/<path:content_path>/assets/<path:asset_path>', methods=["GET", "POST"])
-def get_syllabus_asset(content_path: str, asset_path: str, print=False):
+def get_syllabus_asset(asset_path: str, content_path: str = None):
+    TOC = syllabus.get_toc()
+    if content_path is None:
+            return send_from_directory(TOC.get_global_asset_directory(), asset_path)
     if content_path[-1] == "/":
         content_path = content_path[:-1]
-    TOC = syllabus.get_toc()
     try:
         # explicitly check that the chapter exists
         chapter = TOC.get_chapter_from_path(content_path)
