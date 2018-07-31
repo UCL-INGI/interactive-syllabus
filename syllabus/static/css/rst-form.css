@@ -60,3 +60,8 @@ input[type=radio] {
     margin-left: 30px;
     font-weight: bold;
 }
+
+.framed {
+    border-style: solid;
+    border-radius: 5px;
+}

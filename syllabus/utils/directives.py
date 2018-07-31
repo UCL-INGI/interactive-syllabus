@@ -20,7 +20,7 @@ from urllib.error import URLError, HTTPError
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst.directives.body import CodeBlock
+from docutils.parsers.rst.directives.body import CodeBlock, Container
 from docutils.statemachine import StringList
 from flask import session
 
@@ -69,6 +69,7 @@ class InginiousDirective(Directive):
                                 format='html')
             else:
                 if user is not None:
+                    # TODO: get lti data in the template itself to be able to cache the html content of the pages
                     data, launch_url = get_lti_data(user.get("username", None) if user is not None else None, self.arguments[0])
                     form_inputs = '\n'.join(['<input type="hidden" name="%s" value="%s"/>' % (key, value) for key, value in data.items()])
                     par = nodes.raw('',
@@ -166,3 +167,43 @@ class AuthorDirective(Directive):
         html += '<hr style="margin-top: -5px;;" >\n'
         html += '</div></div>'
         return [nodes.raw(' ', html, format='html')]
+
+
+class TeacherDirective(Directive):
+    """
+    The directive will wrap its content inside this Jinja template code :
+
+    ```
+    {% if logged_in is not none and logged_in["right"] == "admin" %}
+        .. container:: framed
+
+            content
+
+    {% endif %}
+    ```
+
+    meaning that when rendered by Jinja, the content will only be displayed to the admin user.
+
+    For this to work, il needs a variable named `user` containing the correct user.
+
+    """
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 0
+
+    def run(self):
+        if self.content:
+            sl = StringList(["{% if ((logged_in is not none) and (logged_in['right'] == 'admin')) %}"])
+            sl.append(StringList([""]))
+            sl.append(StringList([".. container:: framed"]))
+            sl.append(StringList([""]))
+            new_content = StringList([])
+            for item in self.content:
+                new_content.append(StringList(["    %s" % item]))
+            sl.append(new_content)
+            sl.append(StringList([""]))
+            sl.append(StringList(["{% endif %}"]))
+            self.content = sl
+        return Container(content=self.content, arguments=[], lineno=self.lineno,
+                               block_text=self.block_text, content_offset=self.content_offset, name="container",
+                               options=self.options, state=self.state, state_machine=self.state_machine).run()

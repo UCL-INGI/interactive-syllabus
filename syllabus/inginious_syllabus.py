@@ -47,6 +47,7 @@ directives.register_directive('inginious', syllabus.utils.directives.InginiousDi
 directives.register_directive('inginious-sandbox', syllabus.utils.directives.InginiousSandboxDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
+directives.register_directive('teacher', syllabus.utils.directives.TeacherDirective)
 
 
 if "saml" in syllabus.get_config()['authentication_methods']:

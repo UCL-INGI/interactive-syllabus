@@ -82,19 +82,19 @@ def permission_admin(f):
     return wrapper
 
 
-def render_content(content):
+def render_content(content, **kwargs):
     if type(content) is Chapter:
         return render_rst_file("chapter_index.rst", chapter_path=content.path,
-                               chapter_desc=get_chapter_intro(content))
+                               chapter_desc=get_chapter_intro(content), **kwargs)
     else:
-        return render_rst_file(content.path)
+        return render_rst_file(content.path, **kwargs)
 
 
 def render_rst_file(page_path, **kwargs):
     with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
-        return publish_string(render_template_string(f.read(), **kwargs),
-                              writer_name='html', settings_overrides=default_rst_opts)
-
+        # TODO: cache the return value of publish_string, it should not change per user
+        return render_template_string(publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts),
+                               **kwargs)
 
 def get_content_data(content: Content):
     path = content.path if type(content) is Page else safe_join(content.path, "chapter_introduction.rst")

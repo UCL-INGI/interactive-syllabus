@@ -56,4 +56,10 @@ li a {
     tt {
         background-color: #f1f1f1;
     }
+
+
+    .framed {
+        border-style: solid;
+        border-radius: 5px;
+    }
 }
