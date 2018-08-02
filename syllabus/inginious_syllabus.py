@@ -35,7 +35,7 @@ from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.pages import seeother, get_content_data, permission_admin
-from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError
+from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
             static_folder=os.path.join(syllabus.get_root_path(), 'static'))
@@ -139,11 +139,13 @@ def edit_content(content_path, TOC: TableOfContent):
 
 @app.route('/print_all')
 def print_all_syllabus():
+    TOC = syllabus.get_toc()
     return render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
-                           render_rst=syllabus.utils.pages.render_content)
+                           render_rst=syllabus.utils.pages.render_content, toc=TOC)
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
+    TOC = syllabus.get_toc()
     def fetch_content(chapter):
         printable_content = [chapter]
         for content in toc.get_direct_content_of(chapter):
@@ -156,7 +158,7 @@ def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
     session["print_mode"] = True
     try:
         retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter),
-                                 render_rst=syllabus.utils.pages.render_content)
+                                 render_rst=syllabus.utils.pages.render_content, toc=TOC)
         session["print_mode"] = False
         return retval
     except:

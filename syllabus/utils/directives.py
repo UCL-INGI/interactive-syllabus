@@ -127,6 +127,7 @@ class ToCDirective(Directive):
     has_content = True
     required_arguments = 0
     optional_arguments = 1
+    final_argument_whitespace = True
     html = """
     <div id="table-of-contents">
         <h2> Table des matières </h2>
@@ -135,26 +136,30 @@ class ToCDirective(Directive):
     def run(self):
         toc = syllabus.get_toc()
         if len(self.arguments) == 1:
-            chapter = toc.get_chapter_from_path(self.arguments[0])
-            self.html += "<h3> " + chapter.title + "</h3>\n"
-            self.html += self.parse(toc, chapter)
+            # TODO: change this ugly part, rethink the chapter_index.rst completely :'(
+            self.arguments[0] = "chapter_path" if self.arguments[0].replace(" ", "") == "{{chapter_path}}" else "%s" % self.arguments[0]
+            self.html += "{%% set chapter = toc.get_chapter_from_path(%s) %%}" % self.arguments[0]
+            self.html += "<h3> {{ chapter.title }} </h3>\n"
+            self.html += self.parse()
         else:
+            self.html += "{% set chapter = none %}"
             # for keys in toc.keys():
             #     self.html += "<h3> " + toc[keys]["title"] + "</h3>\n"
             #     self.html += self.parse(toc[keys]["content"], keys + "/")
-            self.html += self.parse(toc)
+            self.html += self.parse()
         return [nodes.raw(' ', self.html, format='html')]
 
-    def parse(self, toc, chapter=None):
-        top_level = toc.get_top_level_content() if chapter is None else toc.get_direct_content_of(chapter)
-
-        tmp_html = "<ul>\n"
-        for content in top_level:
-            tmp_html += '<li style="list-style-type: none;"><a href="/syllabus/' + content.request_path + '">' + content.title + '</a></li>\n'
-            if type(content) is Chapter:
-                tmp_html += self.parse(toc, content)
-        tmp_html += "</ul>"
-        return tmp_html
+    def parse(self):
+        return """
+        {% for content in (toc.get_top_level_content() if chapter is none else toc.get_direct_content_of(chapter)) recursive %}
+            <ul>
+                <li style="list-style-type: none;"><a href="/syllabus/{{content.request_path}}">{{content.title}}</a></li>
+                {% if "Chapter" in content.__class__.__name__ %}
+                    {{ loop(toc.get_direct_content_of(content)) }}
+                {% endif %}
+            </ul>
+        {% endfor %}
+        """
 
 
 class AuthorDirective(Directive):
