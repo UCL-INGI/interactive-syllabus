@@ -174,6 +174,25 @@ class AuthorDirective(Directive):
         return [nodes.raw(' ', html, format='html')]
 
 
+class FramedDirective(Directive):
+    """
+    Creates a frame with the specified number of blank lines appended to the
+    provided content if there is one.
+    """
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+
+    def run(self):
+        sl = StringList([" " for _ in range(int(self.arguments[0]))])
+        if not self.content:
+            self.content = sl
+        else:
+            self.content.append(sl)
+        par = nodes.raw('', """<pre style="background-color: #ffffff; border: 1px solid #000000">%s</pre>""" % "\n".join(self.content), format='html')
+
+        return [par]
+
 class TeacherDirective(Directive):
     """
     The directive will wrap its content inside this Jinja template code :
