@@ -58,7 +58,11 @@ if "saml" in syllabus.get_config()['authentication_methods']:
 @app.route('/', methods=["GET", "POST"])
 @app.route('/index', methods=["GET", "POST"])
 def index(print=False):
-    TOC = syllabus.get_toc()
+    try:
+        TOC = syllabus.get_toc()
+    except ContentNotFoundError:
+        # currently ignore to display the content
+        pass
     if request.args.get("edit") is not None:
         return edit_content(TOC.index.path, TOC)
     print_mode = print or request.args.get("print") is not None

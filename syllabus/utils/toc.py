@@ -76,15 +76,23 @@ class Chapter(Content):
 
 
 class TableOfContent(object):
-    def __init__(self, toc_file=None):
+    def __init__(self, toc_file=None, ignore_not_found=True):
+        """
+
+        :param toc_file: the yaml file used to describe the toc
+        :param ignore_not_found: if set to True, simply ignore chapters and pages that are in the toc file
+        but not on the file system. Raises a ContentNotFoundError otherwise
+        """
         toc_file = toc_file if toc_file is not None else safe_join(get_pages_path(), "toc.yaml")
         with open(toc_file, "r") as f:
             toc_dict = yaml.load(f, OrderedDictYAMLLoader)
-            self._init_from_dict(toc_dict)
+            self._init_from_dict(toc_dict, ignore_not_found)
 
-    def _init_from_dict(self, toc_dict: OrderedDict):
+    def _init_from_dict(self, toc_dict: OrderedDict, ignore_not_found=False):
+        self._ignored_list = []
         self.toc_dict = toc_dict
-        self.ordered_content_indices = self._get_ordered_toc(self.toc_dict)
+        self.ordered_content_indices = self._get_ordered_toc(self.toc_dict, self._ignored_list, ignore_not_found)
+        [ignore['func']() for ignore in self._ignored_list]
         self.ordered_content_list = list(self.ordered_content_indices.keys())
         self.path_to_title_dict = {x.path: x.title
                                    for x in self.ordered_content_list}
@@ -102,6 +110,10 @@ class TableOfContent(object):
 
     def __iter__(self):
         return self.ordered_content_list.__iter__()
+
+    @property
+    def ignored(self):
+        return [x["path"] for x in self._ignored_list]
 
     def get_content_from_path(self, path):
         """
@@ -259,23 +271,53 @@ class TableOfContent(object):
             return None
 
     @staticmethod
-    def _get_ordered_toc(toc_ordered_dict, actual_path=None, actual_index=0) -> OrderedDict:
-        actual_path = list() if actual_path is None else actual_path
+    def _get_ordered_toc(toc_ordered_dict, current_ignored, ignore_not_found=False, current_path=None, current_index=0) -> OrderedDict:
+        """
+        Returns an ordered dict containing the TOC, with the full paths as keys
+        :param toc_ordered_dict: dict representing the TOC
+        :param current_ignored:  list of {"func": f, "path": p} dicts, empty at the beginning,
+        filled by this function if ignore_not_found is True. It contains one entry per content that has not been
+        found on the file system. "func" represents the function to
+        execute to remove the content located at "path" from the toc_ordered_dict.
+        :param ignore_not_found: set to False if a ContentNotFoundError must be thrown if some content in the
+        toc_ordered_dict is not found in the file system
+        """
+        current_path = list() if current_path is None else current_path
+        current_ignored = list() if current_ignored is None else current_ignored
         paths_ordered_dict = OrderedDict()
         for key, val in toc_ordered_dict.items():
-            actual_path.append(key)
+            current_path.append(key)
             title = val["title"]
             # add the path from the root until here
             if "content" in val:
                 # chapter
-                paths_ordered_dict[Chapter(safe_join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
+                try:
+                    paths_ordered_dict[Chapter(safe_join(*current_path), title)] = current_index + len(paths_ordered_dict)
+                except ContentNotFoundError as e:
+                    if ignore_not_found:
+                        k, d = key, toc_ordered_dict
+                        # we can't modify the dict while iterating, so delay the removing to the end
+                        current_ignored.append({"path": safe_join(*current_path), "func": lambda: d.pop(k)})
+                    else:
+                        raise e
                 # continue to explore the TOC and add the result to the paths_list
-                paths_ordered_dict.update(TableOfContent._get_ordered_toc(val["content"], actual_path,
-                                                                          actual_index + len(paths_ordered_dict)))
+                paths_ordered_dict.update(TableOfContent._get_ordered_toc(val["content"], current_ignored,
+                                                                          ignore_not_found=ignore_not_found,
+                                                                          current_path=current_path,
+                                                                          current_index=current_index +
+                                                                          len(paths_ordered_dict)))
             else:
                 # page
-                paths_ordered_dict[Page(safe_join(*actual_path), title)] = actual_index + len(paths_ordered_dict)
-            actual_path.pop()  # remove the actual chapter from the actual path as we go on to the next chapter
+                try:
+                    paths_ordered_dict[Page(safe_join(*current_path), title)] = current_index + len(paths_ordered_dict)
+                except ContentNotFoundError as e:
+                    if ignore_not_found:
+                        k, d = key, toc_ordered_dict
+                        # we can't modify the dict while iterating, so delay the removing to the end
+                        current_ignored.append({"path": safe_join(*current_path), "func": lambda: d.pop(k)})
+                    else:
+                        raise e
+            current_path.pop()  # remove the actual chapter from the actual path as we go on to the next chapter
         return paths_ordered_dict
 
     @staticmethod
@@ -286,7 +328,7 @@ class TableOfContent(object):
         Returns False otherwise
         """
         try:
-            TableOfContent._get_ordered_toc(toc_ordered_dict)
+            TableOfContent._get_ordered_toc(toc_ordered_dict, [])
             return True
         except:
             return False
