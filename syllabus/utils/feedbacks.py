@@ -2,9 +2,9 @@ class Feedback(object):
     def __init__(self, feedback_type, message):
         self.type = feedback_type
         self.message = message
-        self.alert_color = "success" if self.type == "success" else "danger"
+        self.alert_color = "success" if self.type == "success" else "warning" if self.type == "warning" else "danger"
         self.icon = "fa-check" if self.type == "success" else "fa-times"
-        self.title = "Success !" if self.type == "success" else "Error."
+        self.title = "Success !" if self.type == "success" else "Warning." if self.type == "warning" else "Error."
 
     def __dict__(self):
         return {"type": self.type, "message": self.message}

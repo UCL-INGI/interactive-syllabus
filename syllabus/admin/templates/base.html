@@ -111,7 +111,7 @@
                 <div class="alert alert-{{ feedback.alert_color }} alert-dismissable">
                     <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
                     <h4> <i class="fa {{ feedback.icon }}" style="padding-right: 5px"></i> {{ feedback.title }} </h4>
-                    {{ feedback.message }}
+                    {{ feedback.message | safe }}
                 </div>
             </div>
         {% endif %}

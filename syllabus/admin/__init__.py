@@ -68,6 +68,11 @@ def users():
 @sidebar_page('content_edition')
 def content_edition():
     TOC = syllabus.get_toc()
+    if TOC.ignored and not has_feedback(session):
+        set_feedback(session, Feedback(feedback_type="warning", message="The following contents have not been found :\n"
+                                                                        + "<pre>"
+                                                                        + "\n".join(TOC.ignored)
+                                                                        + "</pre>"))
     if request.method == "POST":
         inpt = request.form
         if inpt["action"] == "delete_content":
@@ -182,6 +187,12 @@ def delete_content(inpt, TOC):
 @permission_admin
 @sidebar_page('toc_edition')
 def toc_edition():
+    toc = syllabus.get_toc()
+    if toc.ignored and not has_feedback(session):
+        set_feedback(session, Feedback(feedback_type="warning", message="The following contents have not been found :\n"
+                                                                        + "<pre>"
+                                                                        + "\n".join(toc.ignored)
+                                                                        + "</pre>"))
     if request.method == "POST":
         inpt = request.form
         if "new_content" in inpt:
