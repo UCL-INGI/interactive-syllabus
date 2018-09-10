@@ -65,7 +65,7 @@ class InginiousDirective(Directive):
                 same_origin_proxy = inginious_config['same_origin_proxy']
                 par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
                                                      '\n'.join(self.content),
-                                                     self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-java"),
+                                                     self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-python"),
                                 format='html')
             else:
                 if user is not None:
