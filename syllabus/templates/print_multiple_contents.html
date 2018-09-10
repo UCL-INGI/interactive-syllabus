@@ -63,7 +63,7 @@
     <div class="box contents">
         <div class="no-overflow">
             {% for content in contents %}
-                {{ render_rst(content, logged_in=logged_in)|safe }}
+                {{ render_rst(content, logged_in=logged_in, toc=toc)|safe }}
 
             {% endfor %}
         </div>
