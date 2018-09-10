@@ -145,8 +145,11 @@ def edit_content(content_path, TOC: TableOfContent):
 @app.route('/print_all')
 def print_all_syllabus():
     TOC = syllabus.get_toc()
-    return render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
-                           render_rst=syllabus.utils.pages.render_content, toc=TOC)
+    session["print_mode"] = True
+    retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
+                             render_rst=syllabus.utils.pages.render_content, toc=TOC)
+    session["print_mode"] = False
+    return retval
 
 
 def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
