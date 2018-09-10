@@ -102,23 +102,23 @@ class InginiousDirective(Directive):
                                     format='html')
 
         else:
-            if user is not None:
-                submission = get_lti_submission(user.get("username", None), self.arguments[0])
-            else:
-                submission = None
+            c = []
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
-            if submission is None and self.content:
-                sl = StringList(" "*n_blank_lines)
-                self.content.append(sl)
-                cb = CodeBlock(arguments=["yaml"], content=self.content, lineno=self.lineno,
-                               block_text=self.block_text, content_offset=self.content_offset, name="code-block",
-                               options=self.options, state=self.state, state_machine=self.state_machine)
-                return cb.run()
-            else:
-                if n_blank_lines == 0:
-                    n_blank_lines = 1
-                content = submission if submission is not None else ("\n"*n_blank_lines)
-                par = nodes.raw('', """<pre>%s</pre>""" % content, format='html')
+            c.append('{%% set submission = get_lti_submission(logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
+            c.append("<pre>")
+            c.append("{% if submission is not none %}"
+                     "{{ submission }}"
+                     "{% endif %}")
+            if self.content:
+                c.append("{%% if submission is none %%}"
+                         "%s"
+                         "{%% endif %%}" % "\n".join(list(self.content)))
+            c.append("    {%% for i in range(%d) %%}"
+                     " "             
+                     "    {%% endfor %%}"
+                     "</pre>" % n_blank_lines)
+
+            par = nodes.raw('', "\n".join(c), format='html')
         return [par]
 
     def run(self):

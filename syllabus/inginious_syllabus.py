@@ -34,7 +34,7 @@ from syllabus.database import init_db, db_session, update_database
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.inginious_lti import get_lti_data
+from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
 from syllabus.utils.pages import seeother, get_content_data, permission_admin
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
@@ -144,7 +144,8 @@ def print_all_syllabus():
     TOC = syllabus.get_toc()
     session["print_mode"] = True
     retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
-                             render_rst=syllabus.utils.pages.render_content, toc=TOC)
+                             render_rst=syllabus.utils.pages.render_content, toc=TOC, get_lti_data=get_lti_data,
+                             get_lti_submission=get_lti_submission, logged_in=session.get("user", None))
     session["print_mode"] = False
     return retval
 
@@ -197,7 +198,7 @@ def render_web_page(content: Content, print_mode=False, display_print_all=False)
                                  toc=TOC,
                                  direct_content=TOC.get_direct_content_of(content), next=next, previous=previous,
                                  display_print_all=display_print_all,
-                                 get_lti_data=get_lti_data)
+                                 get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
 
         session["print_mode"] = False
     except Exception:
