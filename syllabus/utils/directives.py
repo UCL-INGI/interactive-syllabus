@@ -69,24 +69,31 @@ class InginiousDirective(Directive):
                                 format='html')
             else:
                 if user is not None:
-                    # TODO: get lti data in the template itself to be able to cache the html content of the pages
-                    data, launch_url = get_lti_data(user.get("username", None) if user is not None else None, self.arguments[0])
-                    form_inputs = '\n'.join(['<input type="hidden" name="%s" value="%s"/>' % (key, value) for key, value in data.items()])
+                    # TODO: this is a bit ugly :'(
                     par = nodes.raw('',
+                                    '{% set user = session.get("user", None) %}\n' +
+                                    ('{%% set data, launch_url = get_lti_data(logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
+                                    """
+                                    {% set inputs_list = [] %}
+                                    {% for key, value in data.items() %}
+                                        {% set a = inputs_list.append('<input type="hidden" name="%s" value="%s"/>' % (key, value)) %}
+                                    {% endfor %}
+                                    {% set form_inputs = '\n'.join(inputs_list) %}
+                                    """ +
                                     '<iframe name="myIframe%s" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
                                     ''
                                     ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
                                     """
-                                    <form action="%s"
+                                    <form action="{{ launch_url }}"
                                           name="ltiLaunchForm"
                                           class="ltiLaunchForm"
                                           method="POST"
                                           encType="application/x-www-form-urlencoded"
                                           target="myIframe%s">
-                                      %s
+                                      {{ form_inputs|safe }}
                                       <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
                                     </form>
-                                    """ % (self.arguments[0], launch_url, self.arguments[0], form_inputs),
+                                    """ % (self.arguments[0], self.arguments[0]),
 
                                     format='html')
                 else:
