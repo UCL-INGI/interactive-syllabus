@@ -1,6 +1,7 @@
 import json
 import re
 from urllib import request as urllib_request, parse
+from urllib.error import URLError
 
 from lti import ToolConsumer
 
@@ -40,7 +41,10 @@ def get_lti_url(user_id, task_id):
 
 def get_lti_submission(user_id, task_id):
     config = syllabus.get_config()
-    lti_url = get_lti_url(user_id, task_id)
+    try:
+        lti_url = get_lti_url(user_id, task_id)
+    except URLError:
+        return None
     match = lti_regex_match.findall(lti_url)
     if len(match) == 1:
         cookie = match[0]
@@ -48,6 +52,7 @@ def get_lti_submission(user_id, task_id):
         if response["status"] == "success" and response["submission"] is not None:
             return response["submission"]["input"]['q1']
     return None
+
 
 def get_lti_data(user_id, task_id):
     config = syllabus.get_config()
