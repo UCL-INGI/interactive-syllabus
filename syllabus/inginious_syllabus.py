@@ -60,13 +60,9 @@ if "saml" in syllabus.get_config()['authentication_methods']:
 def index(print=False):
     try:
         TOC = syllabus.get_toc()
-    except ContentNotFoundError:
-        # currently ignore to display the content
-        pass
-    if request.args.get("edit") is not None:
-        return edit_content(TOC.index.path, TOC)
-    print_mode = print or request.args.get("print") is not None
-    try:
+        if request.args.get("edit") is not None:
+            return edit_content(TOC.index.path, TOC)
+        print_mode = print or request.args.get("print") is not None
         # only display the button to print the whole syllabus in the index
         return render_web_page(TOC.index, print_mode=print_mode, display_print_all=True)
     except ContentNotFoundError:
