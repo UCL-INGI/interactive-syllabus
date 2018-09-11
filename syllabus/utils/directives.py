@@ -141,7 +141,6 @@ class ToCDirective(Directive):
     """
 
     def run(self):
-        toc = syllabus.get_toc()
         if len(self.arguments) == 1:
             # TODO: change this ugly part, rethink the chapter_index.rst completely :'(
             self.arguments[0] = "chapter_path" if self.arguments[0].replace(" ", "") == "{{chapter_path}}" else "%s" % self.arguments[0]
