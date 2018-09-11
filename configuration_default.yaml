@@ -1,3 +1,5 @@
+sessions_secret_key: ~
+
 inginious:
   url: http://inginious_instance.example:port
   course_id: id

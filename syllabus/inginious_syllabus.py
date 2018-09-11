@@ -43,7 +43,10 @@ app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'te
 app.register_blueprint(admin_blueprint, url_prefix='/admin')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = os.urandom(24)
+session_sk = syllabus.get_config().get("sessions_secret_key", None)
+if session_sk is None or session_sk == "":
+    raise Exception("You must give a session secret key to use the application")
+app.secret_key = session_sk
 directives.register_directive('inginious', syllabus.utils.directives.InginiousDirective)
 directives.register_directive('inginious-sandbox', syllabus.utils.directives.InginiousSandboxDirective)
 directives.register_directive('table-of-contents', syllabus.utils.directives.ToCDirective)
