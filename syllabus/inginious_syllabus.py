@@ -16,6 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 from urllib import parse
 from urllib import request as urllib_request
@@ -107,7 +108,7 @@ def get_syllabus_content(content_path: str, print=False):
 def get_syllabus_asset(asset_path: str, content_path: str = None):
     TOC = syllabus.get_toc()
     if content_path is None:
-            return send_from_directory(TOC.get_global_asset_directory(), asset_path)
+        return send_from_directory(TOC.get_global_asset_directory(), asset_path)
     if content_path[-1] == "/":
         content_path = content_path[:-1]
     try:
