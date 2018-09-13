@@ -258,7 +258,7 @@ def log_out():
     if "user" in session:
         saml = session["user"].get("login_method", None) == "saml"
         session.pop("user", None)
-        if saml:
+        if saml and "singleLogoutService" in saml_config["sp"]:
             req = prepare_request(request)
             auth = init_saml_auth(req, saml_config)
             return redirect(auth.logout())
