@@ -297,9 +297,21 @@ def saml():
     #     return
     if request.method == "GET":
         return redirect(auth.login())
-    elif 'acs' in request.args:
+    else:
         auth.process_response()
         errors = auth.get_errors()
+        # Try and check if IdP is using several signature certificates
+        # This is a limitation of python3-saml
+        for cert in saml_config["idp"].get("additionalX509certs", []):
+            if auth.get_last_error_reason() == "Signature validation failed. SAML Response rejected":
+                import copy
+                # Change used IdP certificate
+                new_settings = copy.deepcopy(saml_config)
+                new_settings["idp"]["x509cert"] = cert
+                # Retry processing response
+                auth = init_saml_auth(req, new_settings)
+                auth.process_response()
+                errors = auth.get_errors()
         if len(errors) == 0:
             attrs = auth.get_attributes()
             # session['samlNameId'] = auth.get_nameid()
