@@ -35,8 +35,7 @@ class Content(ABC):
 
 class Page(Content):
 
-    def __init__(self, path, title, pages_path=None):
-        pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
+    def __init__(self, path, title, pages_path):
         # a page should be an rST file, and should have the .rst extension, for security purpose
         file_path = safe_join(pages_path, path)
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
@@ -55,13 +54,13 @@ class Page(Content):
 
 class Chapter(Content):
 
-    def __init__(self, path, title, description=None, pages_path=None):
-        pages_path = pages_path if pages_path is not None else syllabus.get_pages_path()
+    def __init__(self, path, title, pages_path, description=None):
         file_path = safe_join(pages_path, path)
         if not os.path.isdir(file_path):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
         self.description = description
+        self.pages_path = pages_path
 
     def __repr__(self):
         return "Chapter %s" % self.path
@@ -72,18 +71,19 @@ class Chapter(Content):
 
     @property
     def absolute_path(self):
-        return safe_join(syllabus.get_pages_path(), self.path)
+        return safe_join(self.pages_path, self.path)
 
 
 class TableOfContent(object):
-    def __init__(self, toc_file=None, ignore_not_found=True):
+    def __init__(self, course, toc_file=None, ignore_not_found=True):
         """
 
         :param toc_file: the yaml file used to describe the toc
         :param ignore_not_found: if set to True, simply ignore chapters and pages that are in the toc file
         but not on the file system. Raises a ContentNotFoundError otherwise
         """
-        toc_file = toc_file if toc_file is not None else safe_join(get_pages_path(), "toc.yaml")
+        self.toc_path = get_pages_path(course)
+        toc_file = toc_file if toc_file is not None else safe_join(self.toc_path, "toc.yaml")
         with open(toc_file, "r") as f:
             toc_dict = yaml.load(f, OrderedDictYAMLLoader)
             self._init_from_dict(toc_dict, ignore_not_found)
@@ -91,12 +91,12 @@ class TableOfContent(object):
     def _init_from_dict(self, toc_dict: OrderedDict, ignore_not_found=False):
         self._ignored_list = []
         self.toc_dict = toc_dict
-        self.ordered_content_indices = self._get_ordered_toc(self.toc_dict, self._ignored_list, ignore_not_found)
+        self.ordered_content_indices = self._get_ordered_toc(self.toc_path, self.toc_dict, self._ignored_list, ignore_not_found)
         [ignore['func']() for ignore in self._ignored_list]
         self.ordered_content_list = list(self.ordered_content_indices.keys())
         self.path_to_title_dict = {x.path: x.title
                                    for x in self.ordered_content_list}
-        self.index = Page("index.rst", "Index")
+        self.index = Page("index.rst", "Index", self.toc_path)
 
     def __contains__(self, item):
         """
@@ -124,9 +124,9 @@ class TableOfContent(object):
         or the content is not present in the Table of Contents
         """
         try:
-            content = Page(path, "")
+            content = Page(path, "", self.toc_path)
         except ContentNotFoundError:
-            content = Chapter(path, "")
+            content = Chapter(path, "", self.toc_path)
         if content not in self:
             raise ContentNotFoundError("The specified content in not in the Table of Contents: %s", path)
         try:
@@ -143,7 +143,7 @@ class TableOfContent(object):
         Raises a ContentNotFoundError if the page does not exist in the pages directory
         or the page is not present in the Table of Contents
         """
-        page = Page(path, "")
+        page = Page(path, "", self.toc_path)
         if page not in self:
             raise ContentNotFoundError("The specified page in not in the Table of Contents")
         try:
@@ -159,7 +159,7 @@ class TableOfContent(object):
         Raises a ContentNotFoundError if the chapter does not exist in the pages directory
         or the chapter is not present in the Table of Contents
         """
-        chapter = Chapter(path, "")
+        chapter = Chapter(path, "", self.toc_path)
         if chapter not in self:
             raise ContentNotFoundError("The specified chapter in not in the Table of Contents")
         try:
@@ -183,7 +183,7 @@ class TableOfContent(object):
         Raises a ContentNotFoundError otherwise.
         :return:
         """
-        return os.path.join(syllabus.get_pages_path(), "assets")
+        return os.path.join(self.toc_path, "assets")
 
     def get_content_at_same_level(self, content):
         parent = self.get_parent_of(content)
@@ -235,9 +235,9 @@ class TableOfContent(object):
         retval = []
         for x in toc.keys():
             if "content" in toc[x]:
-                retval.append(Chapter(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)]))
+                retval.append(Chapter(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)], self.toc_path))
             else:
-                retval.append(Page(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)]))
+                retval.append(Page(safe_join(content.path, x), self.path_to_title_dict[safe_join(content.path, x)], self.toc_path))
         return retval
 
     def get_containing_chapters_of(self, content):
@@ -247,16 +247,16 @@ class TableOfContent(object):
         for chapter_str in str_containing_chapters:
             actual_path.append(chapter_str)
             joined_path = safe_join(*actual_path)
-            result.append(Chapter(joined_path, self.path_to_title_dict[joined_path]))
+            result.append(Chapter(joined_path, self.path_to_title_dict[joined_path], self.toc_path))
         return result
 
     def get_top_level_content(self):
         res = []
         for path in self.toc_dict.keys():
             if "content" in self.toc_dict[path]:
-                res.append(Chapter(path, self.path_to_title_dict[path]))
+                res.append(Chapter(path, self.path_to_title_dict[path], self.toc_path))
             else:
-                res.append(Page(path, self.path_to_title_dict[path]))
+                res.append(Page(path, self.path_to_title_dict[path], self.toc_path))
         return res
 
     def get_parent_of(self, content):
@@ -266,12 +266,12 @@ class TableOfContent(object):
             return None
         new_path = content.path[:last_separator]
         try:
-            return Chapter(new_path, self.path_to_title_dict[new_path])
+            return Chapter(new_path, self.path_to_title_dict[new_path], self.toc_path)
         except (ContentNotFoundError, KeyError):
             return None
 
     @staticmethod
-    def _get_ordered_toc(toc_ordered_dict, current_ignored, ignore_not_found=False, current_path=None, current_index=0) -> OrderedDict:
+    def _get_ordered_toc(toc_path, toc_ordered_dict, current_ignored, ignore_not_found=False, current_path=None, current_index=0) -> OrderedDict:
         """
         Returns an ordered dict containing the TOC, with the full paths as keys
         :param toc_ordered_dict: dict representing the TOC
@@ -292,7 +292,7 @@ class TableOfContent(object):
             if "content" in val:
                 # chapter
                 try:
-                    paths_ordered_dict[Chapter(safe_join(*current_path), title)] = current_index + len(paths_ordered_dict)
+                    paths_ordered_dict[Chapter(safe_join(*current_path), title, toc_path)] = current_index + len(paths_ordered_dict)
                 except ContentNotFoundError as e:
                     if ignore_not_found:
                         k, d = key, toc_ordered_dict
@@ -301,7 +301,7 @@ class TableOfContent(object):
                     else:
                         raise e
                 # continue to explore the TOC and add the result to the paths_list
-                paths_ordered_dict.update(TableOfContent._get_ordered_toc(val["content"], current_ignored,
+                paths_ordered_dict.update(TableOfContent._get_ordered_toc(toc_path, val["content"], current_ignored,
                                                                           ignore_not_found=ignore_not_found,
                                                                           current_path=current_path,
                                                                           current_index=current_index +
@@ -309,7 +309,7 @@ class TableOfContent(object):
             else:
                 # page
                 try:
-                    paths_ordered_dict[Page(safe_join(*current_path), title)] = current_index + len(paths_ordered_dict)
+                    paths_ordered_dict[Page(safe_join(*current_path), title, toc_path)] = current_index + len(paths_ordered_dict)
                 except ContentNotFoundError as e:
                     if ignore_not_found:
                         k, d = key, toc_ordered_dict
@@ -321,14 +321,14 @@ class TableOfContent(object):
         return paths_ordered_dict
 
     @staticmethod
-    def is_toc_dict_valid(toc_ordered_dict):
+    def is_toc_dict_valid(toc_path, toc_ordered_dict):
         """
         Returns True if the given OrderedDict represents a valid Table of Contents.
         The Table of Contents is valid of all the pages and chapters exists in the page directory.
         Returns False otherwise
         """
         try:
-            TableOfContent._get_ordered_toc(toc_ordered_dict, [])
+            TableOfContent._get_ordered_toc(toc_path, toc_ordered_dict, [])
             return True
         except:
             return False

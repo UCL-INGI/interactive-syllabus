@@ -23,10 +23,10 @@ admin_blueprint = Blueprint('admin', __name__,
                             template_folder='templates',
                             static_folder='static')
 
-sidebar_elements = [{'id': 'users', 'name': 'Users', 'icon': 'users'},
-                    {'id': 'content_edition', 'name': 'Content Edition', 'icon': 'edit'},
-                    {'id': 'toc_edition', 'name': 'ToC Edition', 'icon': 'list'},
-                    {'id': 'config_edition', 'name': 'Configuration Edition', 'icon': 'cog'}]
+sidebar_elements = [{'id': 'users', 'name': 'Users', 'icon': 'users'}] + \
+                    [{'id': 'content_edition/' + course, 'name': 'Content Edition ' + course, 'icon': 'edit'} for course in syllabus.get_courses()] + \
+                    [{'id': 'toc_edition/' + course, 'name': 'ToC Edition ' + course, 'icon': 'list'} for course in syllabus.get_courses()] + \
+                    [{'id': 'config_edition', 'name': 'Configuration Edition', 'icon': 'cog'}]
 
 sidebar = {'active_element': 'users', 'elements': sidebar_elements}
 
@@ -63,11 +63,13 @@ def users():
         abort(404)
 
 
-@admin_blueprint.route('/content_edition', methods=['GET', 'POST'])
+@admin_blueprint.route('/content_edition/<string:course>', methods=['GET', 'POST'])
 @permission_admin
 @sidebar_page('content_edition')
-def content_edition():
-    TOC = syllabus.get_toc()
+def content_edition(course):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    TOC = syllabus.get_toc(course)
     if TOC.ignored and not has_feedback(session):
         set_feedback(session, Feedback(feedback_type="warning", message="The following contents have not been found :\n"
                                                                         + "<pre>"
@@ -76,7 +78,7 @@ def content_edition():
     if request.method == "POST":
         inpt = request.form
         if inpt["action"] == "delete_content":
-            return delete_content(inpt, TOC)
+            return delete_content(course, inpt, TOC)
         containing_chapter = None
         try:
             if inpt["containing-chapter"] != "":
@@ -144,21 +146,21 @@ def content_edition():
                 set_feedback(session, Feedback(feedback_type="error", message="A file or directory with this name "
                                                                               "already exists."))
                 return seeother(request.path)
-            chapter = Chapter(path=content_path, title=inpt["title"])
+            chapter = Chapter(path=content_path, title=inpt["title"], pages_path=syllabus.get_pages_path(course))
             TOC.add_content_in_toc(chapter)
 
         # dump the TOC and reload it
-        syllabus.save_toc(TOC)
-        syllabus.get_toc(force=True)
+        syllabus.save_toc(course, TOC)
+        syllabus.get_toc(course, force=True)
         return seeother(request.path)
     try:
-        return render_template('content_edition.html', active_element=sidebar['active_element'],
+        return render_template('content_edition.html', active_element=sidebar['active_element'], course_str=course,
                                sidebar_elements=sidebar['elements'], TOC=TOC, feedback=pop_feeback(session))
     except TemplateNotFound:
         abort(404)
 
 
-def delete_content(inpt, TOC):
+def delete_content(course, inpt, TOC):
     pages_path = syllabus.get_pages_path()
     content_path = inpt["content-path"]
     path = os.path.join(pages_path, content_path)
@@ -167,8 +169,8 @@ def delete_content(inpt, TOC):
     TOC.remove_content_from_toc(content_to_delete)
 
     # dump the TOC and reload it
-    syllabus.save_toc(TOC)
-    syllabus.get_toc(force=True)
+    syllabus.save_toc(course, TOC)
+    syllabus.get_toc(course, force=True)
 
     # remove the files if asked
     if inpt.get("delete-files", None) == "on":
@@ -183,11 +185,13 @@ def delete_content(inpt, TOC):
     return seeother(request.path)
 
 
-@admin_blueprint.route('/toc_edition', methods=['GET', 'POST'])
+@admin_blueprint.route('/toc_edition/<string:course>', methods=['GET', 'POST'])
 @permission_admin
 @sidebar_page('toc_edition')
-def toc_edition():
-    toc = syllabus.get_toc()
+def toc_edition(course):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    toc = syllabus.get_toc(course)
     if toc.ignored and not has_feedback(session):
         set_feedback(session, Feedback(feedback_type="warning", message="The following contents have not been found :\n"
                                                                         + "<pre>"
@@ -199,7 +203,7 @@ def toc_edition():
             try:
                 # check YAML validity
                 toc_dict = yaml.load(inpt["new_content"], OrderedDictYAMLLoader)
-                if not TableOfContent.is_toc_dict_valid(toc_dict):
+                if not TableOfContent.is_toc_dict_valid(syllabus.get_pages_path(course), toc_dict):
                     set_feedback(session, Feedback(feedback_type="error", message="The submitted table of contents "
                                                                                   "is not consistent with the files "
                                                                                   "located in the pages directory."))
@@ -209,14 +213,14 @@ def toc_edition():
                                                                               "written in valid YAML."))
                 return seeother(request.path)
             # the YAML is valid, write it in the ToC
-            with open(os.path.join(syllabus.get_pages_path(), "toc.yaml"), "w") as f:
+            with open(os.path.join(syllabus.get_pages_path(course), "toc.yaml"), "w") as f:
                 f.write(inpt["new_content"])
-            syllabus.get_toc(force=True)
+            syllabus.get_toc(course, force=True)
         set_feedback(session, Feedback(feedback_type="success", message="The table of contents has been modified "
                                                                         "successfully !"))
         return seeother(request.path)
     else:
-        with open(os.path.join(syllabus.get_pages_path(), "toc.yaml"), "r") as f:
+        with open(os.path.join(syllabus.get_pages_path(course), "toc.yaml"), "r") as f:
             try:
                 return render_template('edit_table_of_content.html', active_element=sidebar['active_element'],
                                        sidebar_elements=sidebar['elements'], content=f.read(),
@@ -241,8 +245,12 @@ def config_edition():
                 syllabus.set_config(inpt["new_config"])
                 # sync the git repo if it has changed
                 try:
-                    if ("git" not in old_config["pages"] and "git" in config["pages"]) or old_config["pages"]["git"] != config["pages"]["git"]:
-                        syllabus.utils.pages.init_and_sync_repo(force_sync=True)
+                    courses = set(list(old_config["courses"].keys()) + list(config["courses"].keys()))
+                    for course in courses:
+                        old_pages_config = old_config["courses"].get(course, {}).get("pages", {})
+                        pages_config = config["courses"].get(course, {}).get("pages", {})
+                        if ("git" not in old_pages_config and "git" in pages_config) or old_pages_config["git"] != pages_config["git"]:
+                            syllabus.utils.pages.init_and_sync_repo(course, force_sync=True)
                 except KeyError as e:
                     pass
                 except AttributeError:
@@ -259,12 +267,12 @@ def config_edition():
     else:
         params = Params.query.one()
         config = syllabus.get_config()
-        hook_path = ("/update_pages/%s" % params.git_hook_url) if "git" in config["pages"] and params.git_hook_url is not None else None
+        hook_paths = [("/update_pages/{}/{}".format(params.git_hook_url, course)) if "git" in config["courses"][course]["pages"] and params.git_hook_url is not None else None for course in syllabus.get_courses()]
         try:
             with open(syllabus.get_config_path(), 'r') as f:
                 return render_template('edit_configuration.html', active_element=sidebar['active_element'],
                                        sidebar_elements=sidebar['elements'], config=f.read(),
-                                       hook_path=hook_path,
+                                       hook_paths=hook_paths,
                                        feedback=pop_feeback(session))
         except TemplateNotFound:
             abort(404)

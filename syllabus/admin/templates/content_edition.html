@@ -41,7 +41,7 @@
             <div class="just-padding">
 
                 <div class="list-group list-group-root well">
-                    <a href="/index?edit" class="list-group-item" data-target="#"
+                    <a href="/index/{{ course_str }}?edit" class="list-group-item" data-target="#"
                        data-toggle="collapse" style="padding-left: 15px">
                         Syllabus index
                     </a>
@@ -57,7 +57,7 @@
                                 <i class="chevron fa fa-chevron-down"></i>
                                 {{ content.title }}
                                 <span class="pull-right">
-                                <a href="/syllabus/{{ content.request_path }}?edit"
+                                <a href="/syllabus/{{ course_str }}/{{ content.request_path }}?edit"
                                    target="_blank"
                                    class="btn btn-xs btn-default edit-button" style="margin-left: 5px">
                                     <i class="fa fa-edit"></i>
@@ -87,7 +87,7 @@
                                 {{ content.title }}
                                 <span class="pull-right">
                                     <a class="btn btn-xs btn-default edit-button"
-                                       href="/syllabus/{{ content.request_path }}?edit"
+                                       href="/syllabus/{{ course_str }}/{{ content.request_path }}?edit"
                                        target="_blank"
                                        style="margin-left: 5px">
                                         <i class="fa fa-edit"></i>

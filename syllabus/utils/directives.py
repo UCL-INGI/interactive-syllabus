@@ -18,6 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from urllib.error import URLError, HTTPError
 
+import re
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives.body import CodeBlock, Container
@@ -27,6 +28,23 @@ from flask import session
 import syllabus.utils.pages
 from syllabus.utils.inginious_lti import get_lti_url, get_lti_data, get_lti_submission
 from syllabus.utils.toc import Chapter
+import docutils.parsers.rst.directives
+
+
+def uri(argument):
+    """
+    Return the URI argument with whitespace removed.
+    (Directive option conversion function.)
+    Raise ``ValueError`` if no argument is found.
+    """
+    if argument is None:
+        raise ValueError('argument required but none supplied')
+    else:
+        uri = ''.join(argument.split())
+        return re.sub('^/assets/', '/syllabus/' + session['course'] + '/assets/', uri)
+
+# Oh yeah baby!
+docutils.parsers.rst.directives.uri = uri
 
 
 class InginiousDirective(Directive):
@@ -60,10 +78,10 @@ class InginiousDirective(Directive):
         user = session.get("user", None)
         if not session.get("print_mode", False):
             if not use_lti:
-                inginious_config = syllabus.get_config()['inginious']
+                inginious_config = syllabus.get_config()['courses'][session['course']]['inginious']
                 inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
                 same_origin_proxy = inginious_config['same_origin_proxy']
-                par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious",
+                par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious/" + session["course"],
                                                      '\n'.join(self.content),
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-python"),
                                 format='html')
@@ -72,7 +90,7 @@ class InginiousDirective(Directive):
                     # TODO: this is a bit ugly :'(
                     par = nodes.raw('',
                                     '{% set user = session.get("user", None) %}\n' +
-                                    ('{%% set data, launch_url = get_lti_data(logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
+                                    ('{%% set data, launch_url = get_lti_data(course_str,logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
                                     """
                                     {% set inputs_list = [] %}
                                     {% for key, value in data.items() %}
@@ -122,7 +140,7 @@ class InginiousDirective(Directive):
         return [par]
 
     def run(self):
-        return self.get_html_content("lti" in syllabus.get_config()["inginious"])
+        return self.get_html_content("lti" in syllabus.get_config()["courses"][session["course"]]["inginious"])
 
 
 class InginiousSandboxDirective(InginiousDirective):
@@ -139,9 +157,10 @@ class ToCDirective(Directive):
     <div id="table-of-contents">
         <h2> Table des matières </h2>
     """
+    
 
     def run(self):
-        toc = syllabus.get_toc()
+        toc = syllabus.get_toc(session["course"])
         if len(self.arguments) == 1:
             # TODO: change this ugly part, rethink the chapter_index.rst completely :'(
             self.arguments[0] = "chapter_path" if self.arguments[0].replace(" ", "") == "{{chapter_path}}" else "%s" % self.arguments[0]
@@ -160,7 +179,7 @@ class ToCDirective(Directive):
         return """
         {% for content in (toc.get_top_level_content() if chapter is none else toc.get_direct_content_of(chapter)) recursive %}
             <ul>
-                <li style="list-style-type: none;"><a href="/syllabus/{{content.request_path}}">{{content.title}}</a></li>
+                <li style="list-style-type: none;"><a href="/syllabus/{{ course_str }}/{{content.request_path}}">{{content.title}}</a></li>
                 {% if "Chapter" in content.__class__.__name__ %}
                     {{ loop(toc.get_direct_content_of(content)) }}
                 {% endif %}

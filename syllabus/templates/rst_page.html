@@ -48,6 +48,19 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
+
+        .navbar-brand-dropdown {
+            margin: 0;
+        }
+
+        .navbar-brand .dropdown-toggle {
+            margin-top: -15px;
+        }
+
+        .dropdown-menu .dropdown-brand {
+            margin-left: -15px;
+        }
+
         .CodeMirror {
             border: 1px solid #eee;
             height: auto;
@@ -80,7 +93,19 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">Accueil</a>
+            <ul class="nav navbar-nav navbar-brand navbar-brand-dropdown">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ courses_titles[course_str] }} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        {% for key, course_title in courses_titles.items() %}
+                            <li><a href="/index/{{ key}}">{{ course_title }}</a></li>
+                             {% if not loop.last %}
+                                <li role="separator" class="divider"></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
@@ -91,7 +116,7 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ chapter.title }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             {% for content in toc.get_content_at_same_level(chapter) %}
-                                <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
+                                <li><a href="/syllabus/{{ course_str }}/{{ content.request_path }}">{{ content.title }}</a></li>
                                 {% if not loop.last %}
                                     <li role="separator" class="divider"></li>
                                 {% endif %}
@@ -104,23 +129,23 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> {{ this_content.title if "Page" in this_content.__class__.__name__ else "Index du chapitre" }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             {% if "Page" in this_content.__class__.__name__ %}
-                                <li><a href="/syllabus/{{ containing_chapters[-1].request_path }}"> Index du chapitre </a></li>
+                                <li><a href="/syllabus/{{ course_str }}/{{ containing_chapters[-1].request_path }}"> Index du chapitre </a></li>
 
                                 <li role="separator" class="divider"></li>
 
                                 {% for content in content_at_same_level %}
-                                <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
+                                <li><a href="/syllabus/{{ course_str }}/{{ content.request_path }}">{{ content.title }}</a></li>
                                     {% if not loop.last %}
                                         <li role="separator" class="divider"></li>
                                     {% endif %}
                                 {% endfor %}
                             {% else %}
-                                <li><a href="/syllabus/{{ this_content.request_path }}"> Index du chapitre </a></li>
+                                <li><a href="/syllabus/{{ course_str }}/{{ this_content.request_path }}"> Index du chapitre </a></li>
 
                                 <li role="separator" class="divider"></li>
 
                                 {% for content in toc.get_direct_content_of(this_content) %}
-                                    <li><a href="/syllabus/{{ content.request_path }}">{{ content.title }}</a></li>
+                                    <li><a href="/syllabus/{{ course_str }}/{{ content.request_path }}">{{ content.title }}</a></li>
                                     {% if not loop.last %}
                                         <li role="separator" class="divider"></li>
                                     {% endif %}
@@ -142,7 +167,7 @@
                     </li>
                 {% endif %}
                 {% if display_print_all %}
-                    <li><a href="/print_all" style="display: block"> Print syllabus </a></li>
+                    <li><a href="/print_all/{{ course_str }}" style="display: block"> Print syllabus </a></li>
                 {% endif %}
                 <li><a href="{{ "%s?print" % request.path }}" style="display: block">Print page</a></li>
                 {% if "Chapter" in this_content.__class__.__name__ %}
@@ -156,7 +181,7 @@
     <span id="maincontent"></span>
     <div class="box contents">
         <div class="no-overflow">
-            {{ render_rst(this_content, logged_in=logged_in, toc=toc, get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)|safe }}
+            {{ render_rst(this_content, course_str=course_str, logged_in=logged_in, toc=toc, get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)|safe }}
         </div>
     </div>
 
@@ -166,12 +191,12 @@
 {% endif %}
 <div style="display: flex; flex-direction: row; justify-content: space-between">
     {% if previous is not none %}
-        <a href="/syllabus/{{ previous.request_path }}" style="font-size: 120%; margin-left: 35px">Page précédente</a>
+        <a href="/syllabus/{{ course_str }}/{{ previous.request_path }}" style="font-size: 120%; margin-left: 35px">Page précédente</a>
     {% else %}
         <div></div>
     {% endif %}
     {% if next is not none %}
-        <a href="/syllabus/{{ next.request_path }}" style="font-size: 120%; margin-right: 35px">Page suivante</a>
+        <a href="/syllabus/{{ course_str }}/{{ next.request_path }}" style="font-size: 120%; margin-right: 35px">Page suivante</a>
     {% else %}
         <div></div>
     {% endif %}

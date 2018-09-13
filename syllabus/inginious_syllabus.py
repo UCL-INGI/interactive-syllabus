@@ -23,7 +23,7 @@ from urllib import request as urllib_request
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
 from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join, \
-    send_from_directory
+    send_from_directory, url_for
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -60,15 +60,25 @@ if "saml" in syllabus.get_config()['authentication_methods']:
 
 
 @app.route('/', methods=["GET", "POST"])
-@app.route('/index', methods=["GET", "POST"])
 def index(print=False):
+    default_course = syllabus.get_config().get("default_course", None)
+    if not default_course:
+        return "No default course"
+    return redirect(url_for("course_index", course=default_course))
+
+
+@app.route('/index/<string:course>', methods=["GET", "POST"])
+def course_index(course, print=False):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    session["course"] = course
     try:
-        TOC = syllabus.get_toc()
+        TOC = syllabus.get_toc(course)
         if request.args.get("edit") is not None:
-            return edit_content(TOC.index.path, TOC)
+            return edit_content(course, TOC.index.path, TOC)
         print_mode = print or request.args.get("print") is not None
         # only display the button to print the whole syllabus in the index
-        return render_web_page(TOC.index, print_mode=print_mode, display_print_all=True)
+        return render_web_page(course, TOC.index, print_mode=print_mode, display_print_all=True)
     except ContentNotFoundError:
         abort(404)
 
@@ -78,34 +88,40 @@ def favicon():
     abort(404)
 
 
-@app.route('/syllabus/<path:content_path>', methods=["GET", "POST"])
-def get_syllabus_content(content_path: str, print=False):
+@app.route('/syllabus/<string:course>/<path:content_path>', methods=["GET", "POST"])
+def get_syllabus_content(course, content_path: str, print=False):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    session["course"] = course
     if content_path[-1] == "/":
         content_path = content_path[:-1]
-    TOC = syllabus.get_toc()
+    TOC = syllabus.get_toc(course)
     if request.args.get("edit") is not None:
-        return edit_content(content_path, TOC)
+        return edit_content(course, content_path, TOC)
     print_mode = print or request.args.get("print") is not None
     try:
         try:
             # assume that it is an RST page
-            return render_web_page(TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+            return render_web_page(course, TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
         except ContentNotFoundError:
             # it should be a chapter
             if request.args.get("print") == "all_content":
                 # we want to print all the content of the chapter
-                return get_chapter_printable_content(TOC.get_chapter_from_path(content_path), TOC)
+                return get_chapter_printable_content(course, TOC.get_chapter_from_path(content_path), TOC)
             # we want to access the index of the chapter
-            return render_web_page(TOC.get_chapter_from_path(content_path), print_mode=print_mode)
+            return render_web_page(course, TOC.get_chapter_from_path(content_path), print_mode=print_mode)
     except ContentNotFoundError:
         abort(404)
 
 
 # maybe use @cache.cached(timeout=seconds) here
-@app.route('/assets/<path:asset_path>', methods=["GET", "POST"])
-@app.route('/syllabus/<path:content_path>/assets/<path:asset_path>', methods=["GET", "POST"])
-def get_syllabus_asset(asset_path: str, content_path: str = None):
-    TOC = syllabus.get_toc()
+@app.route('/syllabus/<string:course>/assets/<path:asset_path>', methods=["GET", "POST"])
+@app.route('/syllabus/<string:course>/<path:content_path>/assets/<path:asset_path>', methods=["GET", "POST"])
+def get_syllabus_asset(course, asset_path: str, content_path: str = None):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    session["course"] = course
+    TOC = syllabus.get_toc(course)
     if content_path is None:
             return send_from_directory(TOC.get_global_asset_directory(), asset_path)
     if content_path[-1] == "/":
@@ -121,7 +137,7 @@ def get_syllabus_asset(asset_path: str, content_path: str = None):
 
 
 @permission_admin
-def edit_content(content_path, TOC: TableOfContent):
+def edit_content(course, content_path, TOC: TableOfContent):
     try:
         content = TOC.get_page_from_path("%s.rst" % content_path)
     except ContentNotFoundError:
@@ -132,29 +148,32 @@ def edit_content(content_path, TOC: TableOfContent):
             return seeother(request.path)
         else:
             if type(content) is Chapter:
-                with open(safe_join(syllabus.get_pages_path(), content.path, "chapter_introduction.rst"), "w") as f:
+                with open(safe_join(syllabus.get_pages_path(course), content.path, "chapter_introduction.rst"), "w") as f:
                     f.write(inpt["new_content"])
             else:
-                with open(safe_join(syllabus.get_pages_path(), content.path), "w") as f:
+                with open(safe_join(syllabus.get_pages_path(course), content.path), "w") as f:
                     f.write(inpt["new_content"])
             return seeother(request.path)
     elif request.method == "GET":
-        return render_template("edit_page.html", content_data=get_content_data(content), content=content, TOC=TOC)
+        return render_template("edit_page.html", content_data=get_content_data(course, content), content=content, TOC=TOC)
 
 
-@app.route('/print_all')
-def print_all_syllabus():
-    TOC = syllabus.get_toc()
+@app.route('/print_all/<string:course>')
+def print_all_syllabus(course):
+    if not course in syllabus.get_config()["courses"].keys():
+        abort(404)
+    session["course"] = course
+    TOC = syllabus.get_toc(course)
     session["print_mode"] = True
-    retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(),
-                             render_rst=syllabus.utils.pages.render_content, toc=TOC, get_lti_data=get_lti_data,
+    retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(course),
+                             render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs), toc=TOC, get_lti_data=get_lti_data,
                              get_lti_submission=get_lti_submission, logged_in=session.get("user", None))
     session["print_mode"] = False
     return retval
 
 
-def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
-    TOC = syllabus.get_toc()
+def get_chapter_printable_content(course: str,chapter: Chapter, toc: TableOfContent):
+    TOC = syllabus.get_toc(course)
     def fetch_content(chapter):
         printable_content = [chapter]
         for content in toc.get_direct_content_of(chapter):
@@ -167,7 +186,7 @@ def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
     session["print_mode"] = True
     try:
         retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter),
-                                 render_rst=syllabus.utils.pages.render_content, toc=TOC)
+                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs), toc=TOC)
         session["print_mode"] = False
         return retval
     except:
@@ -175,9 +194,9 @@ def get_chapter_printable_content(chapter: Chapter, toc: TableOfContent):
         raise
 
 
-def render_web_page(content: Content, print_mode=False, display_print_all=False):
+def render_web_page(course: str, content: Content, print_mode=False, display_print_all=False):
     try:
-        TOC = syllabus.get_toc()
+        TOC = syllabus.get_toc(course)
         session["print_mode"] = print_mode
         try:
             previous = TOC.get_previous_content(content)
@@ -188,16 +207,19 @@ def render_web_page(content: Content, print_mode=False, display_print_all=False)
         except KeyError:
             next = None
 
-        inginious_config = syllabus.get_config()['inginious']
+        config = syllabus.get_config()
+        inginious_config = config['courses'][course]['inginious']
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
         same_origin_proxy = inginious_config['same_origin_proxy']
         retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
                                  logged_in=session.get("user", None),
-                                 inginious_course_url=inginious_course_url if not same_origin_proxy else "/postinginious",
+                                 inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
                                  inginious_url=inginious_config['url'],
                                  containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
-                                 render_rst=syllabus.utils.pages.render_content,
+                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
                                  content_at_same_level=TOC.get_content_at_same_level(content),
+                                 course_str=course,
+                                 courses_titles={course: config["courses"][course]["title"] for course in syllabus.get_courses()},
                                  toc=TOC,
                                  direct_content=TOC.get_direct_content_of(content), next=next, previous=previous,
                                  display_print_all=display_print_all,
@@ -265,11 +287,11 @@ def log_out():
     return seeother('/')
 
 
-@app.route('/postinginious', methods=['POST'])
-def post_inginious():
+@app.route('/postinginious/<string:course>', methods=['POST'])
+def post_inginious(course):
     inpt = request.form
     data = parse.urlencode(inpt).encode()
-    inginious_config = syllabus.get_config()['inginious']
+    inginious_config = syllabus.get_config()['courses'][course]['inginious']
     inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
     req = urllib_request.Request(inginious_course_url, data=data)
     resp = urllib_request.urlopen(req)
@@ -355,12 +377,12 @@ def metadata():
     return resp
 
 
-@app.route('/update_pages/<secret>', methods=['GET', 'POST'])
-def update_pages(secret):
+@app.route('/update_pages/<string:secret>/<string:course>', methods=['GET', 'POST'])
+def update_pages(secret, course):
     params = Params.query.one()
-    if secret != params.git_hook_url or 'git' not in syllabus.get_config()['pages']:
+    if secret != params.git_hook_url or 'git' not in syllabus.get_config()['courses'][course]['pages']:
         return seeother("/")
-    syllabus.utils.pages.init_and_sync_repo(force_sync=True)
+    syllabus.utils.pages.init_and_sync_repo(course, force_sync=True)
     return "done"
 
 

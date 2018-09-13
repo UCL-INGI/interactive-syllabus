@@ -48,9 +48,9 @@ def seeother(link, feedback=None):
     return redirect(link, code=303)
 
 
-def get_chapter_intro(chapter):
+def get_chapter_intro(course, chapter):
     try:
-        with open(safe_join(syllabus.get_pages_path(), chapter.path, "chapter_introduction.rst"), 'r', encoding="utf-8") as f:
+        with open(safe_join(syllabus.get_pages_path(course), chapter.path, "chapter_introduction.rst"), 'r', encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return ""
@@ -82,30 +82,30 @@ def permission_admin(f):
     return wrapper
 
 
-def render_content(content, **kwargs):
+def render_content(course, content, **kwargs):
     if type(content) is Chapter:
-        return render_rst_file("chapter_index.rst", chapter_path=content.path,
-                               chapter_desc=get_chapter_intro(content), **kwargs)
+        return render_rst_file(course, "chapter_index.rst", chapter_path=content.path,
+                               chapter_desc=get_chapter_intro(course, content), **kwargs)
     else:
-        return render_rst_file(content.path, **kwargs)
+        return render_rst_file(course, content.path, **kwargs)
 
 
-def render_rst_file(page_path, **kwargs):
-    with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
+def render_rst_file(course, page_path, **kwargs):
+    with open(safe_join(syllabus.get_pages_path(course), page_path), "r") as f:
         # TODO: cache the return value of publish_string, it should not change per user
         return render_template_string(publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts),
                                **kwargs)
 
-def get_content_data(content: Content):
+def get_content_data(course, content: Content):
     path = content.path if type(content) is Page else safe_join(content.path, "chapter_introduction.rst")
     try:
-        with open(safe_join(syllabus.get_pages_path(), path), "r") as f:
+        with open(safe_join(syllabus.get_pages_path(course), path), "r") as f:
             return f.read()
     except FileNotFoundError:
         return ""
 
 
-def generate_toc_yaml():
+def generate_toc_yaml(course):
     def create_dict(path, name):
         retval = {"title": name, "content": {}}
         for entry in os.listdir(path):
@@ -116,14 +116,14 @@ def generate_toc_yaml():
                     retval["content"][entry] = {"title": entry[:-4]}
         return retval
 
-    path = syllabus.get_pages_path()
+    path = syllabus.get_pages_path(course)
     result = {}
     for dir in [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]:
         result[dir] = create_dict(os.path.join(path, dir), dir)
     return str(yaml.dump(result))
 
 
-def init_and_sync_repo(force_sync=False):
+def init_and_sync_repo(course, force_sync=False):
     """
     Initializes a git repository in the pages folder if no repository already exists, then
     synchronizes it with the remote specified in the configuration file if the
@@ -131,9 +131,11 @@ def init_and_sync_repo(force_sync=False):
     Warning: the local changes will be overwritten.
     :return:
     """
-    path = os.path.join(syllabus.get_root_path(), syllabus.get_pages_path())
-    git_config = syllabus.get_config()['pages']['git']
+    path = os.path.join(syllabus.get_root_path(), syllabus.get_pages_path(course))
+    git_config = syllabus.get_config()['courses'][course]['pages']['git']
     try:
+        if not os.path.exists(path):
+            os.makedirs(path)
         repo = Repo(path)
     except InvalidGitRepositoryError:
         # this is currently not a git repo
@@ -145,12 +147,12 @@ def init_and_sync_repo(force_sync=False):
         # sync the repo if the origin wasn't already there
         force_sync = True
     if force_sync:
-        git_force_sync(origin, repo)
-        syllabus.get_toc(True)
+        git_force_sync(course, origin, repo)
+        syllabus.get_toc(course, True)
 
 
-def git_force_sync(origin, repo):
-    git_config = syllabus.get_config()['pages']['git']
+def git_force_sync(course, origin, repo):
+    git_config = syllabus.get_config()['courses'][course]['pages']['git']
     private_key_path = git_config['repository_private_key']
     branch = git_config['branch']
     if private_key_path is not None:
