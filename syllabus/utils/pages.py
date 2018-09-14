@@ -84,20 +84,36 @@ def permission_admin(f):
 
 def render_content(content, **kwargs):
     if type(content) is Chapter:
-        return render_rst_file("chapter_index.rst", chapter_path=content.path,
+        return render_rst_file("chapter_index.rst", content, chapter_path=content.path,
                                chapter_desc=get_chapter_intro(content), **kwargs)
     else:
-        return render_rst_file(content.path, **kwargs)
+        return render_rst_file(content.path, content, **kwargs)
 
 
-def render_rst_file(page_path, **kwargs):
-    with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
-        # TODO: cache the return value of publish_string, it should not change per user
-        return render_template_string(publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts),
-                               **kwargs)
+def render_rst_file(page_path, content, **kwargs):
+    cache_pages = syllabus.get_config()["cache_pages"]
+    # look if we have a cached version of this content
+    if cache_pages and content.has_cached_content():
+        with open(safe_join(syllabus.get_pages_path(), content.cached_path), "r") as f:
+            rendered = f.read()
+    else:
+        # render the content
+        toc = syllabus.get_toc()
+        with open(safe_join(syllabus.get_pages_path(), page_path), "r") as f:
+            rendered = publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts)
+        if cache_pages:  # cache the content if needed
+            if type(content) is Page:
+                os.makedirs(safe_join(toc.cached_path, toc.get_parent_of(content).path), exist_ok=True)
+            else:
+                os.makedirs(safe_join(toc.cached_path, content.path), exist_ok=True)
+            with open(safe_join(syllabus.get_pages_path(), content.cached_path), "w") as cached_content:
+                cached_content.write(rendered)
+    return render_template_string(rendered, **kwargs)
+
 
 def get_content_data(content: Content):
-    path = content.path if type(content) is Page else safe_join(content.path, "chapter_introduction.rst")
+    # TODO: use the same attr for chapter and page to get the file path
+    path = content.description_path if type(content) is Chapter else content.path
     try:
         with open(safe_join(syllabus.get_pages_path(), path), "r") as f:
             return f.read()

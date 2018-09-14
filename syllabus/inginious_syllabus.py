@@ -80,13 +80,13 @@ def favicon():
 
 
 @app.route('/syllabus/<path:content_path>', methods=["GET", "POST"])
-def get_syllabus_content(content_path: str, print=False):
+def get_syllabus_content(content_path: str, print_mode=False):
     if content_path[-1] == "/":
         content_path = content_path[:-1]
     TOC = syllabus.get_toc()
     if request.args.get("edit") is not None:
         return edit_content(content_path, TOC)
-    print_mode = print or request.args.get("print") is not None
+    print_mode = print_mode or request.args.get("print") is not None
     try:
         try:
             # assume that it is an RST page

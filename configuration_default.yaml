@@ -1,5 +1,8 @@
 sessions_secret_key: ~
 
+cache_pages: yes  # set to true if the rendered pages must be cached as Jinja templates instead of
+                  # re-rendering them each time
+
 inginious:
   url: http://inginious_instance.example:port
   course_id: id

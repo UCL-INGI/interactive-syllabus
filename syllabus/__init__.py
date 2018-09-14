@@ -73,6 +73,14 @@ def get_pages_path():
     return os.path.join(path, "pages")
 
 
+def get_pages_cache_path():
+    """
+    :return: The path to the cached version of the "pages" directory. This directory is located inside the "pages"
+    directory itself, under the ".cache" name.
+    """
+    return os.path.join(get_pages_path(), ".cache")
+
+
 def get_config(force=False):
     def reload_config():
         path = get_config_path()

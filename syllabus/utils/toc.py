@@ -32,6 +32,10 @@ class Content(ABC):
     def request_path(self):
         raise NotImplementedError
 
+    @abstractmethod
+    def has_cached_content(self):
+        raise NotImplementedError
+
 
 class Page(Content):
 
@@ -42,15 +46,28 @@ class Page(Content):
         if path[-4:] != ".rst" or not os.path.isfile(file_path):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
+        self.path_without_ext, self.file_ext = os.path.splitext(self.path)
+        self._complete_path = safe_join(pages_path, path)
+        self._cached_path = safe_join(".cached", "%s.html" % self.path_without_ext)
 
     def __repr__(self):
         return "Page %s" % self.path
 
     @property
     def request_path(self):
-        if self.path[-4:] == ".rst":
-            return self.path[:-4]
-        return self.path
+        return self.path_without_ext
+
+    @property
+    def absolute_path(self):
+        return self._complete_path
+
+    @property
+    def cached_path(self):
+        return self._cached_path
+
+    def has_cached_content(self):
+        absolute_cached_path = safe_join(syllabus.get_pages_path(), self.cached_path)
+        return os.path.exists(absolute_cached_path) and os.path.getmtime(absolute_cached_path) > os.path.getmtime(self.absolute_path)
 
 
 class Chapter(Content):
@@ -61,6 +78,9 @@ class Chapter(Content):
         if not os.path.isdir(file_path):
             raise ContentNotFoundError(file_path)
         super().__init__(path, title)
+        self.intro_file = "chapter_introduction.rst"
+        self.path_without_ext, self.file_ext = os.path.splitext(safe_join(self.path, self.intro_file))
+        self._cached_path = safe_join(".cached", "%s.html" % self.path_without_ext)
         self.description = description
 
     def __repr__(self):
@@ -74,6 +94,17 @@ class Chapter(Content):
     def absolute_path(self):
         return safe_join(syllabus.get_pages_path(), self.path)
 
+    @property
+    def description_path(self):
+        return safe_join(syllabus.get_pages_path(), self.path, self.intro_file)
+
+    @property
+    def cached_path(self):
+        return self._cached_path
+
+    def has_cached_content(self):
+        absolute_cached_path = safe_join(syllabus.get_pages_path(), self.cached_path)
+        return os.path.exists(absolute_cached_path) and os.path.exists(self.absolute_path) and os.path.getmtime(absolute_cached_path) > os.path.getmtime(self.absolute_path)
 
 class TableOfContent(object):
     def __init__(self, toc_file=None, ignore_not_found=True):
@@ -84,6 +115,7 @@ class TableOfContent(object):
         but not on the file system. Raises a ContentNotFoundError otherwise
         """
         toc_file = toc_file if toc_file is not None else safe_join(get_pages_path(), "toc.yaml")
+        self.cached_path = os.path.join(syllabus.get_pages_path(), ".cached")
         with open(toc_file, "r") as f:
             toc_dict = yaml.load(f, OrderedDictYAMLLoader)
             self._init_from_dict(toc_dict, ignore_not_found)
