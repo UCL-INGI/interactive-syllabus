@@ -6,3 +6,7 @@ recursive-include syllabus/static *
 recursive-include syllabus/doc *
 recursive-include syllabus/templates *
 recursive-include syllabus/default *
+recursive-include syllabus/admin *
+recursive-include syllabus/models *
+recursive-include syllabus/utils *
+recursive-include syllabus/saml *

@@ -56,8 +56,8 @@ def init_db():
     users = User.query.all()
     if len(users) == 0:
         create_db_user()
-    if 'git' in syllabus.get_config()['pages']:
-        generate_github_hook()
+    
+    generate_github_hook()
 
 
 def update_database():
