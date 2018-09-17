@@ -43,6 +43,7 @@ def get_toc(course, force=False):
         except KeyError:
             return reload_toc()
 
+
 get_toc.TOC = {}
 
 
@@ -73,12 +74,12 @@ def get_pages_path(course):
     return os.path.join(path, "pages")
 
 
-def get_pages_cache_path():
+def get_pages_cache_path(course):
     """
     :return: The path to the cached version of the "pages" directory. This directory is located inside the "pages"
     directory itself, under the ".cache" name.
     """
-    return os.path.join(get_pages_path(), ".cache")
+    return os.path.join(get_pages_path(course), ".cache")
 
 
 def get_config(force=False):

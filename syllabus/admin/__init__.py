@@ -136,7 +136,7 @@ def content_edition(course):
 
             # create a new page
             open(path, "w").close()
-            page = Page(path=content_path, title=inpt["title"])
+            page = Page(path=content_path, title=inpt["title"], pages_path=syllabus.get_pages_path(course))
             TOC.add_content_in_toc(page)
         elif inpt["action"] == "create_chapter":
             # creating a new chapter
@@ -161,7 +161,7 @@ def content_edition(course):
 
 
 def delete_content(course, inpt, TOC):
-    pages_path = syllabus.get_pages_path()
+    pages_path = syllabus.get_pages_path(course)
     content_path = inpt["content-path"]
     path = os.path.join(pages_path, content_path)
 
