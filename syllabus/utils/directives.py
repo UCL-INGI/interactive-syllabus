@@ -26,8 +26,6 @@ from docutils.statemachine import StringList
 from flask import session
 
 import syllabus.utils.pages
-from syllabus.utils.inginious_lti import get_lti_url, get_lti_data, get_lti_submission
-from syllabus.utils.toc import Chapter
 import docutils.parsers.rst.directives
 
 
@@ -75,7 +73,7 @@ class InginiousDirective(Directive):
     """
 
     def get_html_content(self, use_lti):
-        user = session.get("user", None)
+        # TODO: if not use_lti should be in the template itself
         if not session.get("print_mode", False):
             if not use_lti:
                 inginious_config = syllabus.get_config()['courses'][session['course']]['inginious']
@@ -86,38 +84,36 @@ class InginiousDirective(Directive):
                                                      self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-python"),
                                 format='html')
             else:
-                if user is not None:
-                    # TODO: this is a bit ugly :'(
-                    par = nodes.raw('',
-                                    '{% set user = session.get("user", None) %}\n' +
-                                    ('{%% set data, launch_url = get_lti_data(course_str,logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
-                                    """
-                                    {% set inputs_list = [] %}
-                                    {% for key, value in data.items() %}
-                                        {% set a = inputs_list.append('<input type="hidden" name="%s" value="%s"/>' % (key, value)) %}
-                                    {% endfor %}
-                                    {% set form_inputs = '\n'.join(inputs_list) %}
-                                    """ +
-                                    '<iframe name="myIframe%s" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
-                                    ''
-                                    ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
-                                    """
-                                    <form action="{{ launch_url }}"
-                                          name="ltiLaunchForm"
-                                          class="ltiLaunchForm"
-                                          method="POST"
-                                          encType="application/x-www-form-urlencoded"
-                                          target="myIframe%s">
-                                      {{ form_inputs|safe }}
-                                      <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
-                                    </form>
-                                    """ % (self.arguments[0], self.arguments[0]),
-
-                                    format='html')
-                else:
-                    par = nodes.raw('',
-                                    '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please log in to see this exercise </pre>',
-                                    format='html')
+                # TODO: this is a bit ugly :'(
+                par = nodes.raw('',
+                                '{% set user = session.get("user", None) %}\n' +
+                                '{% if user is not none %}\n' +
+                                ('{%% set data, launch_url = get_lti_data(course_str,logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
+                                """
+                                {% set inputs_list = [] %}
+                                {% for key, value in data.items() %}
+                                    {% set a = inputs_list.append('<input type="hidden" name="%s" value="%s"/>' % (key, value)) %}
+                                {% endfor %}
+                                {% set form_inputs = '\n'.join(inputs_list) %}
+                                """ +
+                                '<iframe name="myIframe%s" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
+                                ''
+                                ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
+                                """
+                                <form action="{{ launch_url }}"
+                                      name="ltiLaunchForm"
+                                      class="ltiLaunchForm"
+                                      method="POST"
+                                      encType="application/x-www-form-urlencoded"
+                                      target="myIframe%s">
+                                  {{ form_inputs|safe }}
+                                  <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
+                                </form>
+                                """ % (self.arguments[0], self.arguments[0]) +
+                                "{% else %}" +
+                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please log in to see this exercise </pre>' +
+                                "{% endif %}",
+                                format='html')
 
         else:
             c = []
