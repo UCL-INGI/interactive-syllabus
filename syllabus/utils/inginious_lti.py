@@ -49,7 +49,7 @@ def get_lti_submission(course, user_id, task_id):
     match = lti_regex_match.findall(lti_url)
     if len(match) == 1:
         cookie = match[0]
-        response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['inginious']['url'], cookie)).read().decode("utf-8"))
+        response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['courses'][course]['inginious']['url'], cookie)).read().decode("utf-8"))
         if response["status"] == "success" and response["submission"] is not None:
             return response["submission"]["input"]['q1']
     return None
