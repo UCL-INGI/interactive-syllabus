@@ -122,7 +122,7 @@ class InginiousDirective(Directive):
         else:
             c = []
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
-            c.append('{%% set submission = get_lti_submission(logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
+            c.append('{%% set submission = get_lti_submission(course_str, logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
             c.append("<pre>")
             c.append("{% if submission is not none %}"
                      "{{ submission }}"

@@ -40,10 +40,10 @@ def get_lti_url(course, user_id, task_id):
     return task_url
 
 
-def get_lti_submission(user_id, task_id):
+def get_lti_submission(course, user_id, task_id):
     config = syllabus.get_config()
     try:
-        lti_url = get_lti_url(user_id, task_id)
+        lti_url = get_lti_url(course, user_id, task_id)
     except URLError:
         return None
     match = lti_regex_match.findall(lti_url)

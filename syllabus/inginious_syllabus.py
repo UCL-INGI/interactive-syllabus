@@ -24,7 +24,7 @@ from urllib import request as urllib_request
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
 from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join, \
-    send_from_directory, url_for
+    send_from_directory, url_for, render_template_string
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -166,14 +166,32 @@ def print_all_syllabus(course):
     session["course"] = course
     TOC = syllabus.get_toc(course)
     session["print_mode"] = True
-    retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(course),
-                             render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs), toc=TOC, get_lti_data=get_lti_data,
-                             get_lti_submission=get_lti_submission, logged_in=session.get("user", None))
+    cached_config = syllabus.get_config()["caching"]
+    if cached_config["cache_pages"] and TOC.has_cached_full_print():
+        with open(TOC.full_print_cached_path(), "r") as f:
+            retval = render_template_string(f.read(),
+                                            contents=syllabus.get_toc(course),
+                                            render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
+                                            toc=TOC, get_lti_data=get_lti_data,
+                                            get_lti_submission=get_lti_submission, logged_in=session.get("user", None),
+                                            course_str=course)
+    else:
+        retval = render_template("print_multiple_contents.html", contents=syllabus.get_toc(course),
+                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content,
+                                                                                                          **kwargs),
+                                 toc=TOC, get_lti_data=get_lti_data,
+                                 get_lti_submission=get_lti_submission, logged_in=session.get("user", None),
+                                 course_str=course)
+        if cached_config["cache_pages"]:
+            # update cache if necessary
+            with open(TOC.full_print_cached_path(), "w") as f:
+                f.write(retval)
+
     session["print_mode"] = False
     return retval
 
 
-def get_chapter_printable_content(course: str,chapter: Chapter, toc: TableOfContent):
+def get_chapter_printable_content(course: str, chapter: Chapter, toc: TableOfContent):
     TOC = syllabus.get_toc(course)
     def fetch_content(chapter):
         printable_content = [chapter]
@@ -187,7 +205,9 @@ def get_chapter_printable_content(course: str,chapter: Chapter, toc: TableOfCont
     session["print_mode"] = True
     try:
         retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter),
-                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs), toc=TOC)
+                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
+                                 toc=TOC,
+                                 course_str=course)
         session["print_mode"] = False
         return retval
     except:

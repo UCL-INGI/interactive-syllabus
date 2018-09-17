@@ -91,11 +91,12 @@ def render_content(course, content, **kwargs):
 
 
 def render_rst_file(course, page_path, content, **kwargs):
-    cache_pages = syllabus.get_config()["cache_pages"]
+    cache_pages = syllabus.get_config()["caching"]["cache_pages"]
     toc = syllabus.get_toc(course)
+    print_mode = session.get("print_mode", False)
     # look if we have a cached version of this content
-    if cache_pages and toc.has_cached_content(content):
-        with open(safe_join(syllabus.get_pages_path(course), content.cached_path), "r") as f:
+    if cache_pages and toc.has_cached_content(content, print_mode):
+        with open(safe_join(syllabus.get_pages_path(course), content.cached_path(print_mode)), "r") as f:
             rendered = f.read()
     else:
         # render the content
@@ -104,11 +105,11 @@ def render_rst_file(course, page_path, content, **kwargs):
         if cache_pages:  # cache the content if needed
             if type(content) is Page:
                 parent = toc.get_parent_of(content)
-                os.makedirs(safe_join(toc.cached_path, parent.path if parent is not None else ""),
+                os.makedirs(safe_join(toc.cached_path(print_mode), parent.path if parent is not None else ""),
                             exist_ok=True)
             else:
-                os.makedirs(safe_join(toc.cached_path, content.path), exist_ok=True)
-            with open(safe_join(syllabus.get_pages_path(course), content.cached_path), "w") as cached_content:
+                os.makedirs(safe_join(toc.cached_path(print_mode), content.path), exist_ok=True)
+            with open(safe_join(syllabus.get_pages_path(course), content.cached_path(print_mode)), "w") as cached_content:
                 cached_content.write(rendered)
     return render_template_string(rendered, **kwargs)
 
