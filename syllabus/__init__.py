@@ -26,28 +26,31 @@ from flask import request, has_request_context
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader, OrderedDumper
 
 
-def get_toc(force=False):
+def get_toc(course, force=False):
     def reload_toc():
         """ loads the TOC explicitely """
         # TODO: change this hack a bit ugly
         from syllabus.utils.toc import TableOfContent
-        get_toc.TOC = TableOfContent()
-        return get_toc.TOC
+        get_toc.TOC[course] = TableOfContent(course)
+        return get_toc.TOC[course]
 
     if force:
         return reload_toc()
     else:
         # use cached version
         try:
-            return get_toc.TOC
-        except AttributeError:
+            return get_toc.TOC[course]
+        except KeyError:
             return reload_toc()
 
 
-def save_toc(TOC):
+get_toc.TOC = {}
+
+
+def save_toc(course, TOC):
     from syllabus.utils.toc import TableOfContent
     """ Dumps the content of the specified TableOfContent in the toc.yaml file. """
-    with open(os.path.join(get_pages_path(), "toc.yaml"), "w") as f:
+    with open(os.path.join(get_pages_path(course), "toc.yaml"), "w") as f:
         yaml.dump(TOC.toc_dict, f, OrderedDumper, default_flow_style=False, allow_unicode=True)
 
 
@@ -55,30 +58,28 @@ def get_root_path():
     return os.path.abspath(os.path.dirname(__file__))
 
 
-def get_pages_path():
+def get_courses():
+    return get_config()['courses'].keys()
+
+
+def get_pages_path(course):
     """
     :return: The path to the content of the "pages" directory. if the syllabus_pages_path variable is set in config.py,
     or if the SYLLABUS_PAGES_PATH environment variable is set in a request context, the returned path will be in the
     specified value (the environment variable has the highest priority)
     If none of these is set, the path will be in the current working directory (os.cwd())
     """
-    # first check if the syllabus_pages_path variable is set
-    if "SYLLABUS_PAGES_PATH" in os.environ:
-        return os.path.join(os.environ["SYLLABUS_PAGES_PATH"], "pages")
-    elif has_request_context() and "SYLLABUS_PAGES_PATH" in request.environ:
-        return os.path.join(request.environ["SYLLABUS_PAGES_PATH"], "pages")
-    # SYLLABUS_PAGES_PATH can be set by mod_wsgi; If not, the path will be in the current working directory
-    syllabus_pages_path = get_config()['pages']['path']
+    syllabus_pages_path = get_config()['courses'][course]['pages']['path']
     path = syllabus_pages_path if syllabus_pages_path is not None else os.getcwd()
     return os.path.join(path, "pages")
 
 
-def get_pages_cache_path():
+def get_pages_cache_path(course):
     """
     :return: The path to the cached version of the "pages" directory. This directory is located inside the "pages"
     directory itself, under the ".cache" name.
     """
-    return os.path.join(get_pages_path(), ".cache")
+    return os.path.join(get_pages_path(course), ".cache")
 
 
 def get_config(force=False):

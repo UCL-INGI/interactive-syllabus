@@ -1,39 +1,45 @@
 sessions_secret_key: ~
 
-cache_pages: yes  # set to true if the rendered pages must be cached as Jinja templates instead of
-                  # re-rendering them each time
+caching:
+  cache_pages: yes  # set to true if the rendered pages must be cached as Jinja templates instead of
+                    # re-rendering them each time
+  full_print_cache_validity: 60  # validity in minutes of the cached content of the full printable version of the syllabus in
 
-inginious:
-  url: http://inginious_instance.example:port
-  course_id: id
+default_course: default
+courses:
+  default:
+    title: Syllabus
+    inginious:
+      url: http://inginious_instance.example:port
+      course_id: id
 
-  # if yes, the INGInious POST requests will be sent to this server instead of the real
-  # INGINious instance. This server will then do the request itself to the INGInious instance,
-  # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
-  same_origin_proxy: yes
+      # if yes, the INGInious POST requests will be sent to this server instead of the real
+      # INGINious instance. This server will then do the request itself to the INGInious instance,
+      # to avoid same origin policy problem (when the INGInious instance does not allow the use of CORS)
+      same_origin_proxy: yes
 
-  # LTI-related config. If you want to use LTI, uncomment the following lines:
+      # LTI-related config. If you want to use LTI, uncomment the following lines:
 
-  #lti:
-  #  consumer_secret: my_super_key
-  #  consumer_key: my_super_consumer_key
+      #lti:
+      #  consumer_secret: my_super_key
+      #  consumer_key: my_super_consumer_key
 
-pages:
-  # indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH
-  # environment variable. If none of these is set, the path will be considered as in the current working directory.
-  path: ~
+    pages:
+      # indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH
+      # environment variable. If none of these is set, the path will be considered as in the current working directory.
+      path: ~
 
-  # Git related config. Allows to synchronize the syllabus pages directory with a Git repository.
-  # If you want to use this feature, uncomment the following lines.
-  #git:
-  #  # url of the git remote that will be used to get the pages of the syllabus.
-  #  # the git repo will be force-pulled from the remote
-  #  # if a deployment key is specified and github is used, the string must be in the following format:
-  #  # "git@github.com:user/repo.git"
-  #  remote: ~
-  #  branch: master
-  #  # The path to the private key used to pull the specified repository
-  #  repository_private_key_path: ~
+      # Git related config. Allows to synchronize the syllabus pages directory with a Git repository.
+      # If you want to use this feature, uncomment the following lines.
+      #git:
+      #  # url of the git remote that will be used to get the pages of the syllabus.
+      #  # the git repo will be force-pulled from the remote
+      #  # if a deployment key is specified and github is used, the string must be in the following format:
+      #  # "git@github.com:user/repo.git"
+      #  remote: ~
+      #  branch: master
+      #  # The path to the private key used to pull the specified repository
+      #  repository_private_key_path: ~
 
 
 # Specifies the authentication methods that can be used by the syllabus.

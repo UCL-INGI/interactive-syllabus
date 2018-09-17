@@ -53,21 +53,24 @@ def ask_question_yes_no(question):
 
 
 if __name__ == '__main__':
-    path = syllabus.get_pages_path()
-    if 'git' in syllabus.get_config()['pages']:
-        pages.init_and_sync_repo()
-    create_toc = False
-    if not os.path.isdir(path) and not os.path.isfile(path):
-        create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "
-                                         "to create it ?")
-        if create_dir:
-            shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
-        else:
-            print("Bye !")
-            exit()
-    if not os.path.isfile(os.path.join(path, "toc.yaml")):
-        with open(os.path.join(path, "toc.yaml"), "w+") as f:
-            yaml.dump(default_toc, f)
+    config = syllabus.get_config()
+    for course in config["courses"]:
+        course_config = config["courses"][course]
+        path = syllabus.get_pages_path(course)
+        if 'git' in course_config['pages']:
+            pages.init_and_sync_repo(course)
+        create_toc = False
+        if not os.path.isdir(path) and not os.path.isfile(path):
+            create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "
+                                             "to create it ?")
+            if create_dir:
+                shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
+            else:
+                print("Bye !")
+                exit()
+        if not os.path.isfile(os.path.join(path, "toc.yaml")):
+            with open(os.path.join(path, "toc.yaml"), "w+") as f:
+                yaml.dump(default_toc, f)
     from syllabus.inginious_syllabus import main
 
     main()

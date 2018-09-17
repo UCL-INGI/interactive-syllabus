@@ -26,11 +26,13 @@
         </h1>
         <section class="content container-fluid">
             <div id="editor" style="margin: 20px; max-width: 95%" data-language="rst">
-                {% if hook_path is not none %}
-                    <div class="alert alert-info">
-                        Git pages update webhook path: <pre>{{ hook_path }}</pre>
-                    </div>
-                {% endif %}
+                {% for hook_path in hook_paths %}
+                    {% if hook_path is not none %}
+                        <div class="alert alert-info">
+                            Git pages update webhook path: <pre>{{ hook_path }}</pre>
+                        </div>
+                    {% endif %}
+                {% endfor %}
                 <form id="to-submit" method="post">
                     <label for="config">New configuration</label>
                     <textarea id="config" name="new_config"
