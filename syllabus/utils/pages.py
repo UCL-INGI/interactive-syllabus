@@ -82,6 +82,13 @@ def permission_admin(f):
     return wrapper
 
 
+def _render_content_to_jinja_templating(course, content):
+    if type(content) is Chapter:
+        return _render_rst_to_jinja_templating(course, "chapter_index.rst", content)
+    else:
+        return _render_rst_to_jinja_templating(course, content.path, content)
+
+
 def render_content(course, content, **kwargs):
     if type(content) is Chapter:
         return render_rst_file(course, "chapter_index.rst", content, chapter_path=content.path,
@@ -90,7 +97,7 @@ def render_content(course, content, **kwargs):
         return render_rst_file(course, content.path, content, **kwargs)
 
 
-def render_rst_file(course, page_path, content, **kwargs):
+def _render_rst_to_jinja_templating(course, page_path, content):
     cache_pages = syllabus.get_config()["caching"]["cache_pages"]
     toc = syllabus.get_toc(course)
     print_mode = session.get("print_mode", False)
@@ -111,7 +118,11 @@ def render_rst_file(course, page_path, content, **kwargs):
                 os.makedirs(safe_join(toc.cached_path(print_mode), content.path), exist_ok=True)
             with open(safe_join(syllabus.get_pages_path(course), content.cached_path(print_mode)), "w") as cached_content:
                 cached_content.write(rendered)
-    return render_template_string(rendered, **kwargs)
+    return rendered
+
+
+def render_rst_file(course, page_path, content, **kwargs):
+    return render_template_string(_render_rst_to_jinja_templating(course, page_path, content), **kwargs)
 
 
 def get_content_data(course, content: Content):

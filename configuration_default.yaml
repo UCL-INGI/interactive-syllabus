@@ -3,7 +3,6 @@ sessions_secret_key: ~
 caching:
   cache_pages: yes  # set to true if the rendered pages must be cached as Jinja templates instead of
                     # re-rendering them each time
-  full_print_cache_validity: 60  # validity in minutes of the cached content of the full printable version of the syllabus in
 
 default_course: default
 courses:

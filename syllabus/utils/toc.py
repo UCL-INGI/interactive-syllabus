@@ -160,16 +160,6 @@ class TableOfContent(object):
             and os.path.exists(content.absolute_path) \
             and os.path.getmtime(absolute_cached_path) > os.path.getmtime(content.absolute_path)
 
-    def has_cached_full_print(self):
-        """
-        returns True if a cached version of the full print exists and if it is recent enough
-        it is considered as resent enough while the modified time if the cached version is not older than
-        the full_print_cache_validity parameter set in the configuration
-        """
-        absolute_cached_path = safe_join(self._print_cached_path, ".full_print.html")
-        return os.path.exists(absolute_cached_path) \
-            and time.time() - os.path.getmtime(absolute_cached_path) < syllabus.get_config()["caching"]["full_print_cache_validity"]*60
-
     def get_content_from_path(self, path):
         """
         Returns the Content object related to the given path if there is a content located at this path
