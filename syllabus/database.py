@@ -56,6 +56,9 @@ def init_db():
     users = User.query.all()
     if len(users) == 0:
         create_db_user()
+    admin = User.query.filter(User.username == "admin").first()
+    if admin is not None and admin.hash_password is None:
+        print("Go to the following link to reset the admin user password: /resetpassword/%s" % admin.change_password_url)
     
     generate_github_hook()
 
