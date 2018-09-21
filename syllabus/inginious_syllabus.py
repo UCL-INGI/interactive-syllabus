@@ -54,6 +54,7 @@ directives.register_directive('table-of-contents', syllabus.utils.directives.ToC
 directives.register_directive('author', syllabus.utils.directives.AuthorDirective)
 directives.register_directive('teacher', syllabus.utils.directives.TeacherDirective)
 directives.register_directive('framed', syllabus.utils.directives.FramedDirective)
+directives.register_directive('print', syllabus.utils.directives.PrintOnlyDirective)
 
 
 if "saml" in syllabus.get_config()['authentication_methods']:

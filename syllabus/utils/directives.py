@@ -252,3 +252,23 @@ class TeacherDirective(Directive):
         return Container(content=self.content, arguments=[], lineno=self.lineno,
                                block_text=self.block_text, content_offset=self.content_offset, name="container",
                                options=self.options, state=self.state, state_machine=self.state_machine).run()
+
+
+class PrintOnlyDirective(Directive):
+    """
+    The directive will display its content only if it is in print mode
+
+    """
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 0
+
+    def run(self):
+
+        if session.get("print_mode", True):
+            return Container(content=self.content, arguments=[], lineno=self.lineno,
+                                   block_text=self.block_text, content_offset=self.content_offset, name="container",
+                                   options=self.options, state=self.state, state_machine=self.state_machine).run()
+        else:
+            return [nodes.raw('', "", format='html')]
+
