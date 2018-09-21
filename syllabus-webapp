@@ -61,8 +61,8 @@ if __name__ == '__main__':
             pages.init_and_sync_repo(course)
         create_toc = False
         if not os.path.isdir(path) and not os.path.isfile(path):
-            create_dir = ask_question_yes_no("No pages directory found in the current working directory. Would you like "
-                                             "to create it ?")
+            create_dir = ask_question_yes_no("No pages directory found in %s. Would you like "
+                                             "to create it ?" % (course_config["pages"]["path"] or os.getcwd()))
             if create_dir:
                 shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
             else:
