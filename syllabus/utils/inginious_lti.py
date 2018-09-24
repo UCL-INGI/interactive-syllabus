@@ -1,5 +1,6 @@
 import json
 import re
+from json import JSONDecodeError
 from urllib import request as urllib_request, parse
 from urllib.error import URLError
 
@@ -49,7 +50,10 @@ def get_lti_submission(course, user_id, task_id):
     match = lti_regex_match.findall(lti_url)
     if len(match) == 1:
         cookie = match[0]
-        response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['courses'][course]['inginious']['url'], cookie)).read().decode("utf-8"))
+        try:
+            response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['courses'][course]['inginious']['url'], cookie), timeout=5).read().decode("utf-8"))
+        except JSONDecodeError:
+            response = {"status": "error"}
         if response["status"] == "success" and response["submission"] is not None:
             return response["submission"]["input"]['q1']
     return None
