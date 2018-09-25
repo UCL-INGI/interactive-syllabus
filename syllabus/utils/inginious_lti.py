@@ -55,7 +55,7 @@ def get_lti_submission(course, user_id, task_id):
         except JSONDecodeError:
             response = {"status": "error"}
         if response["status"] == "success" and response["submission"] is not None:
-            return response["submission"]["input"]['q1']
+            return response
     return None
 
 

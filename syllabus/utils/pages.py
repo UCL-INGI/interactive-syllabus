@@ -97,6 +97,12 @@ def render_content(course, content, **kwargs):
         return render_rst_file(course, content.path, content, **kwargs)
 
 
+def render_rst_str(str_to_render: str, type="normal"):
+    if type == 'code':
+        str_to_render = ".. code-block::\n\n    " + "\n    ".join(str_to_render.splitlines())
+    return publish_string(str_to_render, writer_name='html', settings_overrides=default_rst_opts)
+
+
 def _render_rst_to_jinja_templating(course, page_path, content):
     cache_pages = syllabus.get_config()["caching"]["cache_pages"]
     toc = syllabus.get_toc(course)

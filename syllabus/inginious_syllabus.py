@@ -172,7 +172,8 @@ def print_all_syllabus(course):
                              render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
                              toc=TOC, get_lti_data=get_lti_data,
                              get_lti_submission=get_lti_submission, logged_in=session.get("user", None),
-                             course_str=course)
+                             course_str=course,
+                             render_rst_str=syllabus.utils.pages.render_rst_str)
     session["print_mode"] = False
     return retval
 
@@ -230,7 +231,8 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
                                  toc=TOC,
                                  direct_content=TOC.get_direct_content_of(content), next=next, previous=previous,
                                  display_print_all=display_print_all,
-                                 get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+                                 get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
+                                 render_rst_str=syllabus.utils.pages.render_rst_str)
 
         session["print_mode"] = False
     except Exception:

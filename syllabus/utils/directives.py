@@ -119,17 +119,32 @@ class InginiousDirective(Directive):
             c = []
             n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
             c.append('{%% set submission = get_lti_submission(course_str, logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
-            c.append("<pre>")
             c.append("{% if submission is not none %}"
-                     "{{ submission }}"
+                     "{% for item in submission['question_answer'] %}"
+                        "<div>"
+                          "<div style='display: block; border: 1px solid #000000; padding: 5px; border-radius: 5px;'>"
+                            "<b>Question:</b>"
+                            "<br>"
+                            "{{ render_rst_str(item['question'])|safe }}"
+                            "<br>"
+                            "<b>Answer {{'(correct)' if item['success'] else '(incorrect)'}} :</b>"
+                            "<br>"
+                            "<div style='font-family: Courier New, Courier'>"
+                              "{{ render_rst_str(item['answer'], type=item['type'])|safe }}"
+                            "</div> "
+                          "</div>"
+                        "</div>"
+                        "<br>"
+                     "{% endfor %}"
                      "{% endif %}")
+            c.append("{% if submission is none %}"
+                     "<pre>")
             if self.content:
-                c.append("{%% if submission is none %%}"
-                         "%s"
-                         "{%% endif %%}" % "\n".join(list(self.content)))
-            c.append("    {%% for i in range(%d) %%}"
+                c.append("%s" % "\n".join(list(self.content)))
+            c.append("{%% for i in range(%d) %%}"
                      " "             
-                     "    {%% endfor %%}"
+                     "{%% endfor %%}"
+                     "{%% endif %%}"
                      "</pre>" % n_blank_lines)
 
             par = nodes.raw('', "\n".join(c), format='html')
