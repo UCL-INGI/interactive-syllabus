@@ -81,7 +81,7 @@ class InginiousDirective(Directive):
                 same_origin_proxy = inginious_config['same_origin_proxy']
                 par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious/" + session["course"],
                                                      '\n'.join(self.content),
-                                                     self.arguments[0], self.arguments[1] if len(self.arguments) == 2 else "text/x-python"),
+                                                     self.arguments[0], self.arguments[2] if len(self.arguments) == 3 else "text/x-python"),
                                 format='html')
             else:
                 # TODO: this is a bit ugly :'(
@@ -117,7 +117,7 @@ class InginiousDirective(Directive):
 
         else:
             c = []
-            n_blank_lines = int(self.arguments[2]) if len(self.arguments) == 3 else 0
+            n_blank_lines = int(self.arguments[1]) if len(self.arguments) >= 2 else 0
             c.append('{%% set submission = get_lti_submission(course_str, logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
             c.append("{% if submission is not none %}"
                      "{% for item in submission['question_answer'] %}"
@@ -142,7 +142,7 @@ class InginiousDirective(Directive):
             if self.content:
                 c.append("%s" % "\n".join(list(self.content)))
             c.append("{%% for i in range(%d) %%}"
-                     " "             
+                     "{{ '\n' }}"             
                      "{%% endfor %%}"
                      "{%% endif %%}"
                      "</pre>" % n_blank_lines)
