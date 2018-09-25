@@ -2,7 +2,7 @@ import json
 import re
 from json import JSONDecodeError
 from urllib import request as urllib_request, parse
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 from lti import ToolConsumer
 
@@ -45,14 +45,14 @@ def get_lti_submission(course, user_id, task_id):
     config = syllabus.get_config()
     try:
         lti_url = get_lti_url(course, user_id, task_id)
-    except URLError:
+    except HTTPError:
         return None
     match = lti_regex_match.findall(lti_url)
     if len(match) == 1:
         cookie = match[0]
         try:
             response = json.loads(urllib_request.urlopen('%s/@%s@/lti/bestsubmission' % (config['courses'][course]['inginious']['url'], cookie), timeout=5).read().decode("utf-8"))
-        except JSONDecodeError:
+        except (JSONDecodeError, HTTPError):
             response = {"status": "error"}
         if response["status"] == "success" and response["submission"] is not None:
             return response

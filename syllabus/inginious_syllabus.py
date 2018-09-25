@@ -25,6 +25,7 @@ from docutils.core import publish_string
 from docutils.parsers.rst import directives
 from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join, \
     send_from_directory, url_for, render_template_string
+from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 import syllabus
@@ -290,9 +291,12 @@ def log_out():
         saml = session["user"].get("login_method", None) == "saml"
         session.pop("user", None)
         if saml and "singleLogoutService" in saml_config["sp"]:
-            req = prepare_request(request)
-            auth = init_saml_auth(req, saml_config)
-            return redirect(auth.logout())
+            try:
+                req = prepare_request(request)
+                auth = init_saml_auth(req, saml_config)
+                return redirect(auth.logout())
+            except OneLogin_Saml2_Error:
+                pass
     return seeother('/')
 
 
