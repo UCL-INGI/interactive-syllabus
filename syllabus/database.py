@@ -22,7 +22,7 @@ def create_db_user():
     from syllabus.models.user import User
     change_pwd_bytes = os.urandom(20)
     change_pwd_hex = binascii.hexlify(change_pwd_bytes).decode()
-    u = User('admin', 'admin@localhost', hash_password=None, change_password_url=change_pwd_hex)
+    u = User('admin', 'admin@localhost', hash_password=None, change_password_url=change_pwd_hex, right='admin')
     db_session.add(u)
     db_session.commit()
     connection = engine.connect()
