@@ -253,7 +253,7 @@ class TeacherDirective(Directive):
 
     def run(self):
         if self.content:
-            sl = StringList(["{% if ((logged_in is not none) and (logged_in['right'] == 'admin')) %}"])
+            sl = StringList(["{% if ((logged_in is not none) and (logged_in['right'] in ['admin', 'teacher'])) %}"])
             sl.append(StringList([""]))
             sl.append(StringList([".. container:: framed"]))
             sl.append(StringList([""]))

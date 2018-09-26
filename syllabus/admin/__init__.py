@@ -51,9 +51,10 @@ def users():
             user = User.query.filter(User.username == inpt["username"]).first()
             if user.username == session["user"]["username"]:
                 return seeother(request.path)
-            user.right = "admin" if "admin" in inpt and inpt["admin"] == "on" else None
-            db_session.commit()
-            return seeother(request.path, SuccessFeedback("The rights of %s have been successfully edited" % user.username))
+            if inpt["rights"] in ["admin", "teacher", ""]:
+                user.right = None if inpt['rights'] == '' else inpt['rights']
+                db_session.commit()
+                return seeother(request.path, SuccessFeedback("The rights of %s have been successfully edited" % user.username))
         return seeother(request.path)
     try:
         return render_template('users.html', active_element=sidebar['active_element'],

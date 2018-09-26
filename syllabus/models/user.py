@@ -30,6 +30,14 @@ class User(Base):
     def admin(self):
         return self.right == "admin"
 
+    @property
+    def teacher(self):
+        return self.right == "teacher"
+
+    @property
+    def at_least_teacher(self):
+        return self.right in ["teacher", "admin"]
+
 
 def hash_password(password):
     return sha512(password).hexdigest()

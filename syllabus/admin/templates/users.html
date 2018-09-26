@@ -34,6 +34,8 @@
                                 <td>
                                     {% if u.admin %}
                                         <span class="label label-success">Admin</span>
+                                    {% elif u.teacher %}
+                                        <span class="label label-info">Teacher</span>
                                     {% else %}
                                         -
                                     {% endif %}
@@ -41,9 +43,15 @@
                                 <td>
                                 {% if u.username != session["user"]["username"]  %}
                                     {% if u.admin %}
-                                        <button class="btn btn-xs btn-danger remove-rights-button" data-toggle="modal" data-target="#modal-remove-rights" data-username="{{ u.username }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove admin rights</button>
+                                        <button class="btn btn-xs btn-danger remove-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove admin rights</button>
                                     {% else %}
-                                        <button class="btn btn-xs btn-danger set-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set admin rights</button>
+                                        <button class="btn btn-xs btn-danger set-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set admin rights </button>
+                                    {% endif %}
+
+                                    {% if u.at_least_teacher %}
+                                        <button class="btn btn-xs btn-danger remove-all-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove all rights</button>
+                                    {%  else %}
+                                        <button class="btn btn-xs btn-danger set-teacher-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set teacher rights </button>
                                     {% endif %}
                                 {% endif %}
                                 </td>
@@ -64,12 +72,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Set admin rights to <span class="username"></span></h4>
+                    <h4 class="modal-title">Set <span class="right-modal-text"></span> rights to <span class="username"></span></h4>
                 </div>
                 <form method="post">
                     <div class="modal-body">
-                        Are you sure you want to set admin rights to user <span class="username"></span> ?
-                        <input type="text" name="admin" value="on" hidden>
+                        Are you sure you want to set <span class="right-modal-text"></span> rights to user <span class="username"></span> ?
+                        <input type="text" id="set-rights-rights" name="rights" value="" hidden>
                         <input type="text" name="action" value="change_right" hidden>
                         <input type="text" id="set-rights-username" name="username" hidden>
                     </div>
@@ -83,29 +91,6 @@
         </div>
     </div>
 
-    <div id="modal-remove-rights" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Remove admin rights of <span class="username"></span></h4>
-                </div>
-                <form method="post">
-                    <div class="modal-body">
-                        Are you sure you want to remove the admin rights of user <span class="username"></span> ?
-                        <input type="text" name="action" value="change_right" hidden>
-                        <input type="text" id="remove-rights-username" name="username" hidden>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button id="button-submit" type="submit" class="btn btn-danger">Confirm
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <script defer>
         $(document).ready(function () {
@@ -115,16 +100,31 @@
         $modalSetRights = $('#modal-set-rights');
         $modalRemoveRights = $('#modal-remove-rights');
 
-        $('.set-rights-button').click(function(){
-            var username = $(this).attr("data-username");
+        function setRights(username, rights) {
             $modalSetRights.find('.username').html(username);
+            $modalSetRights.find('.right-modal-text').html(rights !== "" ? rights : "normal user");
             $('#set-rights-username').val(username);
+            $('#set-rights-rights').val(rights);
+        }
+
+        $('.set-admin-rights-button').click(function(){
+            var username = $(this).attr("data-username");
+            setRights(username, 'admin')
         });
 
-        $('.remove-rights-button').click(function(){
+        $('.remove-admin-rights-button').click(function(){
             var username = $(this).attr("data-username");
-            $modalRemoveRights.find('.username').html(username);
-            $('#remove-rights-username').val(username);
+            setRights(username, 'teacher')
+        });
+
+        $('.set-teacher-rights-button').click(function(){
+            var username = $(this).attr("data-username");
+            setRights(username, 'teacher')
+        });
+
+        $('.remove-all-rights-button').click(function(){
+            var username = $(this).attr("data-username");
+            setRights(username, "")
         });
     </script>
 {% endblock %}
