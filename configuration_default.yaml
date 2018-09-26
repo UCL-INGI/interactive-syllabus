@@ -19,9 +19,14 @@ courses:
 
       # LTI-related config. If you want to use LTI, uncomment the following lines:
 
-      #lti:
-      #  consumer_secret: my_super_key
-      #  consumer_key: my_super_consumer_key
+      lti:
+        consumer_secret: my_super_key
+        consumer_key: my_super_consumer_key
+        tool_url: ~ # url of the syllabus using this INGInious course
+        tool_description: ~ # description the syllabus using this INGInious course to announce over LTI
+        tool_context_id: ~
+        tool_context_label: ~
+        tool_context_title: ~
 
     pages:
       # indicates the location where the pages directory is located. It has a lower priority than the SYLLABUS_PAGES_PATH

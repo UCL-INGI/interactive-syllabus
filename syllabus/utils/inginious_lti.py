@@ -60,7 +60,9 @@ def get_lti_submission(course, user_id, task_id):
 
 
 def get_lti_data(course, user_id, task_id):
-    inginious_config = syllabus.get_config()['courses'][course]['inginious']
+    course_config = syllabus.get_config()['courses'][course]
+    inginious_config = course_config['inginious']
+    lti_config = inginious_config['lti']
     consumer = ToolConsumer(
         consumer_key=inginious_config['lti']['consumer_key'],
         consumer_secret=inginious_config['lti']['consumer_secret'],
@@ -69,6 +71,12 @@ def get_lti_data(course, user_id, task_id):
             'lti_message_type': 'basic-lti-launch-request',
             'lti_version': "1.1",
             'resource_link_id': "syllabus_%s" % task_id,
+            'tool_consumer_instance_name': 'Interactive syllabus (%s)' % course_config['title'],
+            'tool_consumer_instance_url': lti_config.get('tool_url', None),
+            'tool_consumer_instance_description': lti_config.get('tool_description', None),
+            'context_id': lti_config.get('tool_context_id', None),
+            'context_label': lti_config.get('tool_context_label', None),
+            'context_title': lti_config.get('tool_context_title', None),
             'user_id': user_id,
         }
     )
