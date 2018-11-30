@@ -82,6 +82,12 @@ def permission_admin(f):
     return wrapper
 
 
+def get_cheat_sheet():
+    with open(os.path.join(syllabus.get_root_path(), 'cheat_sheet/rst-cheatsheet.rst'), "r") as f:
+        code_html = render_template_string(publish_string(f.read(),
+                              writer_name='html', settings_overrides=default_rst_opts))
+        return "<div id=\"cheat_sheet\" style=\"overflow-y: scroll\">"+code_html+"</div>"
+
 def _render_content_to_jinja_templating(course, content):
     if type(content) is Chapter:
         return _render_rst_to_jinja_templating(course, "chapter_index.rst", content)

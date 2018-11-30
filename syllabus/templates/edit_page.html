@@ -15,33 +15,164 @@
     <script type="text/javascript" src="/static/js/jquery-shuffle.js"></script>
     <script type="text/javascript" src="/static/js/jquery-ui.min.js"></script>
     <style>
+        h1 {
+            text-align:center;
+        }
         .CodeMirror {
             border: 1px solid #eee;
-            height: auto;
+        }
+        .live_editor {
+            display: flex;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Edition of {{ content.path if content != TOC.index else "Syllabus index" }}</h1>
+        <h1 id="title">Edition of {{ content.path if content != TOC.index else "Syllabus index" }}</h1>
         <div id="editor" style="margin: 20px" data-language="rst">
             <form method="post">
-                <label for="content">New content</label>
-                <textarea id="content" name="new_content" style="width:100%; height:100%;">{{ content_data }}</textarea><br/>
-                <button type="submit" class="btn btn-primary">Submit</button>
+
+                <div class="modal-body rowr">
+                    {% if enable_preview %}
+                    <div class="col-md-6">
+                    {% else %}
+                     <div class="col-md-12">
+                    {% endif %}
+                        <div id="editor_menu_left" style="height: 100%">
+                            <button type="submit" name="commit" class="btn btn-primary">Submit</button><br /><br />
+                        </div>
+                        <textarea id="content" name="new_content">{{ content_data }}</textarea>
+                    </div>
+                    {% if enable_preview %}
+                    <div class="col-md-6">
+                        <div id="editor_menu_left" style="height: 50px">
+                            <button id="preview_button" type="button" class="btn btn-default">Preview</button>
+                            <button id="cheat_sheet_button" type="button" class="btn btn-info">Cheat sheet</button>
+                        </div>
+                        <div id="preview"></div>
+                        <div id="cheat_sheet"></div>
+                    </div>
+                    {% endif %}
+                </div>
+
             </form>
         </div>
-    </div>
 
 <script>
+    // Transforms textarea to CodeMirror for rst
+    let area_content = $('#content').get(0);
+    content_cm = CodeMirror.fromTextArea(area_content, {
+        lineNumbers: true,
+        matchBrackets: true,
+        mode: "rst",
+        viewportMargin: Infinity
+    });
+    content_cm.setSize("100%", "100%");
 
-        let area = $('#content').get(0);
-        CodeMirror.fromTextArea(area, {
-            lineNumbers: true,
-            matchBrackets: true,
-            mode: "rst",
-            viewportMargin: Infinity
+{% if enable_preview %}
+    let area_preview = $("#preview");
+    // Get the necessary heights to compute elements size
+    let header_size = $("#title").height();
+    let editor_menu_size_left = $("#editor_menu_left").height();
+    let windows_size = $(window).height();
+
+    // Set the sizes for code editor and preview so it does not exceed the window size
+    content_cm.setSize("100%", windows_size-header_size-editor_menu_size_left-75);
+    area_preview.height(windows_size-header_size-editor_menu_size_left-75);
+
+    // Refresh the HTML preview of the rst code
+    function refresh_preview() {
+        $.ajax({
+            type: 'POST',
+            url: '/preview/{{ course }}/refresh',
+            data: {content:content_cm.getValue()},
+            dataType: 'html',
+            timeout: 3000,
+            success: function(code_html) {
+                $(code_html).replaceAll("#preview");
+                $("#preview").height(windows_size-header_size-editor_menu_size_left-75);
+                set_position_preview();
+            },
+            error: function() {
+                alert('Error while refreshing the .rst preview');
+            }
         });
+    }
+
+    // Behavior defined: Refresh each time a single change is made to the rst code
+    content_cm.on("change", function() {
+        refresh_preview()
+    });
+
+    // Initially render the preview
+    refresh_preview();
+
+    // Defines the cheat sheet (static) at the same place as the preview (one displayed at the same time, preview first)
+    function cheat_sheet() {
+        $.ajax({
+            type: 'GET',
+            url: '/preview/cheat_sheet',
+            dataType: 'html',
+            timeout: 3000,
+            success: function(code_html) {
+                $(code_html).replaceAll("#cheat_sheet");
+                $("#cheat_sheet").height(windows_size-header_size-editor_menu_size_left-75);
+                $('#cheat_sheet').css('display','none'); // Set invisible initially
+            },
+            error: function() {
+                alert('Error while loading the .rst cheat sheet');
+            }
+        });
+    }
+
+    // Switch from preview to cheat sheet
+    $("#cheat_sheet_button").click(function() {
+        $('#preview').css('display','none');
+        $('#cheat_sheet').css('display','block');
+    });
+
+
+    // Switch from cheat sheet to preview
+    $("#preview_button").click(function() {
+        $('#cheat_sheet').css('display','none');
+        $('#preview').css('display','block');
+    });
+
+    // Load the cheat sheet at the page generation (but not displayed yet)
+    cheat_sheet();
+
+    // When window is resized, adapt elements size dynamically
+    $(window).resize(function() {
+        let header_size = $("#title").height();
+        let editor_menu_size_left = $("#editor_menu_left").height();
+        let windows_size = $(window).height();
+        content_cm.setSize("100%", windows_size-header_size-editor_menu_size_left-75);
+        $("#preview").height(windows_size-header_size-editor_menu_size_left-75);
+        $("#cheat_sheet").height(windows_size-header_size-editor_menu_size_left-75);
+    });
+
+    // When rst code is scrolled, preview is also scrolled
+    $('.CodeMirror-scroll').scroll(function() {
+            set_position_preview();
+    });
+
+    // Synchronizes the scrolls: When rst code is scrolled, preview is scrolled accordingly to keep corresponding texts side by side
+    function set_position_preview(){
+        let editor_position = content_cm.getScrollInfo().top / ((content_cm.getScrollInfo().height)-(content_cm.getScrollInfo().clientHeight));
+
+        let preview_position = editor_position * ($("#preview").prop('scrollHeight')-$("#preview").height());
+        // Set the position for the preview proportionally
+        $("#preview").scrollTop(preview_position);
+    }
+
+    // Prevent leaving/refreshing the page if changes have been made, except if the action is submitting the form
+    $(window).on('beforeunload', function(){
+        return 'Changes have not been saved, are you sure you want to leave?';
+    });
+    $('form').submit(function() {
+        $(window).unbind('beforeunload');
+    });
+{% endif %}
+
 </script>
 </body>
 </html>

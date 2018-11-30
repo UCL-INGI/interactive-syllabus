@@ -45,6 +45,8 @@ courses:
       #  # The path to the private key used to pull the specified repository
       #  repository_private_key_path: ~
 
+# Enables/disables the live preview of the rST editor in the admin panel
+enable_editing_preview: yes
 
 # Specifies the authentication methods that can be used by the syllabus.
 # The list can contain "local", "saml" or both
