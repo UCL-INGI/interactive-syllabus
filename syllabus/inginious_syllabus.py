@@ -37,7 +37,7 @@ from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
-from syllabus.utils.pages import seeother, get_content_data, permission_admin
+from syllabus.utils.pages import seeother, get_content_data, permission_admin, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -139,6 +139,34 @@ def get_syllabus_asset(course, asset_path: str, content_path: str = None):
         abort(404)
 
 
+@app.route('/preview/<string:course>/refresh', methods=["POST"])
+@permission_admin
+def refresh(course):
+    TOC = syllabus.get_toc(course)
+    data = request.form['content']
+    config = syllabus.get_config()
+    inginious_config = config['courses'][course]['inginious']
+    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+    same_origin_proxy = inginious_config['same_origin_proxy']
+    code_html = render_template_string(publish_string(data, writer_name='html', settings_overrides=default_rst_opts),
+                                 logged_in=session.get("user", None),
+                                 inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
+                                 inginious_url=inginious_config['url'], this_content=data,
+                                 render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
+                                 course_str=course,
+                                 courses_titles={course: config["courses"][course]["title"] for course in syllabus.get_courses()},
+                                 toc=TOC,
+                                 get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
+                                 render_rst_str=syllabus.utils.pages.render_rst_str)
+    return "<div id=\"preview\" style=\"overflow-y: scroll\">"+code_html+"</div>"
+
+
+@app.route('/preview/cheat_sheet', methods=["GET"])
+@permission_admin
+def render_cheat_sheet():
+    return get_cheat_sheet()
+
+
 @permission_admin
 def edit_content(course, content_path, TOC: TableOfContent):
     try:
@@ -158,7 +186,8 @@ def edit_content(course, content_path, TOC: TableOfContent):
                     f.write(inpt["new_content"])
             return seeother(request.path)
     elif request.method == "GET":
-        return render_template("edit_page.html", content_data=get_content_data(course, content), content=content, TOC=TOC)
+        return render_template("edit_page.html", course=course, content_data=get_content_data(course, content),
+                               content=content, TOC=TOC, cheat_sheet=get_cheat_sheet(), enable_preview=syllabus.get_config().get("enable_editing_preview", False))
 
 
 @app.route('/print_all/<string:course>')
