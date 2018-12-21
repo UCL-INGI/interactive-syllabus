@@ -102,6 +102,12 @@ def render_content(course, content, **kwargs):
     else:
         return render_rst_file(course, content.path, content, **kwargs)
 
+def render_footer(course):
+    try:
+        with open(safe_join(syllabus.get_pages_path(course), "footer.rst")) as f:
+            return publish_string(f.read(), writer_name='html', settings_overrides=default_rst_opts)
+    except FileNotFoundError as e:
+        return ""
 
 def render_rst_str(str_to_render: str, type="normal"):
     if type == 'code':
