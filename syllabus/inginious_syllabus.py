@@ -255,6 +255,7 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
                                  inginious_url=inginious_config['url'],
                                  containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
+                                 render_footer= lambda course: syllabus.utils.pages.render_footer(course),
                                  content_at_same_level=TOC.get_content_at_same_level(content),
                                  course_str=course,
                                  courses_titles={course: config["courses"][course]["title"] for course in syllabus.get_courses()},
