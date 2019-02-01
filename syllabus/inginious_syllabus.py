@@ -95,26 +95,30 @@ def favicon():
 def get_syllabus_content(course, content_path: str, print_mode=False):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
-    session["course"] = course
-    if content_path[-1] == "/":
-        content_path = content_path[:-1]
-    TOC = syllabus.get_toc(course)
-    if request.args.get("edit") is not None:
-        return edit_content(course, content_path, TOC)
-    print_mode = print_mode or request.args.get("print") is not None
-    try:
+    course_config = syllabus.get_config()["courses"][course]
+    if course_config["sphinx"]:
+        return render_sphinx_page(course, content_path)
+    else:
+        session["course"] = course
+        if content_path[-1] == "/":
+            content_path = content_path[:-1]
+        TOC = syllabus.get_toc(course)
+        if request.args.get("edit") is not None:
+            return edit_content(course, content_path, TOC)
+        print_mode = print_mode or request.args.get("print") is not None
         try:
-            # assume that it is an RST page
-            return render_web_page(course, TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+            try:
+                # assume that it is an RST page
+                return render_web_page(course, TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+            except ContentNotFoundError:
+                # it should be a chapter
+                if request.args.get("print") == "all_content":
+                    # we want to print all the content of the chapter
+                    return get_chapter_printable_content(course, TOC.get_chapter_from_path(content_path), TOC)
+                # we want to access the index of the chapter
+                return render_web_page(course, TOC.get_chapter_from_path(content_path), print_mode=print_mode)
         except ContentNotFoundError:
-            # it should be a chapter
-            if request.args.get("print") == "all_content":
-                # we want to print all the content of the chapter
-                return get_chapter_printable_content(course, TOC.get_chapter_from_path(content_path), TOC)
-            # we want to access the index of the chapter
-            return render_web_page(course, TOC.get_chapter_from_path(content_path), print_mode=print_mode)
-    except ContentNotFoundError:
-        abort(404)
+            abort(404)
 
 
 # maybe use @cache.cached(timeout=seconds) here
@@ -271,6 +275,21 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
         session["print_mode"] = False
         raise
     return retval
+
+def render_sphinx_page(course: str, docname: str):
+    support = syllabus.get_sphinx_support(course)
+    document = support.get_document(docname)
+    config = syllabus.get_config()
+    inginious_config = config['courses'][course]['inginious']
+    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+    same_origin_proxy = inginious_config['same_origin_proxy']
+    document['body'] = render_template_string(document['body'],
+                             logged_in=session.get("user", None),
+                             inginious_course_url=inginious_course_url if not same_origin_proxy else (
+                                         "/postinginious/" + course),
+                             inginious_url=inginious_config['url'],
+                             get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+    return render_template("sphinx_page.html", document=document)
 
 
 @app.route("/resetpassword/<secret>", methods=["GET", "POST"])

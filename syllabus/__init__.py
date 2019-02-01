@@ -21,7 +21,8 @@
 
 import os
 import yaml
-from flask import request, has_request_context
+from flask import request, has_request_context, safe_join
+from sphinxcontrib.websupport import WebSupport
 
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader, OrderedDumper
 
@@ -94,6 +95,25 @@ def get_config(force=False):
         return get_config.cached
     except AttributeError:
         return reload_config()
+
+
+def get_sphinx_support(course, force=False):
+    def reload_support():
+        support = WebSupport(srcdir=safe_join(get_pages_path(course), "source"),#'/home/michelfra/Documents/pages/source',
+                             builddir=safe_join(get_pages_path(course), "build", "syllabus-build"))
+
+        support.build()
+        if not hasattr(get_sphinx_support, "cached"):
+            get_sphinx_support.cached = {}
+        get_sphinx_support.cached[course] = support
+
+        return get_sphinx_support.cached[course]
+    if force:
+        return reload_support()
+    try:
+        return get_sphinx_support.cached[course]
+    except (AttributeError, KeyError):
+        return reload_support()
 
 
 def get_config_path():

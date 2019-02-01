@@ -1,0 +1,24 @@
+{%- block title %}
+    {{ document.title }}
+{%- endblock %}
+
+{% block css %}
+    {{ document.css|safe }}
+    <link rel="stylesheet" href="/static/websupport-custom.css" type="text/css">
+{% endblock %}
+
+{%- block script %}
+    {{ document.script|safe }}
+{%- endblock %}
+
+{%- block relbar %}
+    {{ document.relbar|safe }}
+{%- endblock %}
+
+{%- block body %}
+    {{ document.body|safe }}
+{%- endblock %}
+
+{%- block sidebar %}
+    {{ document.sidebar|safe }}
+{%- endblock %}
