@@ -99,8 +99,11 @@ def get_config(force=False):
 
 def get_sphinx_support(course, force=False):
     def reload_support():
+        print(course)
         support = WebSupport(srcdir=safe_join(get_pages_path(course), "source"),#'/home/michelfra/Documents/pages/source',
-                             builddir=safe_join(get_pages_path(course), "build", "syllabus-build"))
+                             builddir=safe_join(get_pages_path(course), "build", "syllabus-build"),
+                             staticdir=safe_join(get_root_path(), 'static', 'static_sphinx', course),
+                             staticroot='/static/static_sphinx/{}'.format(course))
 
         support.build()
         if not hasattr(get_sphinx_support, "cached"):

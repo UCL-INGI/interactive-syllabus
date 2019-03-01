@@ -289,7 +289,7 @@ def render_sphinx_page(course: str, docname: str):
                                          "/postinginious/" + course),
                              inginious_url=inginious_config['url'],
                              get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
-    return render_template("sphinx_page.html", document=document)
+    return render_template("sphinx_page.html", document=document, sg=support.get_globalcontext())
 
 
 @app.route("/resetpassword/<secret>", methods=["GET", "POST"])
