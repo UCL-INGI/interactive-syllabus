@@ -47,7 +47,10 @@ courses:
       #  repository_private_key_path: ~
 
   sphinx:
-    sphinx: yes
+    sphinx:
+      source_dir: ~
+      build_dir: ~
+      conf_dir: ~
     title: SyllabusSphinx
     inginious:
       url: http://inginious_instance.example:port

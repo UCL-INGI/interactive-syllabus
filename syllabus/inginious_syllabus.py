@@ -277,19 +277,22 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
     return retval
 
 def render_sphinx_page(course: str, docname: str):
-    support = syllabus.get_sphinx_support(course)
-    document = support.get_document(docname)
-    config = syllabus.get_config()
-    inginious_config = config['courses'][course]['inginious']
-    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
-    same_origin_proxy = inginious_config['same_origin_proxy']
-    document['body'] = render_template_string(document['body'],
-                             logged_in=session.get("user", None),
-                             inginious_course_url=inginious_course_url if not same_origin_proxy else (
-                                         "/postinginious/" + course),
-                             inginious_url=inginious_config['url'],
-                             get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
-    return render_template("sphinx_page.html", document=document, sg=support.get_globalcontext())
+    build = syllabus.get_sphinx_build(course)
+    if docname.endswith(".html"):
+        doc_path = safe_join(build.builder.outdir, docname)
+        config = syllabus.get_config()
+        inginious_config = config['courses'][course]['inginious']
+        inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        same_origin_proxy = inginious_config['same_origin_proxy']
+        with open(doc_path) as f:
+            return render_template_string(f.read(),
+                                     logged_in=session.get("user", None),
+                                     inginious_course_url=inginious_course_url if not same_origin_proxy else (
+                                                 "/postinginious/" + course),
+                                     inginious_url=inginious_config['url'],
+                                     get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+    return send_from_directory(build.builder.outdir, docname)
+
 
 
 @app.route("/resetpassword/<secret>", methods=["GET", "POST"])
