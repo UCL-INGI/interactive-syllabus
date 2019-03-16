@@ -107,7 +107,8 @@ def get_sphinx_build(course, force=False):
         from syllabus.utils import directives
         for directive_name, directive_class in directives.get_directives():
             app.add_directive(directive_name, directive_class)
-        app.build(False, [])
+        if force or not os.path.exists(config['build_dir']):
+            app.build(False, [])
         if not hasattr(get_sphinx_build, "cached"):
             get_sphinx_build.cached = {}
         get_sphinx_build.cached[course] = app
