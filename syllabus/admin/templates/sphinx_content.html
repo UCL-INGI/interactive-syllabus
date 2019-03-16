@@ -1,0 +1,94 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+    <style>
+        /* taken from https://jsfiddle.net/ann7tctp/ */
+
+        .list-group.list-group-root {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .list-group.list-group-root .list-group {
+            margin-bottom: 0;
+        }
+
+        .list-group.list-group-root .list-group-item {
+            border-radius: 0;
+            border-width: 1px 0 0 0;
+        }
+
+        .list-group.list-group-root > .list-group-item:first-child {
+            border-top-width: 0;
+        }
+
+        .list-group-item .chevron {
+            margin-right: 5px;
+        }
+    </style>
+    <section class="content-header">
+        <h1>
+            Content
+            <small>Manage the syllabus pages and chapters</small>
+        </h1>
+        <section class="content container-fluid">
+            <div class="just-padding" style="text-align: center">
+
+
+                <button class="btn btn-lg btn-primary rebuild-button"
+                        data-toggle="modal" data-target="#modal-rebuild"
+                        data-course-name="{{ course_str }}">
+                    Rebuild the sphinx sources
+                </button>
+            </div>
+        </section>
+    </section>
+
+
+    <div id="modal-rebuild" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Rebuild the syllabus</h4>
+                </div>
+                <form method="post">
+                    <div class="modal-body">
+                        Do you really want to rebuild the syllabus of this course ?
+                        <input type="text" id="course-name" name="course-name" hidden>
+                        <input type="text" id="action" name="action" value="sphinx_rebuild" hidden>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="button-submit" type="submit" class="btn btn-info">Rebuild
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        $(document).ready(function () {
+            $('.list-group-item').click(function () {
+                $('.chevron.fa', this)
+                    .toggleClass('fa-chevron-right')
+                    .toggleClass('fa-chevron-down');
+            });
+
+            var $modalRebuild = $('#modal-rebuild');
+
+            $('.rebuild-button').click(function (e) {
+                e.stopPropagation();
+
+                $modalRebuild.find('#course-name').val($(this).attr('data-course-name'));
+                $('#action').val("sphinx_rebuild");
+                $modalRebuild.modal('show');
+            })
+        });
+
+    </script>
+{% endblock %}
