@@ -295,6 +295,7 @@ def render_sphinx_page(course: str, docname: str):
                                      courses_titles={course: config["courses"][course]["title"] for course in
                                                      syllabus.get_courses()},
                                      inginious_url=inginious_config['url'],
+                                     course_str=course,
                                      get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
     return send_from_directory(build.builder.outdir, docname)
 
