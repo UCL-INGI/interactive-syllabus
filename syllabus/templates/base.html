@@ -6,11 +6,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>{% block title %}{% endblock %}</title>
     {% block css %}
-    {{ sg.css|safe }}
     {% endblock %}
     <link rel="stylesheet" href="/static/sphinxweb.css" type="text/css" media="screen" />
     {% block js %}
-    {{ sg.script|safe }}
     {% endblock %}
   </head>
   <body>
