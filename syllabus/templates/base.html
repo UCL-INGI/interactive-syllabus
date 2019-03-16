@@ -22,32 +22,19 @@
 
     <div class="document">
       <div class="documentwrapper">
-	<div class="bodywrapper">
-          <div class="body">
-	    {% block body %}{% endblock %}
-          </div>
-	</div>
+        <div class="bodywrapper">
+              <div class="body">
+            {% block body %}{% endblock %}
+              </div>
+        </div>
       </div>
     {% block sidebar %}{% endblock %}
       <div class="clearer"></div>
 
     {% block relbar2 %}{% endblock %}
 
-{%- block footer %}
-    <div class="footer">
-    {%- if sg %}
-    {%- if sg.show_copyright %}
-      &copy; Copyright {{ sg.copyright }}.
-    {%- endif %}
-    {%- if sg.last_updated %}
-      Last updated on {{ sg.last_updated }}.
-    {%- endif %}
-    {%- if sg.show_sphinx %}
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>
-      {{ sg.sphinx_version }}.
-    {%- endif %}
-    {%- endif %}
+    {%- block footer %}
+    {%- endblock %}
     </div>
-{%- endblock %}
   </body>
 </html >
