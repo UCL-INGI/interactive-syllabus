@@ -75,6 +75,9 @@ def course_index(course, print_mode=False):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
     session["course"] = course
+    course_config = syllabus.get_config()["courses"][course]
+    if course_config.get("sphinx"):
+        return seeother("/syllabus/{}/{}".format(course, course_config["sphinx"].get("index", "index.html")))
     try:
         TOC = syllabus.get_toc(course)
         if request.args.get("edit") is not None:
@@ -285,10 +288,12 @@ def render_sphinx_page(course: str, docname: str):
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
         same_origin_proxy = inginious_config['same_origin_proxy']
         with open(doc_path) as f:
-            return render_template_string(f.read(),
+            return render_template_string('{{% extends "sphinx_page.html" %}} {{% block content %}}{}{{% endblock %}}'.format(f.read()),
                                      logged_in=session.get("user", None),
                                      inginious_course_url=inginious_course_url if not same_origin_proxy else (
                                                  "/postinginious/" + course),
+                                     courses_titles={course: config["courses"][course]["title"] for course in
+                                                     syllabus.get_courses()},
                                      inginious_url=inginious_config['url'],
                                      get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
     return send_from_directory(build.builder.outdir, docname)
