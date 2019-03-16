@@ -120,7 +120,7 @@ class InginiousDirective(Directive):
                                 </form>
                                 """ % (self.arguments[0], self.arguments[0]) +
                                 "{% else %}" +
-                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please log in to see this exercise </pre>' +
+                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please <a href="/login">log in</a> to see this exercise </pre>' +
                                 "{% endif %}",
                                 format='html')
 
