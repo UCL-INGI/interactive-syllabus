@@ -37,7 +37,7 @@ from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
-from syllabus.utils.pages import seeother, get_content_data, permission_admin, render_content, default_rst_opts, get_cheat_sheet
+from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -71,6 +71,7 @@ def index(print=False):
 
 
 @app.route('/index/<string:course>', methods=["GET", "POST"])
+@update_last_visited
 def course_index(course, print_mode=False):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
@@ -102,6 +103,7 @@ def get_syllabus_content(course, content_path: str, print_mode=False):
     if course_config["sphinx"]:
         return render_sphinx_page(course, content_path)
     else:
+        store_last_visited()
         session["course"] = course
         if content_path[-1] == "/":
             content_path = content_path[:-1]
@@ -175,6 +177,7 @@ def render_cheat_sheet():
 
 
 @permission_admin
+@update_last_visited
 def edit_content(course, content_path, TOC: TableOfContent):
     try:
         content = TOC.get_page_from_path("%s.rst" % content_path)
@@ -288,6 +291,7 @@ def render_sphinx_page(course: str, docname: str):
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
         same_origin_proxy = inginious_config['same_origin_proxy']
         with open(doc_path) as f:
+            store_last_visited()
             return render_template_string('{{% extends "sphinx_page.html" %}} {{% block content %}}{}{{% endblock %}}'.format(f.read()),
                                      logged_in=session.get("user", None),
                                      inginious_course_url=inginious_course_url if not same_origin_proxy else (
@@ -340,7 +344,7 @@ def log_in():
         if user is None or user.hash_password != password_hash:
             abort(403)
         session['user'] = user.to_dict()
-        return seeother('/')
+        return seeother(session.get("last_visited", "/"))
 
 
 @app.route("/logout")
@@ -355,7 +359,7 @@ def log_out():
                 return redirect(auth.logout())
             except OneLogin_Saml2_Error:
                 pass
-    return seeother('/')
+    return seeother(session.get("last_visited", "/"))
 
 
 @app.route('/postinginious/<string:course>', methods=['POST'])
@@ -429,7 +433,7 @@ def saml():
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
                 return redirect(auth.redirect_to(request.form['RelayState']))
 
-    return seeother("/")
+    return seeother(session.get("last_visited", "/"))
 
 
 @app.route('/saml/metadata/')
