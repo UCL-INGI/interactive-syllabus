@@ -101,6 +101,10 @@ authentication_methods:
       required: yes # set this to no to disable email activation (users won't need to activate their account anymore)
       smtp_server: mysmtpserver.example # name of the smtp server to which send the activation e-mail
       sender_email_address: noreply@syllabus.example  # e-mail address used by the application to send the activation e-mail
+      authentication:
+        required: yes
+        username: username
+        password: mypassword
   # SAML-related configuration
   saml:
     idp_name: SAML # SAML IDP name (e.g.: "Identity provider of company X"): displayed to the user in the log in and register pages

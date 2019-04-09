@@ -39,7 +39,7 @@ from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User, UserAlreadyExists
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
-from syllabus.utils.mail import send_confirmation_mail
+from syllabus.utils.mail import send_confirmation_mail, send_authenticated_confirmation_mail
 from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
@@ -415,9 +415,18 @@ def register():
             locally_register_new_user(u, activation_required)
             feedback_message = "You have been successfully registered."
             if email_activation_config.get("required", True):
-                send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
-                                       "{}{}/{}".format(request.host_url, "activate", u.activation_secret),
-                                       email_activation_config["smtp_server"])
+                auth_config = email_activation_config.get("authentication", {})
+                if auth_config.get("required", False):
+                    send_authenticated_confirmation_mail(email_activation_config["sender_email_address"], u.email,
+                                                         "{}{}/{}".format(request.host_url, "activate",
+                                                                          u.activation_secret),
+                                                         email_activation_config["smtp_server"],
+                                                         username=auth_config["username"],
+                                                         password=auth_config["password"])
+                else:
+                    send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
+                                           "{}{}/{}".format(request.host_url, "activate", u.activation_secret),
+                                           email_activation_config["smtp_server"])
                 feedback_message += " Please activate your account using the activation link you received by e-mail."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
