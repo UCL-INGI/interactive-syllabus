@@ -70,9 +70,21 @@ def users():
 def content_edition(course):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
+    course_config = syllabus.get_config()["courses"][course]
+    if course_config.get("sphinx"):
+        if request.method == "POST":
+            inpt = request.form
+            if inpt["action"] == "sphinx_rebuild":
+                return sphinx_rebuild(course, course_config)
+            return seeother(request.path)
+        try:
+            return render_template('sphinx_content.html', active_element=sidebar['active_element'], course_str=course,
+                                   sidebar_elements=sidebar['elements'], feedback=pop_feeback(session))
+        except TemplateNotFound:
+            abort(404)
     TOC = syllabus.get_toc(course)
     if TOC.ignored and not has_feedback(session):
-        set_feedback(session, Feedback(feedback_type="warning", message="The following contents have not been found :\n"
+        set_feedback(session, Feedback(feedback_type="warning", message="Could not find the following content :\n"
                                                                         + "<pre>"
                                                                         + "\n".join(TOC.ignored)
                                                                         + "</pre>"))
@@ -184,6 +196,15 @@ def delete_content(course, inpt, TOC):
 
     set_feedback(session, Feedback(feedback_type="success", message="The content has been successfully deleted"))
     return seeother(request.path)
+
+def sphinx_rebuild(course, course_config):
+    if course_config.get("sphinx"):
+        syllabus.get_sphinx_build(course, True)
+        set_feedback(session, Feedback(feedback_type="success", message="The syllabus has been successfully rebuilt"))
+    else:
+        set_feedback(session, Feedback(feedback_type="error", message="The syllabus is not a sphinx syllabus"))
+    return seeother(request.path)
+
 
 
 @admin_blueprint.route('/toc_edition/<string:course>', methods=['GET', 'POST'])

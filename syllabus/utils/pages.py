@@ -21,7 +21,7 @@ from functools import wraps
 
 import yaml
 from docutils.core import publish_string
-from flask import render_template_string, redirect, session, abort
+from flask import render_template_string, redirect, session, abort, request
 from flask.helpers import safe_join
 from git import Repo, InvalidGitRepositoryError
 from werkzeug.utils import secure_filename
@@ -81,6 +81,15 @@ def permission_admin(f):
         return f(*args, **kwargs)
     return wrapper
 
+def store_last_visited():
+    session['last_visited'] = request.path
+
+def update_last_visited(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        store_last_visited()
+        return f(*args, **kwargs)
+    return wrapper
 
 def get_cheat_sheet():
     with open(os.path.join(syllabus.get_root_path(), 'cheat_sheet/rst-cheatsheet.rst'), "r") as f:

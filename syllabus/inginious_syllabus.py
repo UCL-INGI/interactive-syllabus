@@ -37,7 +37,7 @@ from syllabus.models.params import Params
 from syllabus.models.user import hash_password, User
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
-from syllabus.utils.pages import seeother, get_content_data, permission_admin, render_content, default_rst_opts, get_cheat_sheet
+from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -71,10 +71,14 @@ def index(print=False):
 
 
 @app.route('/index/<string:course>', methods=["GET", "POST"])
+@update_last_visited
 def course_index(course, print_mode=False):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
     session["course"] = course
+    course_config = syllabus.get_config()["courses"][course]
+    if course_config.get("sphinx"):
+        return seeother("/syllabus/{}/{}".format(course, course_config["sphinx"].get("index", "index.html")))
     try:
         TOC = syllabus.get_toc(course)
         if request.args.get("edit") is not None:
@@ -95,26 +99,31 @@ def favicon():
 def get_syllabus_content(course, content_path: str, print_mode=False):
     if not course in syllabus.get_config()["courses"].keys():
         abort(404)
-    session["course"] = course
-    if content_path[-1] == "/":
-        content_path = content_path[:-1]
-    TOC = syllabus.get_toc(course)
-    if request.args.get("edit") is not None:
-        return edit_content(course, content_path, TOC)
-    print_mode = print_mode or request.args.get("print") is not None
-    try:
+    course_config = syllabus.get_config()["courses"][course]
+    if course_config["sphinx"]:
+        return render_sphinx_page(course, content_path)
+    else:
+        store_last_visited()
+        session["course"] = course
+        if content_path[-1] == "/":
+            content_path = content_path[:-1]
+        TOC = syllabus.get_toc(course)
+        if request.args.get("edit") is not None:
+            return edit_content(course, content_path, TOC)
+        print_mode = print_mode or request.args.get("print") is not None
         try:
-            # assume that it is an RST page
-            return render_web_page(course, TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+            try:
+                # assume that it is an RST page
+                return render_web_page(course, TOC.get_page_from_path("%s.rst" % content_path), print_mode=print_mode)
+            except ContentNotFoundError:
+                # it should be a chapter
+                if request.args.get("print") == "all_content":
+                    # we want to print all the content of the chapter
+                    return get_chapter_printable_content(course, TOC.get_chapter_from_path(content_path), TOC)
+                # we want to access the index of the chapter
+                return render_web_page(course, TOC.get_chapter_from_path(content_path), print_mode=print_mode)
         except ContentNotFoundError:
-            # it should be a chapter
-            if request.args.get("print") == "all_content":
-                # we want to print all the content of the chapter
-                return get_chapter_printable_content(course, TOC.get_chapter_from_path(content_path), TOC)
-            # we want to access the index of the chapter
-            return render_web_page(course, TOC.get_chapter_from_path(content_path), print_mode=print_mode)
-    except ContentNotFoundError:
-        abort(404)
+            abort(404)
 
 
 # maybe use @cache.cached(timeout=seconds) here
@@ -168,6 +177,7 @@ def render_cheat_sheet():
 
 
 @permission_admin
+@update_last_visited
 def edit_content(course, content_path, TOC: TableOfContent):
     try:
         content = TOC.get_page_from_path("%s.rst" % content_path)
@@ -272,6 +282,28 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
         raise
     return retval
 
+def render_sphinx_page(course: str, docname: str):
+    build = syllabus.get_sphinx_build(course)
+    if docname.endswith(".html"):
+        doc_path = safe_join(build.builder.outdir, docname)
+        config = syllabus.get_config()
+        inginious_config = config['courses'][course]['inginious']
+        inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        same_origin_proxy = inginious_config['same_origin_proxy']
+        with open(doc_path) as f:
+            store_last_visited()
+            return render_template_string('{{% extends "sphinx_page.html" %}} {{% block content %}}{}{{% endblock %}}'.format(f.read()),
+                                     logged_in=session.get("user", None),
+                                     inginious_course_url=inginious_course_url if not same_origin_proxy else (
+                                                 "/postinginious/" + course),
+                                     courses_titles={course: config["courses"][course]["title"] for course in
+                                                     syllabus.get_courses()},
+                                     inginious_url=inginious_config['url'],
+                                     course_str=course,
+                                     get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+    return send_from_directory(build.builder.outdir, docname)
+
+
 
 @app.route("/resetpassword/<secret>", methods=["GET", "POST"])
 def reset_password(secret):
@@ -312,7 +344,7 @@ def log_in():
         if user is None or user.hash_password != password_hash:
             abort(403)
         session['user'] = user.to_dict()
-        return seeother('/')
+        return seeother(session.get("last_visited", "/"))
 
 
 @app.route("/logout")
@@ -327,7 +359,7 @@ def log_out():
                 return redirect(auth.logout())
             except OneLogin_Saml2_Error:
                 pass
-    return seeother('/')
+    return seeother(session.get("last_visited", "/"))
 
 
 @app.route('/postinginious/<string:course>', methods=['POST'])
@@ -401,7 +433,7 @@ def saml():
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
                 return redirect(auth.redirect_to(request.form['RelayState']))
 
-    return seeother("/")
+    return seeother(session.get("last_visited", "/"))
 
 
 @app.route('/saml/metadata/')

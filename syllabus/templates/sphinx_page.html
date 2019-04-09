@@ -1,0 +1,41 @@
+
+<script>
+
+    window.addEventListener('message', function(e) {
+        var height = e.data.height;
+        if(e.origin === "{{ inginious_url }}") {
+            var iFrames = document.getElementsByTagName("iframe");
+            for(var i in iFrames) {
+                if(e.source === iFrames[i].contentWindow) {
+                    $(iFrames[i]).height(height);
+                    break;
+                }
+            }
+        }
+    }, false);
+
+</script>
+{% block content %}{% endblock %}
+
+<script>
+    $('.inginious-task').each(function(index, task){
+        let area = $(task).find('.inginious-code').get(0);
+        let language = $(task).attr("data-language");
+        let editor = CodeMirror.fromTextArea(area, {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: language,
+            viewportMargin: Infinity
+        });
+        $(task).find('.button-inginious-task').click(function(e){
+            const toSubmit = editor.getValue();
+            const taskID = $(task).find('.taskid').val();
+            $(task).find('.to-submit').val(JSON.stringify({q1: toSubmit}));
+            submitCode("{{ inginious_course_url }}", taskID, "q1", toSubmit, $(task).find('.feedback-container'),$(task),editor);
+        });
+        $(task).show();
+    });
+    $('.inginious-submitter').hide();
+    $('.inginious-submitter').click();
+</script>
+<script src="/static/js/submitter.js"></script>

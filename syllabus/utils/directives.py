@@ -25,8 +25,9 @@ from docutils.parsers.rst.directives.body import CodeBlock, Container
 from docutils.statemachine import StringList
 from flask import session
 
-import syllabus.utils.pages
 import docutils.parsers.rst.directives
+
+import syllabus
 
 
 def uri(argument):
@@ -44,6 +45,14 @@ def uri(argument):
 # Oh yeah baby!
 docutils.parsers.rst.directives.uri = uri
 
+def get_directives():
+    return [('inginious', InginiousDirective),
+    ('inginious-sandbox', InginiousSandboxDirective),
+    ('table-of-contents', ToCDirective),
+    ('author', AuthorDirective),
+    ('teacher', TeacherDirective),
+    ('framed', FramedDirective),
+    ('print', PrintOnlyDirective)]
 
 class InginiousDirective(Directive):
     """
@@ -71,7 +80,7 @@ class InginiousDirective(Directive):
     </div>
 
     """
-
+    # TODO: ensure that we do not depend on the syllabus module *at all* anymore
     def get_html_content(self, use_lti):
         # TODO: if not use_lti should be in the template itself
         if not session.get("print_mode", False):
@@ -111,7 +120,7 @@ class InginiousDirective(Directive):
                                 </form>
                                 """ % (self.arguments[0], self.arguments[0]) +
                                 "{% else %}" +
-                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please log in to see this exercise </pre>' +
+                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please <a href="/login">log in</a> to see this exercise </pre>' +
                                 "{% endif %}",
                                 format='html')
 

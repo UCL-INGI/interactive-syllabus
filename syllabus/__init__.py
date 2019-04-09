@@ -21,7 +21,9 @@
 
 import os
 import yaml
-from flask import request, has_request_context
+from flask import request, has_request_context, safe_join
+from sphinx.application import Sphinx
+from sphinxcontrib.websupport import WebSupport
 
 from syllabus.utils.yaml_ordered_dict import OrderedDictYAMLLoader, OrderedDumper
 
@@ -94,6 +96,33 @@ def get_config(force=False):
         return get_config.cached
     except AttributeError:
         return reload_config()
+
+
+def get_sphinx_build(course, force=False):
+    def reload_support():
+        config = get_config()['courses'][course]['sphinx']
+
+        # The build dir is created by the Sphinx call. Thus if we need to compile the pages, checking after
+        # if the build dir exists would always yield True.
+        build_dir_exist = os.path.exsists(config['build_dir'])
+        app = Sphinx(config["source_dir"], config['conf_dir'] or config["source_dir"], config['build_dir'],
+                     os.path.join(config['build_dir'], '.doctrees'), 'html')
+        from syllabus.utils import directives
+        for directive_name, directive_class in directives.get_directives():
+            app.add_directive(directive_name, directive_class)
+        if force or not build_dir_exists:
+            app.build(False, [])
+        if not hasattr(get_sphinx_build, "cached"):
+            get_sphinx_build.cached = {}
+        get_sphinx_build.cached[course] = app
+
+        return get_sphinx_build.cached[course]
+    if force:
+        return reload_support()
+    try:
+        return get_sphinx_build.cached[course]
+    except (AttributeError, KeyError):
+        return reload_support()
 
 
 def get_config_path():
