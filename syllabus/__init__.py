@@ -104,7 +104,7 @@ def get_sphinx_build(course, force=False):
 
         # The build dir is created by the Sphinx call. Thus if we need to compile the pages, checking after
         # if the build dir exists would always yield True.
-        build_dir_exist = os.path.exsists(config['build_dir'])
+        build_dir_exists = os.path.exists(config['build_dir'])
         app = Sphinx(config["source_dir"], config['conf_dir'] or config["source_dir"], config['build_dir'],
                      os.path.join(config['build_dir'], '.doctrees'), 'html')
         from syllabus.utils import directives
