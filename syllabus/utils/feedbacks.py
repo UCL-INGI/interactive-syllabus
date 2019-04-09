@@ -26,24 +26,24 @@ class SuccessFeedback(Feedback):
         super().__init__(feedback_type="success", message=message)
 
 
-def set_feedback(session, feedback):
+def set_feedback(session, feedback, feedback_type="admin"):
     """ adds the feedback to the session """
-    session["feedback"] = feedback.__dict__()
+    session["{}_feedback".format(feedback_type)] = feedback.__dict__()
 
 
-def has_feedback(session):
+def has_feedback(session, feedback_type="admin"):
     """ returns True if there is a feedback in the session, False otherwise """
-    return "feedback" in session
+    return "{}_feedback".format(feedback_type) in session
 
 
-def get_feedback(session):
+def get_feedback(session, feedback_type="admin"):
     """ returns the current feedback in the specified session if there is one, None otherwise """
     try:
-        return Feedback.from_dict(session.get("feedback", None))
+        return Feedback.from_dict(session.get("{}_feedback".format(feedback_type), None))
     except:
         return None
 
 
-def pop_feeback(session):
+def pop_feeback(session, feedback_type="admin"):
     """ returns and removes the current feedback from the specified session if there is one, None otherwise """
-    return Feedback.from_dict(session.pop("feedback", None))
+    return Feedback.from_dict(session.pop("{}_feedback".format(feedback_type), None))

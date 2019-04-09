@@ -18,6 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 from urllib import parse
 from urllib import request as urllib_request
 
@@ -27,16 +28,18 @@ from flask import Flask, render_template, request, abort, make_response, session
     send_from_directory, url_for, render_template_string
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
+from sqlalchemy.orm.exc import NoResultFound
 
 import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
-from syllabus.admin import admin_blueprint
-from syllabus.database import init_db, db_session, update_database
+from syllabus.admin import admin_blueprint, pop_feeback, set_feedback, ErrorFeedback, SuccessFeedback
+from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database
 from syllabus.models.params import Params
-from syllabus.models.user import hash_password, User
+from syllabus.models.user import hash_password, User, UserAlreadyExists
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
+from syllabus.utils.mail import send_confirmation_mail
 from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
@@ -59,7 +62,7 @@ directives.register_directive('print', syllabus.utils.directives.PrintOnlyDirect
 
 
 if "saml" in syllabus.get_config()['authentication_methods']:
-    saml_config = syllabus.get_config()['saml']
+    saml_config = syllabus.get_config()['authentication_methods']['saml']
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -329,8 +332,11 @@ def reset_password(secret):
 @app.route("/login", methods=['GET', 'POST'])
 def log_in():
     if request.method == "GET":
-        return render_template("login.html", auth_methods=syllabus.get_config()['authentication_methods'])
+        return render_template("login.html", auth_methods=syllabus.get_config()['authentication_methods'],
+                               feedback=pop_feeback(session, feedback_type="login"))
     if request.method == "POST":
+        if "local" not in syllabus.get_config()['authentication_methods']:
+            abort(404)
         inpt = request.form
         username = inpt["username"]
         password = inpt["password"]
@@ -342,7 +348,11 @@ def log_in():
 
         user = User.query.filter(User.username == username).first()
         if user is None or user.hash_password != password_hash:
-            abort(403)
+            set_feedback(session, ErrorFeedback("Invalid username/password."), feedback_type="login")
+            return seeother("/login")
+        if not user.activated:
+            set_feedback(session, ErrorFeedback("Your account is not yet activated."), feedback_type="login")
+            return seeother("/login")
         session['user'] = user.to_dict()
         return seeother(session.get("last_visited", "/"))
 
@@ -361,6 +371,72 @@ def log_out():
                 pass
     return seeother(session.get("last_visited", "/"))
 
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if "local" not in syllabus.get_config()['authentication_methods']:
+        abort(404)
+    if request.method == "GET":
+        return render_template("register.html", auth_methods=syllabus.get_config()['authentication_methods'],
+                               feedback=pop_feeback(session, feedback_type="login"))
+    if request.method == "POST":
+        inpt = request.form
+        username = inpt["username"]
+        password = inpt["password"]
+        confirm_password = inpt["confirm-password"]
+        email = inpt["email"]
+
+        # check the correctness of the input fields
+        error = False
+        if password != confirm_password:
+            set_feedback(session, ErrorFeedback("Your passwords do not match."), feedback_type="login")
+            error = True
+        elif len(password) < 6:
+            set_feedback(session, ErrorFeedback("Your password is too short (< 6 characters)"), feedback_type="login")
+            error = True
+        elif re.match(r"^[-_0-9A-Z]{4,}$", username, re.IGNORECASE) is None:
+            set_feedback(session, ErrorFeedback("the username you entered is invalid (should contain at least 4 "
+                                                "characters and only letters from a to z, digits, - and _)"),
+                         feedback_type="login")
+            error = True
+        if error:
+            return seeother("/register")
+
+        try:
+            password_hash = hash_password(password.encode("utf-8"))
+        except UnicodeEncodeError:
+            # TODO: log
+            return seeother("/login")
+
+        email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
+        activation_required = email_activation_config.get("required", True)
+        u = User(username, email, hash_password=password_hash, right=None, activated=not activation_required)
+        try:
+            locally_register_new_user(u, activation_required)
+            feedback_message = "You have been successfully registered."
+            if email_activation_config.get("required", True):
+                send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
+                                       "{}{}/{}".format(request.host_url, "activate", u.activation_secret),
+                                       email_activation_config["smtp_server"])
+                feedback_message += " Please activate your account using the activation link you received by e-mail."
+            set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
+            return seeother("/login")
+        except UserAlreadyExists:
+            set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
+            return seeother("/register")
+
+
+@app.route("/activate/<string:secret>")
+def activate_account(secret):
+    try:
+        user = User.query.filter(User.activation_secret == secret).one()
+    except NoResultFound:
+        abort(404)
+    user.activated = True
+    user.activation_secret = None
+    db_session.commit()
+    set_feedback(session, SuccessFeedback("Your account has been successfully activated"), feedback_type="login")
+    return seeother("/login")
 
 @app.route('/postinginious/<string:course>', methods=['POST'])
 def post_inginious(course):
@@ -418,9 +494,10 @@ def saml():
             realname = attrs[saml_config['sp']['attrs']['realname']][0]
             email = attrs[saml_config['sp']['attrs']['email']][0]
 
-            user = User.query.filter(User.email == email).first()
-
-            if user is None:  # The user does not exist in our DB
+            try:
+                user = User.query.filter(User.email == email).one()
+            except NoResultFound:
+                # The user does not exist in our DB
                 user = User(name=username, full_name=realname, email=email, hash_password=None,
                             change_password_url=None)
                 db_session.add(user)
@@ -463,5 +540,6 @@ def update_pages(secret, course):
 
 def main():
     update_database()
+    reload_database()
     init_db()
     app.run(host='0.0.0.0', port=5000)

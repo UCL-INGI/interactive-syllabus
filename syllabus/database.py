@@ -1,6 +1,10 @@
 import os
 
 import binascii
+import re
+import stat
+from operator import or_
+
 from sqlalchemy import create_engine
 from sqlalchemy.engine import ResultProxy
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -15,7 +19,7 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base = declarative_base()
 Base.query = db_session.query_property()
 
-current_version = 2
+current_version = 3
 
 
 def create_db_user():
@@ -63,6 +67,15 @@ def init_db():
     generate_github_hook()
 
 
+def reload_database():
+    # FIXME: ugly
+    global engine, db_session
+    engine = create_engine('sqlite:///%s' % database_path, convert_unicode=True)
+    db_session = scoped_session(sessionmaker(autocommit=False,
+                                             autoflush=False,
+                                             bind=engine))
+
+
 def update_database():
     if os.path.isfile(database_path):
         connection = engine.connect()
@@ -84,6 +97,55 @@ def update_database():
             INSERT INTO params (git_hook_url, id)
             VALUES (NULL, 1);
             """)
+        if version < 3:
+            print("updating to version 3")
+            from sqlalchemy.schema import CreateTable
+            from syllabus.models.user import User
+            from syllabus.models.params import Params
+            print()
+
+            tmp_path = os.path.join(get_root_path(), 'temp.sqlite')
+            engine_tmp = create_engine('sqlite:///%s' % tmp_path, convert_unicode=True)
+
+            if os.path.isfile(tmp_path):
+                os.remove(tmp_path)
+            import syllabus.models.user
+            import syllabus.models.params
+            connection_tmp = engine_tmp.connect()
+            connection_tmp.execute(CreateTable(User.__table__))
+            connection_tmp.execute(CreateTable(Params.__table__))
+            for row in connection.execute("SELECT username, email, full_name, hash_password, change_password_url, "
+                                          "right FROM users"):
+                connection_tmp.execute("INSERT INTO users (username, email, full_name, hash_password, change_password_url, right, activated) "\
+                                       "VALUES ('{}', '{}', {}, '{}', {}, {}, {})".format(row[0], row[1], "NULL" if row[2] is None else "'%s'" % row[2],
+                                                                                                row[3], "NULL" if row[4] is None else "'%s'" % row[4],
+                                                                                                "NULL" if row[5] is None else "'%s'" % row[5], 1))
+            for row in connection.execute("SELECT git_hook_url, id FROM params"):
+                connection_tmp.execute("INSERT INTO params (git_hook_url, id) "\
+                                       "VALUES ('{}', '{}')".format(row[0], row[1]))
+            os.remove(database_path)
+            os.rename(tmp_path, database_path)
+            os.chmod(database_path, stat.S_IRWXU | stat.S_IRWXG)
+            reload_database()
+            connection = engine.connect()
+
         connection.execute("PRAGMA main.user_version=%d;" % current_version)
     else:
         print("The database does not exist yet.")
+
+
+def locally_register_new_user(user, activation_required=True):
+    from syllabus.models.user import User, UserAlreadyExists
+    user.activated = not activation_required
+    user.right = None
+    existing_user = User.query.filter(or_(User.username == user.username, User.email == user.email)).first()
+    if existing_user is not None:
+        raise UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
+                                                                                              existing_user.to_dict()))
+    secret_already_exists = True
+    while activation_required and secret_already_exists:
+        user_activation_secret_bytes = os.urandom(20)
+        user.activation_secret = binascii.hexlify(user_activation_secret_bytes).decode()
+        secret_already_exists = User.query.filter(User.activation_secret == user.activation_secret).first() is not None
+    db_session.add(user)
+    db_session.commit()

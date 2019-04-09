@@ -25,10 +25,15 @@
             <h2 class="form-signin-heading">Please sign in</h2>
             <label for="inputUsername" class="sr-only">Username</label>
             <input type="text" id="inputUsername" class="form-control" placeholder="Username" required autofocus name="username">
+            <label for="inputUsername" class="sr-only">E-mail</label>
+            <input type="text" id="inputEmail" class="form-control" placeholder="E-mail" required name="email">
             <label for="inputPassword" class="sr-only">Password</label>
-            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+            <input type="password" minlength="6" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+            <label for="repeatPassword" class="sr-only">Confirm password</label>
+            <input type="password" minlength="6" id="repeatPassword" class="form-control" placeholder="Confirm password" required name="confirm-password">
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
           </form>
+
         {% endif %}
         {% if "saml" in auth_methods %}
             <div class="form-signin">
