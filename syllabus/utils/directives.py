@@ -80,49 +80,68 @@ class InginiousDirective(Directive):
     </div>
 
     """
-    # TODO: ensure that we do not depend on the syllabus module *at all* anymore
-    def get_html_content(self, use_lti):
-        # TODO: if not use_lti should be in the template itself
+
+    def get_html_content(self, sandbox):
         if not session.get("print_mode", False):
-            if not use_lti:
-                inginious_config = syllabus.get_config()['courses'][session['course']]['inginious']
-                inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
-                same_origin_proxy = inginious_config['same_origin_proxy']
-                par = nodes.raw('', self.html.format(inginious_course_url if not same_origin_proxy else "/postinginious/" + session["course"],
-                                                     '\n'.join(self.content),
-                                                     self.arguments[0], self.arguments[2] if len(self.arguments) == 3 else "text/x-python"),
-                                format='html')
+
+            html_no_lti = """
+            {{% set action_to_do = '/postinginious/' + session["course"] %}}
+            {{% if not inginious_config['same_origin_proxy'] %}}
+                {{% set action_to_do = inginious_course_url %}}
+            {{% endif %}}
+            <div class="inginious-task" style="margin: 20px" data-language={0}">
+                <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
+                    <strong>Success!</strong> Indicates a successful or positive action.
+                </div>
+                <form method="post" action="{{ action_to_do }}">
+                    <textarea style="width: 100%; height: 100%; height: 150px;" class="inginious-code" name="code">{1}</textarea><br/>
+                    <input type="text" name="taskid" class="taskid" value="{2}" hidden />
+                    <input type="text" name="input" class="to-submit" hidden />
+                </form>
+                <button class="btn btn-primary button-inginious-task" id="{2}" value="Submit">Soumettre</button>
+            </div>
+            """.format(self.arguments[2] if len(self.arguments) == 3 else "text/x-python",
+                    '\n'.join(self.content),
+                    self.arguments[0])
+
+            html_lti = """
+            {{% set user = session.get("user", None) %}}
+            {{% if user is not none %}}
+                {{% set data, launch_url = get_lti_data(course_str, logged_in["username"] if logged_in is not none else none, {0}) %}}
+                {{% set inputs_list = [] %}}
+                {{% for key, value in data.items() %}}
+                    {{% set a = inputs_list.append('<input type="hidden" name="{0}" value="{0}" />' % (key, value)) %}}
+                {{% endfor %}}
+                {{% set form_inputs = '\n'.join(inputs_list) %}}
+                <iframe name="myIframe{0}" frameborder="0" allowfullscreen"true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"
+                    style="overflow: hidden; width: 100%; height: 520px" src=""></iframe>
+                <form action="{{ launch_url }}"
+                      name="ltiLaunchForm"
+                      class="ltiLaunchForm"
+                      method="POST"
+                      encType="application/x-www-form-urlencoded"
+                      target="myIframe{0}">
+                {{ form_inputs|safe }}
+                <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
+                </form>
+            {{% else %}}
+                <pre style="overflow: hidden; width: 100%; height: 520px">Please log in to see this exercise</pre>
+            {{% endif %}}
+            """.format(self.arguments[0])
+
+            if sandbox:
+                html = html_no_lti
             else:
-                # TODO: this is a bit ugly :'(
-                par = nodes.raw('',
-                                '{% set user = session.get("user", None) %}\n' +
-                                '{% if user is not none %}\n' +
-                                ('{%% set data, launch_url = get_lti_data(course_str,logged_in["username"] if logged_in is not none else none, "%s") %%}\n' % self.arguments[0]) +
-                                """
-                                {% set inputs_list = [] %}
-                                {% for key, value in data.items() %}
-                                    {% set a = inputs_list.append('<input type="hidden" name="%s" value="%s"/>' % (key, value)) %}
-                                {% endfor %}
-                                {% set form_inputs = '\n'.join(inputs_list) %}
-                                """ +
-                                '<iframe name="myIframe%s" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"'
-                                ''
-                                ' style="overflow: hidden; width: 100%%; height: 520px" src=""></iframe>'
-                                """
-                                <form action="{{ launch_url }}"
-                                      name="ltiLaunchForm"
-                                      class="ltiLaunchForm"
-                                      method="POST"
-                                      encType="application/x-www-form-urlencoded"
-                                      target="myIframe%s">
-                                  {{ form_inputs|safe }}
-                                  <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
-                                </form>
-                                """ % (self.arguments[0], self.arguments[0]) +
-                                "{% else %}" +
-                                '<pre style="overflow: hidden; width: 100%%; height: 520px"> Please <a href="/login">log in</a> to see this exercise </pre>' +
-                                "{% endif %}",
-                                format='html')
+                html = """
+                {{% set use_lti = "lti" in inginious_config %}}
+                {{% if use_lti %}}
+                    {0}
+                {{% else %}}
+                    {1}
+                {{% endif %}}
+                """.format(html_lti, html_no_lti)
+
+            par = nodes.raw('', html, format='html')
 
         else:
             c = []
@@ -160,12 +179,12 @@ class InginiousDirective(Directive):
         return [par]
 
     def run(self):
-        return self.get_html_content("lti" in syllabus.get_config()["courses"][session["course"]]["inginious"])
+        return self.get_html_content(False)
 
 
 class InginiousSandboxDirective(InginiousDirective):
     def run(self):
-        return self.get_html_content(False)
+        return self.get_html_content(True)
 
 
 class ToCDirective(Directive):

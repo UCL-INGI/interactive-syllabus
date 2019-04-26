@@ -264,6 +264,7 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
         same_origin_proxy = inginious_config['same_origin_proxy']
         retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
                                  logged_in=session.get("user", None),
+                                 inginious_config = syllabus.get_config()['courses'][course]['inginious'],
                                  inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
                                  inginious_url=inginious_config['url'],
                                  containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
