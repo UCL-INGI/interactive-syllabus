@@ -16,18 +16,14 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from urllib.error import URLError, HTTPError
 
 import re
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives.body import CodeBlock, Container
 from docutils.statemachine import StringList
-from flask import session
 
 import docutils.parsers.rst.directives
-
-import syllabus
 
 
 def uri(argument):
@@ -40,19 +36,22 @@ def uri(argument):
         raise ValueError('argument required but none supplied')
     else:
         uri = ''.join(argument.split())
-        return re.sub('^/assets/', '/syllabus/' + session['course'] + '/assets/', uri)
+        return re.sub('^/assets/', '/syllabus/{{session["course"]}}/assets/', uri)
+
 
 # Oh yeah baby!
 docutils.parsers.rst.directives.uri = uri
 
+
 def get_directives():
     return [('inginious', InginiousDirective),
-    ('inginious-sandbox', InginiousSandboxDirective),
-    ('table-of-contents', ToCDirective),
-    ('author', AuthorDirective),
-    ('teacher', TeacherDirective),
-    ('framed', FramedDirective),
-    ('print', PrintOnlyDirective)]
+            ('inginious-sandbox', InginiousSandboxDirective),
+            ('table-of-contents', ToCDirective),
+            ('author', AuthorDirective),
+            ('teacher', TeacherDirective),
+            ('framed', FramedDirective),
+            ('print', PrintOnlyDirective)]
+
 
 class InginiousDirective(Directive):
     """
@@ -82,100 +81,109 @@ class InginiousDirective(Directive):
     """
 
     def get_html_content(self, sandbox):
-        if not session.get("print_mode", False):
 
-            html_no_lti = """
-            {{% set action_to_do = '/postinginious/' + session["course"] %}}
-            {{% if not inginious_config['same_origin_proxy'] %}}
-                {{% set action_to_do = inginious_course_url %}}
-            {{% endif %}}
-            <div class="inginious-task" style="margin: 20px" data-language={0}">
-                <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
-                    <strong>Success!</strong> Indicates a successful or positive action.
-                </div>
-                <form method="post" action="{{{{ action_to_do }}}}">
-                    <textarea style="width: 100%; height: 100%; height: 150px;" class="inginious-code" name="code">{1}</textarea><br/>
-                    <input type="text" name="taskid" class="taskid" value="{2}" hidden />
-                    <input type="text" name="input" class="to-submit" hidden />
-                </form>
-                <button class="btn btn-primary button-inginious-task" id="{2}" value="Submit">Soumettre</button>
+        html_no_lti = """
+        {{% set action_to_do = '/postinginious/' + session["course"] %}}
+        {{% if not inginious_config['same_origin_proxy'] %}}
+            {{% set action_to_do = inginious_course_url %}}
+        {{% endif %}}
+        <div class="inginious-task" style="margin: 20px" data-language={0}">
+            <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
+                <strong>Success!</strong> Indicates a successful or positive action.
             </div>
-            """.format(self.arguments[2] if len(self.arguments) == 3 else "text/x-python",
-                    '\n'.join(self.content),
-                    self.arguments[0])
+            <form method="post" action="{{{{ action_to_do }}}}">
+                <textarea style="width: 100%; height: 100%; height: 150px;" class="inginious-code" name="code">{1}</textarea><br/>
+                <input type="text" name="taskid" class="taskid" value="{2}" hidden />
+                <input type="text" name="input" class="to-submit" hidden />
+            </form>
+            <button class="btn btn-primary button-inginious-task" id="{2}" value="Submit">Soumettre</button>
+        </div>
+        """.format(self.arguments[2] if len(self.arguments) == 3 else "text/x-python",
+                   '\n'.join(self.content),
+                   self.arguments[0])
 
-            html_lti = """
-            {{% set user = session.get("user", None) %}}
-            {{% if user is not none %}}
-                {{% set data, launch_url = get_lti_data(course_str, logged_in["email"] if logged_in is not none else none, "{0}") %}}
-                {{% set inputs_list = [] %}}
-                {{% for key, value in data.items() %}}
-                    {{% set a = inputs_list.append('<input type="hidden" name="{{0}}" value="{{1}}" />'.format(key, value)) %}}
-                {{% endfor %}}
-                {{% set form_inputs = '\\n'.join(inputs_list) %}}
-                <iframe name="myIframe{0}" frameborder="0" allowfullscreen"true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"
-                    style="overflow: hidden; width: 100%; height: 520px" src=""></iframe>
-                <form action="{{{{ launch_url }}}}"
-                      name="ltiLaunchForm"
-                      class="ltiLaunchForm"
-                      method="POST"
-                      encType="application/x-www-form-urlencoded"
-                      target="myIframe{0}">
-                {{{{ form_inputs|safe }}}}
-                <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
-                </form>
-            {{% else %}}
-                <pre style="overflow: hidden; width: 100%; height: 520px">Please log in to see this exercise</pre>
-            {{% endif %}}
-            """.format(self.arguments[0])
+        html_lti = """
+        {{% set user = session.get("user", None) %}}
+        {{% if user is not none %}}
+            {{% set data, launch_url = get_lti_data(course_str, logged_in["email"] if logged_in is not none else none, "{0}") %}}
+            {{% set inputs_list = [] %}}
+            {{% for key, value in data.items() %}}
+                {{% set a = inputs_list.append('<input type="hidden" name="{{0}}" value="{{1}}" />'.format(key, value)) %}}
+            {{% endfor %}}
+            {{% set form_inputs = '\\n'.join(inputs_list) %}}
+            <iframe name="myIframe{0}" frameborder="0" allowfullscreen"true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"
+                style="overflow: hidden; width: 100%; height: 520px" src=""></iframe>
+            <form action="{{{{ launch_url }}}}"
+                  name="ltiLaunchForm"
+                  class="ltiLaunchForm"
+                  method="POST"
+                  encType="application/x-www-form-urlencoded"
+                  target="myIframe{0}">
+            {{{{ form_inputs|safe }}}}
+            <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
+            </form>
+        {{% else %}}
+            <pre style="overflow: hidden; width: 100%; height: 520px">Please log in to see this exercise</pre>
+        {{% endif %}}
+        """.format(self.arguments[0])
 
-            if sandbox:
-                html = html_no_lti
-            else:
-                html = """
-                {{% set use_lti = "lti" in inginious_config %}}
-                {{% if use_lti %}}
-                    {0}
-                {{% else %}}
-                    {1}
-                {{% endif %}}
-                """.format(html_lti, html_no_lti)
-
-            par = nodes.raw('', html, format='html')
-
+        if sandbox:
+            html_no_print = html_no_lti
         else:
-            c = []
-            n_blank_lines = int(self.arguments[1]) if len(self.arguments) >= 2 else 0
-            c.append('{%% set submission = get_lti_submission(course_str, logged_in["email"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
-            c.append("{% if submission is not none %}"
-                     "{% for item in submission['question_answer'] %}"
-                        "<div>"
-                          "<div style='display: block; border: 1px solid #000000; padding: 5px; border-radius: 5px;'>"
-                            "<b>Question:</b>"
-                            "<br>"
-                            "{{ render_rst_str(item['question'])|safe }}"
-                            "<br>"
-                            "<b>Answer {{'(correct)' if item['success'] else '(incorrect)'}} :</b>"
-                            "<br>"
-                            "<div style='font-family: Courier New, Courier'>"
-                              "{{ render_rst_str(item['answer'], type=item['type'])|safe }}"
-                            "</div> "
-                          "</div>"
-                        "</div>"
-                        "<br>"
-                     "{% endfor %}"
-                     "{% endif %}")
-            c.append("{% if submission is none %}"
-                     "<pre>")
-            if self.content:
-                c.append("%s" % "\n".join(list(self.content)))
-            c.append("{%% for i in range(%d) %%}"
-                     "{{ '\n' }}"             
-                     "{%% endfor %%}"
-                     "{%% endif %%}"
-                     "</pre>" % n_blank_lines)
+            html_no_print = """
+            {{% set use_lti = "lti" in inginious_config %}}
+            {{% if use_lti %}}
+                {0}
+            {{% else %}}
+                {1}
+            {{% endif %}}
+        """.format(html_lti, html_no_lti)
 
-            par = nodes.raw('', "\n".join(c), format='html')
+        # par = nodes.raw('', html, format='html')
+
+        c = []
+        n_blank_lines = int(self.arguments[1]) if len(self.arguments) >= 2 else 0
+        c.append(
+            '{%% set submission = get_lti_submission(course_str, logged_in["email"], "%s") if logged_in is not none else none %%}' %
+            self.arguments[0])
+        c.append("{% if submission is not none %}"
+                 "{% for item in submission['question_answer'] %}"
+                 "<div>"
+                 "<div style='display: block; border: 1px solid #000000; padding: 5px; border-radius: 5px;'>"
+                 "<b>Question:</b>"
+                 "<br>"
+                 "{{ render_rst_str(item['question'])|safe }}"
+                 "<br>"
+                 "<b>Answer {{'(correct)' if item['success'] else '(incorrect)'}} :</b>"
+                 "<br>"
+                 "<div style='font-family: Courier New, Courier'>"
+                 "{{ render_rst_str(item['answer'], type=item['type'])|safe }}"
+                 "</div> "
+                 "</div>"
+                 "</div>"
+                 "<br>"
+                 "{% endfor %}"
+                 "{% endif %}")
+        c.append("{% if submission is none %}"
+                 "<pre>")
+        if self.content:
+            c.append("%s" % "\n".join(list(self.content)))
+        c.append("{%% for i in range(%d) %%}"
+                 "{{ '\n' }}"
+                 "{%% endfor %%}"
+                 "{%% endif %%}"
+                 "</pre>" % n_blank_lines)
+        html_print = "\n".join(c)
+
+        html = """
+        {{% if not session.get("print_mode", False) %}}
+        {}
+        {{% else %}}
+        {}
+        {{% endif %}}
+        """.format(html_no_print, html_print)
+
+        par = nodes.raw('', html, format='html')
         return [par]
 
     def run(self):
@@ -196,12 +204,13 @@ class ToCDirective(Directive):
     <div id="table-of-contents">
         <h2> Table des matières </h2>
     """
-    
 
     def run(self):
         if len(self.arguments) == 1:
             # TODO: change this ugly part, rethink the chapter_index.rst completely :'(
-            self.arguments[0] = "chapter_path" if self.arguments[0].replace(" ", "") == "{{chapter_path}}" else "%s" % self.arguments[0]
+            self.arguments[0] = "chapter_path" if self.arguments[0].replace(" ", "") == "{{chapter_path}}" else "%s" % \
+                                                                                                                self.arguments[
+                                                                                                                    0]
             self.html += "{%% set chapter = toc.get_chapter_from_path(%s) %%}" % self.arguments[0]
             self.html += "<h3> {{ chapter.title }} </h3>\n"
             self.html += self.parse()
@@ -232,7 +241,8 @@ class AuthorDirective(Directive):
     optional_arguments = 0
 
     def run(self):
-        html = '<div align=right><div style="display: inline-block;"><p><small> Auteur(s) : ' + self.content[0] + '</small></p>'
+        html = '<div align=right><div style="display: inline-block;"><p><small> Auteur(s) : ' + self.content[
+            0] + '</small></p>'
         html += '<hr style="margin-top: -5px;;" >\n'
         html += '</div></div>'
         return [nodes.raw(' ', html, format='html')]
@@ -253,7 +263,9 @@ class FramedDirective(Directive):
             self.content = sl
         else:
             self.content.append(sl)
-        par = nodes.raw('', """<pre style="background-color: #ffffff; border: 1px solid #000000">%s</pre>""" % "\n".join(self.content), format='html')
+        par = nodes.raw('',
+                        """<pre style="background-color: #ffffff; border: 1px solid #000000">%s</pre>""" % "\n".join(
+                            self.content), format='html')
 
         return [par]
 
@@ -293,8 +305,8 @@ class TeacherDirective(Directive):
             sl.append(StringList(["{% endif %}"]))
             self.content = sl
         return Container(content=self.content, arguments=[], lineno=self.lineno,
-                               block_text=self.block_text, content_offset=self.content_offset, name="container",
-                               options=self.options, state=self.state, state_machine=self.state_machine).run()
+                         block_text=self.block_text, content_offset=self.content_offset, name="container",
+                         options=self.options, state=self.state, state_machine=self.state_machine).run()
 
 
 class PrintOnlyDirective(Directive):
@@ -307,11 +319,12 @@ class PrintOnlyDirective(Directive):
     optional_arguments = 0
 
     def run(self):
-
-        if session.get("print_mode", True):
-            return Container(content=self.content, arguments=[], lineno=self.lineno,
-                                   block_text=self.block_text, content_offset=self.content_offset, name="container",
-                                   options=self.options, state=self.state, state_machine=self.state_machine).run()
-        else:
-            return [nodes.raw('', "", format='html')]
+        content = """
+            {{% if session.get("print_mode", True) %}}
+                {}
+            {{% endif %}}
+        """.format(self.content)
+        return Container(content=content, arguments=[], lineno=self.lineno,
+                         block_text=self.block_text, content_offset=self.content_offset, name="container",
+                             options=self.options, state=self.state, state_machine=self.state_machine).run()
 
