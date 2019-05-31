@@ -1,3 +1,9 @@
+# Interactive Syllabus
+The Interactive Syllabus allows you to write syllabus (either with [Sphinx](https://www.sphinx-doc.org/en/master/) or 
+with the Python `docutils` rST) and insert automatically-graded exercises in it using 
+[INGInious](https://inginious.org/?lang=en).
+
+
 # How to install
 
 You will first need to install the external dependancies for `xmlsec`. The installation procedure depends on your Linux 
