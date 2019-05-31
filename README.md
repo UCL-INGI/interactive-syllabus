@@ -1,24 +1,36 @@
 # How to install
-You will first need flask:
-`pip3 install Flask`
 
-This application relies on INGInious, you can read the installation instructions
-of INGInious here:
-
-http://inginious.readthedocs.io/en/latest/install_doc/installation.html
-
-More precisely, this application uses the simple-grader plugin. To install this plugin,
-follow the instructions here:
-
- http://inginious.readthedocs.io/en/latest/install_doc/config_reference.html#simple-grader-plugin-webapp-lti
+You will first need to install the external dependancies for `xmlsec`. The installation procedure depends on your Linux 
+distribution, go to [this page](https://github.com/mehcode/python-xmlsec#pre-install) and follow the instructions under the 
+**Pre-Install** section. 
 
 
-Once you have a running INGInious instance with the Simple Grader plugin activated, create an INGInious course that will contain the INGInious tasks for your interactive syllabus (or download an INGInious course that contains the tasks you need, like this one) and set it as the course that will be exposed via the Simple Grader plugin.
+The Interactive Syllabus application relies on INGInious, you can read the installation instructions
+of INGInious [here](http://inginious.readthedocs.io/en/latest/install_doc/installation.html).
 
-You can then install this application with pip3 (we currently support python3.5+).
-If you want to have the `pages/`directory of your syllabus in a different location than the current working directory, you can set the `SYLLABUS_PAGES_PATH` WSGI environment variable to the path that you want if you use WSGI. Otherwise, you can set the `syllabus_pages_path` variable in `syllabus/config.py`.
+In order to display INGInious exercises to students, the syllabus can either use LTI or the simple-grader INGInious
+plugin. To install this plugin, follow the instructions 
+[here](http://inginious.readthedocs.io/en/latest/install_doc/config_reference.html#simple-grader-plugin-webapp-lti).
 
-Once you have installed the syllabus and one the INGInious course that will contain the tasks for the syllabus is correctly added in INGInious, set the `inginious_course_url` variable in `syllabus/config.py` to the url of your INGInious course exposed via the Simple Grader plugin (i.e. inginious instance hostname hostname + the path you defined in the `page_pattern` field in the configuration of the INGInious Simple Grader plugin).
+
+Once you have a running INGInious instance, create an INGInious course that will contain the INGInious tasks for your
+interactive syllabus (or download an INGInious course that contains the tasks you need, like 
+[this one](https://github.com/UCL-INGI/CS1-Java)).
+
+You can then install this application with pip3 (we currently support python3.6+), with the following command :
+
+    pip3 install git+https://github.com/OpenWeek/interactive-syllabus
+
+The syllabus will search for a special configuration file named `configuration.yaml` (an example can be found on this 
+repository in `configuration_default.yaml`). This file contains the whole configuration of the syllabus. The application 
+will search in your current working directory by default. If you want to put this file in another location, you can set
+the `SYLLABUS_CONFIG_PATH` environment variable that points to the path to directory that contains `configuration.yaml`
+file. This file allows you to define specific parameters for each of your courses 
+(the INGInious instance, the INGInious course ID, ...).
+
+If you want to have the `pages/` directory of your syllabus in a different location than the current working directory,
+you can set the `SYLLABUS_PAGES_PATH` environment variable to the path that you want. 
+Otherwise, you can set the `syllabus_pages_path` variable in your `configuration.yaml` file. 
 
 You can now use this rST directive :
 
@@ -26,8 +38,11 @@ You can now use this rST directive :
 .. inginious:: task-id
     // pre-filled code (can be empty)
 ```
-This will create a CodeMirror Text Area with a button to POST its content as the input of the task `task-id` of the course you exposed via the Simple Grader INGInious plugin, in order to grade the content and thus have a real-time feedback about the code written by the user of the syllabus.
+This will insert the INGInious task referred by `task-id` in the syllabus page.
+
+To run a syllabus instance locally, run the `interactive-syllabus` command.
 
 # WSGI
 
-I you plan to use `WSGI`, replace the `syllabus-webapp` script by the `syllabus.wsgi` script located in the `demo_wsgi` directory.
+I you plan to use `WSGI`, execute the `syllabus.wsgi` script instead of the `syllabus-webapp` script located in the 
+`demo_wsgi` directory.
