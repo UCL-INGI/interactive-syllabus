@@ -42,11 +42,17 @@ default_toc = \
     }
 
 
-def ask_question_yes_no(question):
-    answer = None
+def ask_question_yes_no(question, default):
+    default_answer = "No" if default == "n" else "Yes"
     while True:
-        text_answer = input("%s [y/n]" % question)
-        if text_answer.lower() not in "yn":
+        try:
+            text_answer = input("{} [y/n] (Default: {})".format(question, default_answer))
+        except EOFError:
+            return default == 'y'
+        answer = text_answer.lower()
+        if answer == '\n':
+            return default == 'y'
+        elif answer != 'y' and answer != 'n':
             print("Please answer y or n")
         else:
             return text_answer == "y"
@@ -62,7 +68,7 @@ if __name__ == '__main__':
         create_toc = False
         if not os.path.isdir(path) and not os.path.isfile(path):
             create_dir = ask_question_yes_no("No pages directory found in %s. Would you like "
-                                             "to create it ?" % (course_config["pages"]["path"] or os.getcwd()))
+                                             "to create it ?" % (course_config["pages"]["path"] or os.getcwd()), "n")
             if create_dir:
                 shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
             else:
