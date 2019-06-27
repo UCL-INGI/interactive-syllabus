@@ -111,7 +111,7 @@ def content_edition(course):
             set_feedback(session, Feedback(feedback_type="error", message='The file name cannot contain the "%s" forbidden character.' % os.sep))
             return seeother(request.path)
 
-        pages_path = syllabus.get_pages_path()
+        pages_path = syllabus.get_pages_path(course)
         content_path = os.path.join(containing_chapter.path, inpt["name"]) if containing_chapter is not None else inpt["name"]
         path = os.path.join(pages_path, content_path)
 
