@@ -46,7 +46,7 @@ You can now use this rST directive :
 ```
 This will insert the INGInious task referred by `task-id` in the syllabus page.
 
-To run a syllabus instance locally, run the `interactive-syllabus` command.
+To run a syllabus instance locally, run the `syllabus-webapp` command.
 
 # WSGI
 
