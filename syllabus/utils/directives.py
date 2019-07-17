@@ -93,7 +93,7 @@ class InginiousDirective(Directive):
                 <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>
                     <strong>Success!</strong> Indicates a successful or positive action.
                 </div>
-                <form method="post" action="{{ action_to_do }}">
+                <form method="post" action="{{{{ action_to_do }}}}">
                     <textarea style="width: 100%; height: 100%; height: 150px;" class="inginious-code" name="code">{1}</textarea><br/>
                     <input type="text" name="taskid" class="taskid" value="{2}" hidden />
                     <input type="text" name="input" class="to-submit" hidden />
@@ -107,21 +107,21 @@ class InginiousDirective(Directive):
             html_lti = """
             {{% set user = session.get("user", None) %}}
             {{% if user is not none %}}
-                {{% set data, launch_url = get_lti_data(course_str, logged_in["username"] if logged_in is not none else none, {0}) %}}
+                {{% set data, launch_url = get_lti_data(course_str, logged_in["username"] if logged_in is not none else none, "{0}") %}}
                 {{% set inputs_list = [] %}}
                 {{% for key, value in data.items() %}}
-                    {{% set a = inputs_list.append('<input type="hidden" name="{0}" value="{0}" />' % (key, value)) %}}
+                    {{% set a = inputs_list.append('<input type="hidden" name="{{0}}" value="{{1}}" />'.format(key, value)) %}}
                 {{% endfor %}}
-                {{% set form_inputs = '\n'.join(inputs_list) %}}
+                {{% set form_inputs = '\\n'.join(inputs_list) %}}
                 <iframe name="myIframe{0}" frameborder="0" allowfullscreen"true" webkitallowfullscreen="true" mozallowfullscreen="true" scrolling="no"
                     style="overflow: hidden; width: 100%; height: 520px" src=""></iframe>
-                <form action="{{ launch_url }}"
+                <form action="{{{{ launch_url }}}}"
                       name="ltiLaunchForm"
                       class="ltiLaunchForm"
                       method="POST"
                       encType="application/x-www-form-urlencoded"
                       target="myIframe{0}">
-                {{ form_inputs|safe }}
+                {{{{ form_inputs|safe }}}}
                 <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
                 </form>
             {{% else %}}
