@@ -75,6 +75,7 @@ def content_edition(course):
         if request.method == "POST":
             inpt = request.form
             if inpt["action"] == "sphinx_rebuild":
+                session["course"] = course
                 return sphinx_rebuild(course, course_config)
             return seeother(request.path)
         try:
