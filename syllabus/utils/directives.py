@@ -107,7 +107,7 @@ class InginiousDirective(Directive):
             html_lti = """
             {{% set user = session.get("user", None) %}}
             {{% if user is not none %}}
-                {{% set data, launch_url = get_lti_data(course_str, logged_in["username"] if logged_in is not none else none, "{0}") %}}
+                {{% set data, launch_url = get_lti_data(course_str, logged_in["email"] if logged_in is not none else none, "{0}") %}}
                 {{% set inputs_list = [] %}}
                 {{% for key, value in data.items() %}}
                     {{% set a = inputs_list.append('<input type="hidden" name="{{0}}" value="{{1}}" />'.format(key, value)) %}}
@@ -146,7 +146,7 @@ class InginiousDirective(Directive):
         else:
             c = []
             n_blank_lines = int(self.arguments[1]) if len(self.arguments) >= 2 else 0
-            c.append('{%% set submission = get_lti_submission(course_str, logged_in["username"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
+            c.append('{%% set submission = get_lti_submission(course_str, logged_in["email"], "%s") if logged_in is not none else none %%}' % self.arguments[0])
             c.append("{% if submission is not none %}"
                      "{% for item in submission['question_answer'] %}"
                         "<div>"

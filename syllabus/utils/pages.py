@@ -72,10 +72,10 @@ def sanitize_path(f):
 def permission_admin(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        username = session["user"]["username"] if "user" in session else None
-        if username is None:
+        email = session["user"]["email"] if "user" in session else None
+        if email is None:
             abort(403)
-        user = User.query.filter(User.username == username).first()
+        user = User.query.filter(User.email == email).first()
         if not user.admin:
             abort(403)
         return f(*args, **kwargs)

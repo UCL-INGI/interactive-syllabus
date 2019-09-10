@@ -135,11 +135,12 @@ def update_database():
         print("The database does not exist yet.")
 
 
+# we cannot register locally if either somebody has the same e-mail
 def locally_register_new_user(user, activation_required=True):
     from syllabus.models.user import User, UserAlreadyExists
     user.activated = not activation_required
     user.right = None
-    existing_user = User.query.filter(or_(User.username == user.username, User.email == user.email)).first()
+    existing_user = User.query.filter(User.email == user.email).first()
     if existing_user is not None:
         raise UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
                                                                                               existing_user.to_dict()))

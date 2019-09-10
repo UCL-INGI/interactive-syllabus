@@ -48,13 +48,13 @@ def users():
     if request.method == 'POST':
         inpt = request.form
         if inpt["action"] == "change_right":
-            user = User.query.filter(User.username == inpt["username"]).first()
-            if user.username == session["user"]["username"]:
+            user = User.query.filter(User.email == inpt["email"]).first()
+            if user.email == session["user"]["email"]:
                 return seeother(request.path)
             if inpt["rights"] in ["admin", "teacher", ""]:
                 user.right = None if inpt['rights'] == '' else inpt['rights']
                 db_session.commit()
-                return seeother(request.path, SuccessFeedback("The rights of %s have been successfully edited" % user.username))
+                return seeother(request.path, SuccessFeedback("The rights of %s have been successfully edited" % user.email))
         return seeother(request.path)
     try:
         return render_template('users.html', active_element=sidebar['active_element'],

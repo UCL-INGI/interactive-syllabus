@@ -339,7 +339,7 @@ def log_in():
         if "local" not in syllabus.get_config()['authentication_methods']:
             abort(404)
         inpt = request.form
-        username = inpt["username"]
+        email = inpt["email"]
         password = inpt["password"]
         try:
             password_hash = hash_password(password.encode("utf-8"))
@@ -347,9 +347,9 @@ def log_in():
             # TODO: log
             return seeother("/login")
 
-        user = User.query.filter(User.username == username).first()
+        user = User.query.filter(User.email == email).first()
         if user is None or user.hash_password != password_hash:
-            set_feedback(session, ErrorFeedback("Invalid username/password."), feedback_type="login")
+            set_feedback(session, ErrorFeedback("Invalid email/password."), feedback_type="login")
             return seeother("/login")
         if not user.activated:
             set_feedback(session, ErrorFeedback("Your account is not yet activated."), feedback_type="login")
@@ -505,6 +505,7 @@ def saml():
             email = attrs[saml_config['sp']['attrs']['email']][0]
 
             try:
+                # we only log-in using the e-mail
                 user = User.query.filter(User.email == email).one()
             except NoResultFound:
                 # The user does not exist in our DB

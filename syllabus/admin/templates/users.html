@@ -12,7 +12,7 @@
                            data-page-length='25'>
                         <thead>
                         <tr>
-                            <th>Username</th>
+                            <th>E-mail</th>
                             <th>Full Name</th>
                             <th>Permissions</th>
                             <th>Actions</th>
@@ -20,7 +20,7 @@
                         </thead>
                         <tfoot>
                         <tr>
-                            <th>Username</th>
+                            <th>E-mail</th>
                             <th>Full Name</th>
                             <th>Permissions</th>
                             <th>Actions</th>
@@ -28,8 +28,8 @@
                         </tfoot>
                         <tbody>
                         {% for u in users %}
-                            <tr data-username="{{ u.username }}">
-                                <td>{{ u.username }}</td>
+                            <tr data-email="{{ u.email }}">
+                                <td>{{ u.email }}</td>
                                 <td>{{ u.full_name if u.full_name is not none else "-" }}</td>
                                 <td>
                                     {% if u.admin %}
@@ -41,17 +41,17 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                {% if u.username != session["user"]["username"]  %}
+                                {% if u.email != session["user"]["email"]  %}
                                     {% if u.admin %}
-                                        <button class="btn btn-xs btn-danger remove-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove admin rights</button>
+                                        <button class="btn btn-xs btn-danger remove-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-email="{{ u.email }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove admin rights</button>
                                     {% else %}
-                                        <button class="btn btn-xs btn-danger set-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set admin rights </button>
+                                        <button class="btn btn-xs btn-danger set-admin-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-email="{{ u.email }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set admin rights </button>
                                     {% endif %}
 
                                     {% if u.at_least_teacher %}
-                                        <button class="btn btn-xs btn-danger remove-all-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove all rights</button>
+                                        <button class="btn btn-xs btn-danger remove-all-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-email="{{ u.email }}"> <i class="fa fa-times" style="margin-right: 5px"></i> Remove all rights</button>
                                     {%  else %}
-                                        <button class="btn btn-xs btn-danger set-teacher-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-username="{{ u.username }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set teacher rights </button>
+                                        <button class="btn btn-xs btn-danger set-teacher-rights-button" data-toggle="modal" data-target="#modal-set-rights" data-email="{{ u.email }}"> <i class="fa fa-check" style="margin-right: 5px"></i> Set teacher rights </button>
                                     {% endif %}
                                 {% endif %}
                                 </td>
@@ -72,14 +72,14 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Set <span class="right-modal-text"></span> rights to <span class="username"></span></h4>
+                    <h4 class="modal-title">Set <span class="right-modal-text"></span> rights to <span class="email"></span></h4>
                 </div>
                 <form method="post">
                     <div class="modal-body">
-                        Are you sure you want to set <span class="right-modal-text"></span> rights to user <span class="username"></span> ?
+                        Are you sure you want to set <span class="right-modal-text"></span> rights to user <span class="email"></span> ?
                         <input type="text" id="set-rights-rights" name="rights" value="" hidden>
                         <input type="text" name="action" value="change_right" hidden>
-                        <input type="text" id="set-rights-username" name="username" hidden>
+                        <input type="text" id="set-rights-email" name="email" hidden>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -100,31 +100,31 @@
         $modalSetRights = $('#modal-set-rights');
         $modalRemoveRights = $('#modal-remove-rights');
 
-        function setRights(username, rights) {
-            $modalSetRights.find('.username').html(username);
+        function setRights(email, rights) {
+            $modalSetRights.find('.email').html(email);
             $modalSetRights.find('.right-modal-text').html(rights !== "" ? rights : "normal user");
-            $('#set-rights-username').val(username);
+            $('#set-rights-email').val(email);
             $('#set-rights-rights').val(rights);
         }
 
         $('.set-admin-rights-button').click(function(){
-            var username = $(this).attr("data-username");
-            setRights(username, 'admin')
+            var email = $(this).attr("data-email");
+            setRights(email, 'admin')
         });
 
         $('.remove-admin-rights-button').click(function(){
-            var username = $(this).attr("data-username");
-            setRights(username, 'teacher')
+            var email = $(this).attr("data-email");
+            setRights(email, 'teacher')
         });
 
         $('.set-teacher-rights-button').click(function(){
-            var username = $(this).attr("data-username");
-            setRights(username, 'teacher')
+            var email = $(this).attr("data-email");
+            setRights(email, 'teacher')
         });
 
         $('.remove-all-rights-button').click(function(){
-            var username = $(this).attr("data-username");
-            setRights(username, "")
+            var email = $(this).attr("data-email");
+            setRights(email, "")
         });
     </script>
 {% endblock %}
