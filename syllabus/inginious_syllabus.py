@@ -81,7 +81,7 @@ def course_index(course, print_mode=False):
     session["course"] = course
     course_config = syllabus.get_config()["courses"][course]
     if course_config.get("sphinx"):
-        return seeother("/syllabus/{}/{}".format(course, course_config["sphinx"].get("index", "index.html")))
+        return seeother("/syllabus/{}/{}".format(course, course_config["sphinx"].get("index_page", "index.html")))
     try:
         TOC = syllabus.get_toc(course)
         if request.args.get("edit") is not None:

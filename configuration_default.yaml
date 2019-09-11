@@ -51,6 +51,7 @@ courses:
       source_dir: ~
       build_dir: ~
       conf_dir: ~
+      index_page: ~ # sets the path of the html file inside source_dir that contains the index, set to none for "index.html"
     title: SyllabusSphinx
     inginious:
       url: http://inginious_instance.example:port
