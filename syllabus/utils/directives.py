@@ -328,3 +328,12 @@ class PrintOnlyDirective(Directive):
                          block_text=self.block_text, content_offset=self.content_offset, name="container",
                              options=self.options, state=self.state, state_machine=self.state_machine).run()
 
+
+def setup(app):
+    for name, directive in get_directives():
+        app.add_directive(name, directive)
+    return {
+        'version': '0.1',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }
