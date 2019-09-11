@@ -20,8 +20,8 @@ def send_confirmation_mail(email_from, email_to, url, smtp_server, smtp_port=Non
     s.quit()
 
 
-def send_authenticated_confirmation_mail(email_from, email_to, url, smtp_server, username, password):
-    s = smtplib.SMTP_SSL(smtp_server)
+def send_authenticated_confirmation_mail(email_from, email_to, url, smtp_server, username, password, smtp_port=None):
+    s = smtplib.SMTP_SSL(smtp_server, port=smtp_port if smtp_port is not None else 0)  # 0 == default port (465)
     s.login(username, password)
     _send_confirmation_email(email_from, email_to, url, s)
     s.quit()

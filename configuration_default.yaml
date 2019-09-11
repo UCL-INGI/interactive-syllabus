@@ -99,7 +99,9 @@ authentication_methods:
     # e-mail activation send an e-mail to the newly registered users in order to activate their account
     email_activation:
       required: yes # set this to no to disable email activation (users won't need to activate their account anymore)
+      use_ssl: yes # set this to no to disable the use of SSL for SMTP
       smtp_server: mysmtpserver.example # name of the smtp server to which send the activation e-mail
+      smtp_server_port: ~ # if not defined, will be set to 465 if use_ssl is yes, it will be set to 25 otherwise
       sender_email_address: noreply@syllabus.example  # e-mail address used by the application to send the activation e-mail
       authentication:
         required: yes

@@ -423,11 +423,14 @@ def register():
                                                                           u.activation_secret),
                                                          email_activation_config["smtp_server"],
                                                          username=auth_config["username"],
-                                                         password=auth_config["password"])
+                                                         password=auth_config["password"],
+                                                         smtp_port=email_activation_config["smtp_server_port"])
                 else:
                     send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
                                            "{}{}/{}".format(request.host_url, "activate", u.activation_secret),
-                                           email_activation_config["smtp_server"])
+                                           email_activation_config["smtp_server"],
+                                           use_ssl=email_activation_config["use_ssl"],
+                                           smtp_port=email_activation_config["smtp_server_port"])
                 feedback_message += " Please activate your account using the activation link you received by e-mail."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
