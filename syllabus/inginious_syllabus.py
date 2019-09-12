@@ -302,6 +302,7 @@ def render_sphinx_page(course: str, docname: str):
                                                  "/postinginious/" + course),
                                      courses_titles={course: config["courses"][course]["title"] for course in
                                                      syllabus.get_courses()},
+                                     inginious_config=inginious_config,
                                      inginious_url=inginious_config['url'],
                                      course_str=course,
                                      get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
