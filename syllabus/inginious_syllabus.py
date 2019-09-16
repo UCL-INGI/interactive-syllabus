@@ -294,18 +294,21 @@ def render_sphinx_page(course: str, docname: str):
         inginious_config = config['courses'][course]['inginious']
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
         same_origin_proxy = inginious_config['same_origin_proxy']
-        with open(doc_path) as f:
-            store_last_visited()
-            return render_template_string('{{% extends "sphinx_page.html" %}} {{% block content %}}{}{{% endblock %}}'.format(f.read()),
-                                     logged_in=session.get("user", None),
-                                     inginious_course_url=inginious_course_url if not same_origin_proxy else (
-                                                 "/postinginious/" + course),
-                                     courses_titles={course: config["courses"][course]["title"] for course in
-                                                     syllabus.get_courses()},
-                                     inginious_config=inginious_config,
-                                     inginious_url=inginious_config['url'],
-                                     course_str=course,
-                                     get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+        try:
+            with open(doc_path) as f:
+                store_last_visited()
+                return render_template_string('{{% extends "sphinx_page.html" %}} {{% block content %}}{}{{% endblock %}}'.format(f.read()),
+                                         logged_in=session.get("user", None),
+                                         inginious_course_url=inginious_course_url if not same_origin_proxy else (
+                                                     "/postinginious/" + course),
+                                         courses_titles={course: config["courses"][course]["title"] for course in
+                                                         syllabus.get_courses()},
+                                         inginious_config=inginious_config,
+                                         inginious_url=inginious_config['url'],
+                                         course_str=course,
+                                         get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+        except FileNotFoundError:
+            abort(404)
     return send_from_directory(build.builder.outdir, docname)
 
 
