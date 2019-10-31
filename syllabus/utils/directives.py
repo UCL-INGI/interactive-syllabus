@@ -85,7 +85,7 @@ class InginiousDirective(Directive):
         html_no_lti = """
         {{% set action_to_do = '/postinginious/' + session["course"] %}}
         {{% if not inginious_config['same_origin_proxy'] %}}
-            {{% set action_to_do = inginious_course_url %}}
+            {{% set action_to_do = inginious_sandbox_url %}}
         {{% endif %}}
         <div class="inginious-task" style="margin: 20px" data-language={0}">
             <div class="feedback-container" class="alert alert-success" style="padding: 10px;" hidden>

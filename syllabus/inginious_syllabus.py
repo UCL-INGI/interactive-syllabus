@@ -19,6 +19,7 @@
 
 import os
 import re
+import urllib
 from urllib import parse
 from urllib import request as urllib_request
 
@@ -159,9 +160,12 @@ def refresh(course):
     config = syllabus.get_config()
     inginious_config = config['courses'][course]['inginious']
     inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+    path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
+    inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
     same_origin_proxy = inginious_config['same_origin_proxy']
     code_html = render_template_string(publish_string(data, writer_name='html', settings_overrides=default_rst_opts),
                                  logged_in=session.get("user", None),
+                                 inginious_sandbox_url=inginious_sandbox_url,
                                  inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
                                  inginious_url=inginious_config['url'], this_content=data,
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
@@ -261,11 +265,14 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
         config = syllabus.get_config()
         inginious_config = config['courses'][course]['inginious']
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
+        inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
         same_origin_proxy = inginious_config['same_origin_proxy']
         retval = render_template('rst_page.html' if not print_mode else 'print_page.html',
                                  logged_in=session.get("user", None),
                                  inginious_config = syllabus.get_config()['courses'][course]['inginious'],
                                  inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
+                                 inginious_sandbox_url=inginious_sandbox_url,
                                  inginious_url=inginious_config['url'],
                                  containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
@@ -293,6 +300,8 @@ def render_sphinx_page(course: str, docname: str):
         config = syllabus.get_config()
         inginious_config = config['courses'][course]['inginious']
         inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
+        inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
         same_origin_proxy = inginious_config['same_origin_proxy']
         try:
             with open(doc_path) as f:
@@ -301,6 +310,7 @@ def render_sphinx_page(course: str, docname: str):
                                          logged_in=session.get("user", None),
                                          inginious_course_url=inginious_course_url if not same_origin_proxy else (
                                                      "/postinginious/" + course),
+                                         inginious_sandbox_url=inginious_sandbox_url,
                                          courses_titles={course: config["courses"][course]["title"] for course in
                                                          syllabus.get_courses()},
                                          inginious_config=inginious_config,
@@ -460,8 +470,9 @@ def post_inginious(course):
     inpt = request.form
     data = parse.urlencode(inpt).encode()
     inginious_config = syllabus.get_config()['courses'][course]['inginious']
-    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
-    req = urllib_request.Request(inginious_course_url, data=data)
+    path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
+    inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
+    req = urllib_request.Request(inginious_sandbox_url, data=data)
     resp = urllib_request.urlopen(req)
     response = make_response(resp.read().decode())
     response.headers['Content-Type'] = 'text/json'

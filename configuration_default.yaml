@@ -12,6 +12,8 @@ courses:
     inginious:
       url: http://inginious_instance.example:port
       course_id: id
+      # the "pattern" parameter for the INGInious simple_grader plugin
+      simple_grader_pattern: /simple_grader
 
       # if yes, the INGInious POST requests will be sent to this server instead of the real
       # INGINious instance. This server will then do the request itself to the INGInious instance,
