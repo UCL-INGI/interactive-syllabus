@@ -72,7 +72,7 @@ if __name__ == '__main__':
             if create_dir:
                 shutil.copytree(os.path.join(syllabus.get_root_path(), "default", "pages"), path)
             else:
-                print("Bye !")
+                print("You need a page directory for every course!")
                 exit()
         if not os.path.isfile(os.path.join(path, "toc.yaml")):
             with open(os.path.join(path, "toc.yaml"), "w+") as f:
