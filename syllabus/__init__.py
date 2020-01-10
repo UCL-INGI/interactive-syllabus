@@ -84,11 +84,21 @@ def get_pages_cache_path(course):
     return os.path.join(get_pages_path(course), ".cache")
 
 
+def remove_no_default_course():
+    config = get_config()
+    default_course = config['default_course']
+    courses_id = list(config['courses'].keys())
+    for course_id in courses_id:
+        if course_id != default_course:
+            del config['courses'][course_id]
+
+
 def get_config(force=False):
     def reload_config():
         path = get_config_path()
         with open(path, "r") as f:
             get_config.cached = yaml.load(f)
+            remove_no_default_course()
             return get_config.cached
     if force:
         return reload_config()

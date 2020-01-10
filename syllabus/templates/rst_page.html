@@ -159,27 +159,6 @@
                     </li>
                 {% endif %}
                 </ul>
-              <ul class="nav navbar-nav navbar-right">
-                {% if logged_in is not none %}
-                    {% if logged_in["right"] == "admin" %}
-                        <li><a href="/admin/users" style="display: block">Admin Panel</a></li>
-                    {% endif %}
-                    <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
-                {% else %}
-                    <li>
-                      <a href="/login">Log in</a>
-                    </li>
-                    <li>
-                      <a href="/register">Register</a>
-                    </li>
-                {% endif %}
-                {% if display_print_all %}
-                    <li><a href="/print_all/{{ course_str }}" style="display: block"> Print syllabus </a></li>
-                {% endif %}
-                <li><a href="{{ "%s?print" % request.path }}" style="display: block">Print page</a></li>
-                {% if "Chapter" in this_content.__class__.__name__ %}
-                    <li><a href="{{ "%s?print=all_content" % request.path }}" style="display: block">Print chapter content</a></li>
-                {% endif %}
               </ul>
         </div>
     </div>
