@@ -10,3 +10,4 @@ recursive-include syllabus/admin *
 recursive-include syllabus/models *
 recursive-include syllabus/utils *
 recursive-include syllabus/saml *
+recursive-include syllabus/cheat_sheet *
