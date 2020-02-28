@@ -42,6 +42,7 @@ from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
 from syllabus.utils.mail import send_confirmation_mail, send_authenticated_confirmation_mail
 from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
+from syllabus.utils.rst import get_inginious_html
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
 
 app = Flask(__name__, template_folder=os.path.join(syllabus.get_root_path(), 'templates'),
@@ -274,6 +275,7 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
                                  inginious_course_url=inginious_course_url if not same_origin_proxy else ("/postinginious/" + course),
                                  inginious_sandbox_url=inginious_sandbox_url,
                                  inginious_url=inginious_config['url'],
+                                 get_inginious_html=get_inginious_html,
                                  containing_chapters=TOC.get_containing_chapters_of(content), this_content=content,
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
                                  render_footer= lambda course: syllabus.utils.pages.render_footer(course),
@@ -316,7 +318,8 @@ def render_sphinx_page(course: str, docname: str):
                                          inginious_config=inginious_config,
                                          inginious_url=inginious_config['url'],
                                          course_str=course,
-                                         get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+                                         get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
+                                         get_inginious_html=get_inginious_html)
         except FileNotFoundError:
             abort(404)
     return send_from_directory(build.builder.outdir, docname)
