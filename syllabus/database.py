@@ -11,8 +11,8 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from syllabus import get_root_path
 
-database_path = os.path.join(get_root_path(), 'database.sqlite')
-engine = create_engine('sqlite:///%s' % database_path, convert_unicode=True)
+database_uri = os.environ.get("SYLLABUS_DATABASE_URI", 'sqlite:///%s' % os.path.join(get_root_path(), 'database.sqlite'))
+engine = create_engine(database_uri, convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
@@ -54,7 +54,7 @@ def init_db():
     import syllabus.models.user
     import syllabus.models.params
 
-    if not os.path.isfile(database_path):
+    if "sqlite://" in database_uri and not os.path.isfile(database_uri.replace("sqlite://", "")):
         print("Init the database.")
     Base.metadata.create_all(bind=engine)
     from syllabus.models.user import User
@@ -71,13 +71,16 @@ def init_db():
 def reload_database():
     # FIXME: ugly
     global engine, db_session
-    engine = create_engine('sqlite:///%s' % database_path, convert_unicode=True)
+    engine = create_engine(database_uri, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
                                              bind=engine))
 
 
 def update_database():
+    if "sqlite" not in database_uri:
+        return
+    database_path = database_uri.replace("sqlite://", "")
     if os.path.isfile(database_path):
         connection = engine.connect()
         version = connection.execute("PRAGMA main.user_version;").first()[0]

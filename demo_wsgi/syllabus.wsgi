@@ -1,5 +1,15 @@
-import shutil
 import os
+
+ENV_VARS = {
+               "SYLLABUS_CONFIG_PATH":  "/home/syllabus/interactive-syllabus",
+#              "SYLLABUS_DATABASE_URI": "database_uri"
+           }
+
+for name, val in ENV_VARS.items():
+    if val is not None:
+        os.environ[name] = val
+
+import shutil
 import yaml
 import syllabus
 from syllabus.database import init_db, update_database
@@ -11,11 +21,6 @@ from syllabus.utils import pages
 # different values for these variables: you only need to duplicate this file
 # and change these variables
 
-ENV_VARS = {"SYLLABUS_CONFIG_PATH": "/home/syllabus/interactive-syllabus"}
-
-for name, val in ENV_VARS.items():
-    if val is not None:
-        os.environ[name] = val
 
 default_toc = \
     {
