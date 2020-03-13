@@ -35,8 +35,9 @@ def uri(argument):
     if argument is None:
         raise ValueError('argument required but none supplied')
     else:
+        from flask import session
         uri = ''.join(argument.split())
-        return re.sub('^/assets/', '/syllabus/{{session["course"]}}/assets/', uri)
+        return re.sub('^/assets/', '/syllabus/{}/assets/'.format(session["course"]), uri)
 
 
 # Oh yeah baby!
@@ -82,8 +83,9 @@ class InginiousDirective(Directive):
 
     def get_html_content(self, sandbox):
 
+        from flask import session
         html_no_lti = """
-        {{% set action_to_do = '/postinginious/' + session["course"] %}}
+        {{% set action_to_do = '/postinginious/{3}' %}}
         {{% if not inginious_config['same_origin_proxy'] %}}
             {{% set action_to_do = inginious_sandbox_url %}}
         {{% endif %}}
@@ -100,7 +102,8 @@ class InginiousDirective(Directive):
         </div>
         """.format(self.arguments[2] if len(self.arguments) == 3 else "text/x-python",
                    '\n'.join(self.content),
-                   self.arguments[0])
+                   self.arguments[0],
+                   session["course"])
 
         html_lti = """
         {{% set user = session.get("user", None) %}}
