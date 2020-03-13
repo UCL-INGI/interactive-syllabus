@@ -1,6 +1,8 @@
+from hmac import HMAC
+
 from sqlalchemy import Column, String, Boolean
 from syllabus.database import Base
-from hashlib import sha512
+from hashlib import sha512, pbkdf2_hmac, sha256
 
 
 class User(Base):
@@ -44,8 +46,13 @@ class User(Base):
         return self.right in ["teacher", "admin"]
 
 
-def hash_password(password):
-    return sha512(password).hexdigest()
+def hash_password_func(email, password, global_salt, n_iterations):
+    if global_salt is None:
+        return sha512(password).hexdigest()
+    return pbkdf2_hmac('sha512',
+                       password=password.encode(),
+                       salt=HMAC(global_salt.encode(), email.encode(), sha256).digest(),
+                       iterations=n_iterations)
 
 
 class UserAlreadyExists(Exception):

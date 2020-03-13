@@ -37,7 +37,7 @@ import syllabus.utils.pages
 from syllabus.admin import admin_blueprint, pop_feeback, set_feedback, ErrorFeedback, SuccessFeedback
 from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database
 from syllabus.models.params import Params
-from syllabus.models.user import hash_password, User, UserAlreadyExists
+from syllabus.models.user import hash_password_func, User, UserAlreadyExists
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
 from syllabus.utils.mail import send_confirmation_mail, send_authenticated_confirmation_mail
@@ -337,7 +337,9 @@ def reset_password(secret):
         password_confirm = inpt["password_confirm"]
         if password != password_confirm:
             return render_template("reset_password.html", alert_hidden=False)
-        password_hash = hash_password(password.encode("utf-8"))
+        password_hash = hash_password_func(email=user.email, password=password,
+                                           global_salt=syllabus.get_config().get('password_salt', None),
+                                           n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
         user.hash_password = password_hash
         user.change_password_url = None
         db_session.commit()
@@ -356,7 +358,9 @@ def log_in():
         email = inpt["email"]
         password = inpt["password"]
         try:
-            password_hash = hash_password(password.encode("utf-8"))
+            password_hash = hash_password_func(email=email, password=password,
+                                               global_salt=syllabus.get_config().get('password_salt', None),
+                                               n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
         except UnicodeEncodeError:
             # TODO: log
             return seeother("/login")
@@ -418,7 +422,9 @@ def register():
             return seeother("/register")
 
         try:
-            password_hash = hash_password(password.encode("utf-8"))
+            password_hash = hash_password_func(email=email, password=password,
+                                               global_salt=syllabus.get_config().get('password_salt', None),
+                                               n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
         except UnicodeEncodeError:
             # TODO: log
             return seeother("/login")

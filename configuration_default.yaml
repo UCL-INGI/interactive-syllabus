@@ -1,5 +1,11 @@
 sessions_secret_key: ~
 
+# !! HIGHLY RECOMMENDED TO SET !  "salt should be about 16 or more bytes from a proper source, e.g. os.urandom()"
+password_salt: ~ # if unset or not present, the passwords are stored hashed using sha512(password)
+                 # if set, the passwords are stored hashed using pbkdf2_hmac with the provided salt
+password_hash_iterations: 100000  # set it to the capabilities of your server. 100000 is recommended but could be too
+                                  # heavy for your server
+
 caching:
   cache_pages: yes  # set to true if the rendered pages must be cached as Jinja templates instead of
                     # re-rendering them each time
