@@ -322,14 +322,16 @@ class PrintOnlyDirective(Directive):
     optional_arguments = 0
 
     def run(self):
-        content = """
-            {{% if session.get("print_mode", True) %}}
-                {}
-            {{% endif %}}
-        """.format(self.content)
-        return Container(content=content, arguments=[], lineno=self.lineno,
+        sl = StringList(["{% if session.get('print_mode', True) %}"])
+        sl.append(StringList([""]))
+        sl += self.content
+        sl.append(StringList([""]))
+        sl.append(StringList(["{% endif %}"]))
+        return Container(content=sl,
+                         arguments=[],
+                         lineno=self.lineno,
                          block_text=self.block_text, content_offset=self.content_offset, name="container",
-                             options=self.options, state=self.state, state_machine=self.state_machine).run()
+                         options=self.options, state=self.state, state_machine=self.state_machine).run()
 
 
 def setup(app):
