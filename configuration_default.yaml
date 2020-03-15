@@ -112,6 +112,7 @@ authentication_methods:
       smtp_server: mysmtpserver.example # name of the smtp server to which send the activation e-mail
       smtp_server_port: ~ # if not defined, will be set to 465 if use_ssl is yes, it will be set to 25 otherwise
       sender_email_address: noreply@syllabus.example  # e-mail address used by the application to send the activation e-mail
+      secret: activation_secret # Use to generate the hash for the activation link
       authentication:
         required: yes
         username: username
