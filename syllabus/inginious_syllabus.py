@@ -30,12 +30,14 @@ from flask import Flask, render_template, request, abort, make_response, session
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from sqlalchemy.orm.exc import NoResultFound
+from hashlib import sha256
+from hmac import HMAC
 
 import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
 from syllabus.admin import admin_blueprint, pop_feeback, set_feedback, ErrorFeedback, SuccessFeedback
-from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database
+from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database, find_user_from_registration_hash
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password_func, User, UserAlreadyExists
 from syllabus.saml import prepare_request, init_saml_auth
@@ -437,17 +439,19 @@ def register():
             feedback_message = "You have been successfully registered."
             if email_activation_config.get("required", True):
                 auth_config = email_activation_config.get("authentication", {})
+                # TODO: for now, only hashing the email of the users. Need to add something more?
+                hash = HMAC(email_activation_config["secret"].encode(), u.email.encode(), sha256).hexdigest()
+                url = "{}{}/{}".format(request.host_url, "activate", hash)
                 if auth_config.get("required", False):
                     send_authenticated_confirmation_mail(email_activation_config["sender_email_address"], u.email,
-                                                         "{}{}/{}".format(request.host_url, "activate",
-                                                                          u.activation_secret),
+                                                         url,
                                                          email_activation_config["smtp_server"],
                                                          username=auth_config["username"],
                                                          password=auth_config["password"],
                                                          smtp_port=email_activation_config["smtp_server_port"])
                 else:
                     send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
-                                           "{}{}/{}".format(request.host_url, "activate", u.activation_secret),
+                                           url,
                                            email_activation_config["smtp_server"],
                                            use_ssl=email_activation_config["use_ssl"],
                                            smtp_port=email_activation_config["smtp_server_port"])
@@ -461,12 +465,10 @@ def register():
 
 @app.route("/activate/<string:secret>")
 def activate_account(secret):
-    try:
-        user = User.query.filter(User.activation_secret == secret).one()
-    except NoResultFound:
+    user = find_user_from_registration_hash(secret)
+    if user is None:
         abort(404)
     user.activated = True
-    user.activation_secret = None
     db_session.commit()
     set_feedback(session, SuccessFeedback("Your account has been successfully activated"), feedback_type="login")
     return seeother("/login")

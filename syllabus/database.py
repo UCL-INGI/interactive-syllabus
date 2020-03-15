@@ -10,6 +10,7 @@ from sqlalchemy.engine import ResultProxy
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from syllabus import get_root_path
+from syllabus import get_config
 
 database_uri = os.environ.get("SYLLABUS_DATABASE_URI", 'sqlite:///%s' % os.path.join(get_root_path(), 'database.sqlite'))
 engine = create_engine(database_uri, convert_unicode=True)
@@ -147,10 +148,15 @@ def locally_register_new_user(user, activation_required=True):
     if existing_user is not None:
         raise UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
                                                                                               existing_user.to_dict()))
-    secret_already_exists = True
-    while activation_required and secret_already_exists:
-        user_activation_secret_bytes = os.urandom(20)
-        user.activation_secret = binascii.hexlify(user_activation_secret_bytes).decode()
-        secret_already_exists = User.query.filter(User.activation_secret == user.activation_secret).first() is not None
     db_session.add(user)
     db_session.commit()
+
+
+def find_user_from_registration_hash(hash):
+    from syllabus.models.user import User, get_activation_hash
+    users = User.query.all()
+    email_activation_config = get_config()["authentication_methods"]["local"].get("email_activation", {})
+    for user in users:
+        if get_activation_hash(user.email, email_activation_config['secret']) == hash:
+            return user
+    return None
