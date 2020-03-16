@@ -140,9 +140,9 @@ def update_database():
 
 
 # we cannot register locally if either somebody has the same e-mail
-def locally_register_new_user(user, activation_required=True):
+def locally_register_new_user(user, activated=False):
     from syllabus.models.user import User, UserAlreadyExists
-    user.activated = not activation_required
+    user.activated = activated
     user.right = None
     existing_user = User.query.filter(User.email == user.email).first()
     if existing_user is not None:
@@ -151,12 +151,3 @@ def locally_register_new_user(user, activation_required=True):
     db_session.add(user)
     db_session.commit()
 
-
-def find_user_from_registration_hash(hash):
-    from syllabus.models.user import User, get_activation_hash
-    users = User.query.all()
-    email_activation_config = get_config()["authentication_methods"]["local"].get("email_activation", {})
-    for user in users:
-        if get_activation_hash(user.email, email_activation_config['secret']) == hash:
-            return user
-    return None

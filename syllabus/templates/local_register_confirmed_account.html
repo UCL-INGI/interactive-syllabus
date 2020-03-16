@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="/static/js/jquery-3.1.1.min.js"></script>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/signin.css" rel="stylesheet">
+    <script src="/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        {% if feedback is defined and feedback is not none %}
+            <div class="container-fluid" style="padding-top: 10px">
+                <div class="alert alert-{{ feedback.alert_color }} alert-dismissable">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <h4> <i class="fa {{ feedback.icon }}" style="padding-right: 5px"></i> {{ feedback.title }} </h4>
+                    {{ feedback.message | safe }}
+                </div>
+            </div>
+        {% endif %}
+
+      <form class="form-signin" method="post">
+        <h2 class="form-signin-heading">Please register</h2>
+        <label for="inputUsername" class="sr-only">Username</label>
+        <input type="text" id="inputUsername" class="form-control" placeholder="Username" required autofocus name="username">
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" minlength="6" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+        <label for="repeatPassword" class="sr-only">Confirm password</label>
+        <input type="password" minlength="6" id="repeatPassword" class="form-control" placeholder="Confirm password" required name="confirm-password">
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
+      </form>
+
+
+
+    </div> <!-- /container -->
+
+
+</body>
+</html>
