@@ -1,3 +1,4 @@
+import hmac
 from hmac import HMAC
 
 from sqlalchemy import Column, String, Boolean
@@ -50,11 +51,19 @@ def hash_password_func(email, password, global_salt, n_iterations):
     return pbkdf2_hmac('sha512',
                        password=password.encode(),
                        salt=HMAC(global_salt.encode(), email.encode(), sha256).digest(),
-                       iterations=n_iterations)
+                       iterations=n_iterations).hex()
 
 
-def get_activation_hash(email, secret):
-    return HMAC(secret.encode(), email.encode(), sha256).hexdigest()
+def _get_activation_mac(email: str, secret: str, timestamp: int):
+    return HMAC(secret.encode(), "{}.{}.activate".format(email, timestamp).encode(), sha256)
+
+
+def get_activation_mac(email: str, secret: str, timestamp: int):
+    return _get_activation_mac(email=email, secret=secret, timestamp=timestamp).hexdigest()
+
+
+def verify_activation_mac(email: str, secret: str, timestamp: int, mac_to_verify: str):
+    return hmac.compare_digest(get_activation_mac(email=email, secret=secret, timestamp=timestamp), mac_to_verify)
 
 
 class UserAlreadyExists(Exception):

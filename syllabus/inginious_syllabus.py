@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import datetime
 import os
 import re
 import urllib
@@ -30,16 +30,14 @@ from flask import Flask, render_template, request, abort, make_response, session
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from sqlalchemy.orm.exc import NoResultFound
-from hashlib import sha256
-from hmac import HMAC
 
 import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
 from syllabus.admin import admin_blueprint, pop_feeback, set_feedback, ErrorFeedback, SuccessFeedback
-from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database, find_user_from_registration_hash
+from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database
 from syllabus.models.params import Params
-from syllabus.models.user import hash_password_func, User, UserAlreadyExists
+from syllabus.models.user import hash_password_func, User, UserAlreadyExists, verify_activation_mac, get_activation_mac
 from syllabus.saml import prepare_request, init_saml_auth
 from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
 from syllabus.utils.mail import send_confirmation_mail, send_authenticated_confirmation_mail
@@ -393,69 +391,95 @@ def log_out():
     return seeother(session.get("last_visited", "/"))
 
 
+def handle_user_registration_infos(inpt, email, activation_required):
+    """
+
+    :param inpt: the form containing the username, password confirm-password and email fields
+    :param activation_required: set to true if the user still has to activate its account as of now
+    :return: a new user
+    :raises: UnicodeEncodeError
+    """
+    username = inpt["username"]
+    password = inpt["password"]
+    confirm_password = inpt["confirm-password"]
+
+    # check the correctness of the input fields
+    error = False
+    if password != confirm_password:
+        set_feedback(session, ErrorFeedback("Your passwords do not match."), feedback_type="login")
+        error = True
+    elif len(password) < 6:
+        set_feedback(session, ErrorFeedback("Your password is too short (< 6 characters)"), feedback_type="login")
+        error = True
+    elif re.match(r"^[-_0-9A-Z]{4,}$", username, re.IGNORECASE) is None:
+        set_feedback(session, ErrorFeedback("the username you entered is invalid (should contain at least 4 "
+                                            "characters and only letters from a to z, digits, - and _)"),
+                     feedback_type="login")
+        error = True
+    if error:
+        return None
+
+    password_hash = hash_password_func(email=email, password=password,
+                                       global_salt=syllabus.get_config().get('password_salt', None),
+                                       n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
+    return User(username, email, hash_password=password_hash, right=None, activated=not activation_required)
+
+
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+    timestamp = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
+    activation_required = email_activation_config.get("required", True)
     if "local" not in syllabus.get_config()['authentication_methods']:
         abort(404)
     if request.method == "GET":
         return render_template("register.html", auth_methods=syllabus.get_config()['authentication_methods'],
-                               feedback=pop_feeback(session, feedback_type="login"))
+                               feedback=pop_feeback(session, feedback_type="login"),
+                               activation_required=activation_required)
     if request.method == "POST":
         inpt = request.form
-        username = inpt["username"]
-        password = inpt["password"]
-        confirm_password = inpt["confirm-password"]
-        email = inpt["email"]
+        if activation_required:
+            # send the email confirmation
+            email = inpt["email"]
+            auth_config = email_activation_config.get("authentication", {})
+            parsed_url = urllib.parse.urlparse(urllib.parse.urljoin(request.host_url, "activate"))
+            parsed_url = parsed_url._replace(query=urllib.parse.urlencode({
+                "email": email,
+                "token": get_activation_mac(email=email, secret=email_activation_config["secret"], timestamp=timestamp),
+                "ts": timestamp
+            }))
+            url = urllib.parse.urlunparse(parsed_url)
+            if auth_config.get("required", False):
+                send_authenticated_confirmation_mail(email_activation_config["sender_email_address"], email,
+                                                     url,
+                                                     email_activation_config["smtp_server"],
+                                                     username=auth_config["username"],
+                                                     password=auth_config["password"],
+                                                     smtp_port=email_activation_config["smtp_server_port"])
+            else:
+                send_confirmation_mail(email_activation_config["sender_email_address"], email,
+                                       url,
+                                       email_activation_config["smtp_server"],
+                                       use_ssl=email_activation_config["use_ssl"],
+                                       smtp_port=email_activation_config["smtp_server_port"])
+            feedback_message = "Registration successful. Please activate your account using the activation link you received by e-mail."
+            set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
+            return seeother("/login")
 
-        # check the correctness of the input fields
-        error = False
-        if password != confirm_password:
-            set_feedback(session, ErrorFeedback("Your passwords do not match."), feedback_type="login")
-            error = True
-        elif len(password) < 6:
-            set_feedback(session, ErrorFeedback("Your password is too short (< 6 characters)"), feedback_type="login")
-            error = True
-        elif re.match(r"^[-_0-9A-Z]{4,}$", username, re.IGNORECASE) is None:
-            set_feedback(session, ErrorFeedback("the username you entered is invalid (should contain at least 4 "
-                                                "characters and only letters from a to z, digits, - and _)"),
-                         feedback_type="login")
-            error = True
-        if error:
-            return seeother("/register")
+        # here, the activation is not required
 
         try:
-            password_hash = hash_password_func(email=email, password=password,
-                                               global_salt=syllabus.get_config().get('password_salt', None),
-                                               n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
+            u = handle_user_registration_infos(inpt, inpt["email"], False)
         except UnicodeEncodeError:
             # TODO: log
             return seeother("/login")
 
-        email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
-        activation_required = email_activation_config.get("required", True)
-        u = User(username, email, hash_password=password_hash, right=None, activated=not activation_required)
+        if u is None:
+            return seeother("/register")
+
         try:
             locally_register_new_user(u, activation_required)
             feedback_message = "You have been successfully registered."
-            if email_activation_config.get("required", True):
-                auth_config = email_activation_config.get("authentication", {})
-                # TODO: for now, only hashing the email of the users. Need to add something more?
-                hash = HMAC(email_activation_config["secret"].encode(), u.email.encode(), sha256).hexdigest()
-                url = "{}{}/{}".format(request.host_url, "activate", hash)
-                if auth_config.get("required", False):
-                    send_authenticated_confirmation_mail(email_activation_config["sender_email_address"], u.email,
-                                                         url,
-                                                         email_activation_config["smtp_server"],
-                                                         username=auth_config["username"],
-                                                         password=auth_config["password"],
-                                                         smtp_port=email_activation_config["smtp_server_port"])
-                else:
-                    send_confirmation_mail(email_activation_config["sender_email_address"], u.email,
-                                           url,
-                                           email_activation_config["smtp_server"],
-                                           use_ssl=email_activation_config["use_ssl"],
-                                           smtp_port=email_activation_config["smtp_server_port"])
-                feedback_message += " Please activate your account using the activation link you received by e-mail."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
         except UserAlreadyExists:
@@ -463,13 +487,50 @@ def register():
             return seeother("/register")
 
 
-@app.route("/activate/<string:secret>")
-def activate_account(secret):
-    user = find_user_from_registration_hash(secret)
-    if user is None:
+@app.route("/activate", methods=['GET', 'POST'])
+def activate_account():
+    email = request.args.get('email')
+    mac = request.args.get('token')
+    try:
+        ts = int(request.args.get('ts'))
+    except ValueError:
         abort(404)
-    user.activated = True
-    db_session.commit()
+        return None
+    email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
+    if not verify_activation_mac(email=email, secret=email_activation_config["secret"],
+                                 mac_to_verify=mac, timestamp=ts):
+        # the mac does not match the provided email
+        abort(404)
+        return None
+
+    if User.query.filter(User.email == email).count() != 0:
+        set_feedback(session, ErrorFeedback("This user is already activated."), feedback_type="login")
+        return seeother("/login")
+
+    if request.method == "GET":
+        return render_template("local_register_confirmed_account.html",
+                               feedback=pop_feeback(session, feedback_type="login"))
+
+    if request.method == "POST":
+        inpt = request.form
+        try:
+            u = handle_user_registration_infos(inpt, email, False)
+        except UnicodeEncodeError:
+            # TODO: log
+            return seeother("/login")
+
+        if u is None:
+            return seeother("/activate?{}".format(urllib.parse.urlencode({"email": email, "token": mac, "ts": ts})))
+
+        try:
+            locally_register_new_user(u, activated=True)
+            feedback_message = "You have been successfully registered."
+            set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
+            return seeother("/login")
+        except UserAlreadyExists:
+            set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
+            return seeother("/register/{}/{}".format(email, mac))
+
     set_feedback(session, SuccessFeedback("Your account has been successfully activated"), feedback_type="login")
     return seeother("/login")
 
