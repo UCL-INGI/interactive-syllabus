@@ -464,7 +464,7 @@ def register():
                                        smtp_port=email_activation_config["smtp_server_port"])
             feedback_message = "Registration successful. Please activate your account using the activation link you received by e-mail."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
-            return seeother("/login")
+            return seeother("/activation_needed")
 
         # here, the activation is not required
 
@@ -485,6 +485,11 @@ def register():
         except UserAlreadyExists:
             set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
             return seeother("/register")
+
+@app.route("/activation_needed")
+def feedback_page():
+    return render_template("feedback_page.html", auth_methods=syllabus.get_config()['authentication_methods'],
+                           feedback=pop_feeback(session, feedback_type="login"))
 
 
 @app.route("/activate", methods=['GET', 'POST'])
