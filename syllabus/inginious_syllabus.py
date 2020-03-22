@@ -462,7 +462,8 @@ def register():
                                        email_activation_config["smtp_server"],
                                        use_ssl=email_activation_config["use_ssl"],
                                        smtp_port=email_activation_config["smtp_server_port"])
-            feedback_message = "Registration successful. Please activate your account using the activation link you received by e-mail."
+            feedback_message = "Registration successful. Please activate your account using the activation link you received by e-mail." \
+                               "Click <a href=\"/login\">here</a> to log in."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/activation_needed")
 
