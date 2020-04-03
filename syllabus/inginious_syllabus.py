@@ -479,7 +479,7 @@ def register():
             return seeother("/register")
 
         try:
-            locally_register_new_user(u, activation_required)
+            locally_register_new_user(u, not activation_required)
             feedback_message = "You have been successfully registered."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
