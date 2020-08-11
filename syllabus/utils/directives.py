@@ -128,7 +128,8 @@ class InginiousDirective(Directive):
         {{% elif login_img is defined and login_img is not none %}}
             <a href="/login"><img style="width: 100%" src="{{{{ login_img }}}}"></a>
         {{% else %}}
-            <pre style="overflow: hidden; width: 100%; height: 520px">Please log in to see this exercise</pre>
+            <div style="background: lightblue; padding: 15px"> <b>You cannot see this exercise because you are currently not logged in. </b>
+            <a href="/login"><b>Click here</b></a> to log in or get a direct access to the exercice on INGInious by following <a href="{{{{ inginious_course_url }}}}/{0}">this link</a>. </div>
         {{% endif %}}
         """.format(self.arguments[0])
 
