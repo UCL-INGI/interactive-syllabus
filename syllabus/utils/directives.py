@@ -125,6 +125,8 @@ class InginiousDirective(Directive):
             {{{{ form_inputs|safe }}}}
             <button class="inginious-submitter" type="submit">Launch the INGInious exercise</button>
             </form>
+        {{% elif login_img is defined and login_img is not none %}}
+            <a href="/login"><img style="width: 100%" src="{{{{ login_img }}}}"></a>
         {{% else %}}
             <pre style="overflow: hidden; width: 100%; height: 520px">Please log in to see this exercise</pre>
         {{% endif %}}

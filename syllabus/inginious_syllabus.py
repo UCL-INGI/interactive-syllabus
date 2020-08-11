@@ -284,7 +284,8 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
                                  direct_content=TOC.get_direct_content_of(content), next=next, previous=previous,
                                  display_print_all=display_print_all,
                                  get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
-                                 render_rst_str=syllabus.utils.pages.render_rst_str)
+                                 render_rst_str=syllabus.utils.pages.render_rst_str,
+                                 login_img="/static/login.png" if os.path.exists(os.path.join(app.static_folder, "login.png")) else None)
 
         session["print_mode"] = False
     except Exception:
@@ -316,7 +317,8 @@ def render_sphinx_page(course: str, docname: str):
                                          inginious_config=inginious_config,
                                          inginious_url=inginious_config['url'],
                                          course_str=course,
-                                         get_lti_data=get_lti_data, get_lti_submission=get_lti_submission)
+                                         get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
+                                         login_img="/static/login.png" if os.path.exists(os.path.join(app.static_folder, "login.png")) else None)
         except FileNotFoundError:
             abort(404)
     return send_from_directory(build.builder.outdir, docname)
