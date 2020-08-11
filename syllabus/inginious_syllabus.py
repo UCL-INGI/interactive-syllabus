@@ -318,7 +318,7 @@ def render_sphinx_page(course: str, docname: str):
                                          inginious_url=inginious_config['url'],
                                          course_str=course,
                                          get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
-                                         login_img="/static/login.png" if os.path.exists(os.path.join(app.static_folder, "login.png")) else None)
+                                         login_img="/static/login.png" if config['courses'][course].get("use_logged_out_img", False) else None)
         except FileNotFoundError:
             abort(404)
     return send_from_directory(build.builder.outdir, docname)
