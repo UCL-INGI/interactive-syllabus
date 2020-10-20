@@ -144,10 +144,14 @@ def locally_register_new_user(user, activated=False):
     from syllabus.models.user import User, UserAlreadyExists
     user.activated = activated
     user.right = None
-    existing_user = User.query.filter(User.email == user.email).first()
+    existing_user = User.query.filter(or_(User.email == user.email, User.username == user.username)).first()
     if existing_user is not None:
-        raise UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
+        exception = UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
                                                                                               existing_user.to_dict()))
+        if existing_user.email == user.email:
+            exception.reason = "email"
+        else:
+            exception.reason = "username"
     db_session.add(user)
     db_session.commit()
 

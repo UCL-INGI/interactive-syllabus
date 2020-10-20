@@ -285,7 +285,8 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
                                  display_print_all=display_print_all,
                                  get_lti_data=get_lti_data, get_lti_submission=get_lti_submission,
                                  render_rst_str=syllabus.utils.pages.render_rst_str,
-                                 login_img="/static/login.png" if os.path.exists(os.path.join(app.static_folder, "login.png")) else None)
+                                 login_img="/static/login.png" if os.path.exists(os.path.join(app.static_folder, "login.png")) else None,
+                                 auth_methods=syllabus.get_config()["authentication_methods"])
 
         session["print_mode"] = False
     except Exception:
@@ -429,11 +430,11 @@ def handle_user_registration_infos(inpt, email, activation_required):
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+    if "local" not in syllabus.get_config()['authentication_methods']:
+        abort(404)
     timestamp = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
     activation_required = email_activation_config.get("required", True)
-    if "local" not in syllabus.get_config()['authentication_methods']:
-        abort(404)
     if request.method == "GET":
         return render_template("register.html", auth_methods=syllabus.get_config()['authentication_methods'],
                                feedback=pop_feeback(session, feedback_type="login"),
@@ -485,8 +486,10 @@ def register():
             feedback_message = "You have been successfully registered."
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
-        except UserAlreadyExists:
-            set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
+        except UserAlreadyExists as e:
+            set_feedback(session, ErrorFeedback("Could not register: this user already exists{}.".format(
+                                                (": %s" % e.reason) if e.reason is not None else "")),
+                         feedback_type="login")
             return seeother("/register")
 
 @app.route("/activation_needed")
@@ -501,7 +504,7 @@ def activate_account():
     mac = request.args.get('token')
     try:
         ts = int(request.args.get('ts'))
-    except ValueError:
+    except TypeError:
         abort(404)
         return None
     email_activation_config = syllabus.get_config()["authentication_methods"]["local"].get("email_activation", {})
@@ -536,6 +539,7 @@ def activate_account():
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
         except UserAlreadyExists:
+            db_session.rollback()
             set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
             return seeother("/register/{}/{}".format(email, mac))
 
