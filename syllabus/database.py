@@ -152,6 +152,7 @@ def locally_register_new_user(user, activated=False):
             exception.reason = "email"
         else:
             exception.reason = "username"
+        raise exception
     db_session.add(user)
     db_session.commit()
 
