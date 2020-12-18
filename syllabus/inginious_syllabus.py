@@ -490,6 +490,7 @@ def register():
             set_feedback(session, ErrorFeedback("Could not register: this user already exists{}.".format(
                                                 (": %s" % e.reason) if e.reason is not None else "")),
                          feedback_type="login")
+            db_session.rollback()
             return seeother("/register")
 
 @app.route("/activation_needed")
