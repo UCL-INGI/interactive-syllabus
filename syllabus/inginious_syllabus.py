@@ -241,7 +241,8 @@ def get_chapter_printable_content(course: str, chapter: Chapter, toc: TableOfCon
         retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter), logged_in=session.get("user", None),
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
                                  toc=TOC,
-                                 course_str=course)
+                                 course_str=course,
+                                 get_lti_submission=get_lti_submission)
         session["print_mode"] = False
         return retval
     except:
