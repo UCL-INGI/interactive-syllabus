@@ -238,7 +238,7 @@ def get_chapter_printable_content(course: str, chapter: Chapter, toc: TableOfCon
 
     session["print_mode"] = True
     try:
-        retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter),
+        retval = render_template("print_multiple_contents.html", contents=fetch_content(chapter), logged_in=session.get("user", None),
                                  render_rst=lambda content, **kwargs: syllabus.utils.pages.render_content(course, content, **kwargs),
                                  toc=TOC,
                                  course_str=course)
