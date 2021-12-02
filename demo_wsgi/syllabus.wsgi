@@ -1,4 +1,13 @@
+#!/bin/env python3
+
+import shutil
 import os
+import yaml
+
+# use it to set environment variables with WSGI outside the request context
+# it is mostly useful if you want several instances of the syllabus having
+# different values for these variables: you only need to duplicate this file
+# and change these variables
 
 ENV_VARS = {
                "SYLLABUS_CONFIG_PATH":  "/home/syllabus/interactive-syllabus",
@@ -9,18 +18,9 @@ for name, val in ENV_VARS.items():
     if val is not None:
         os.environ[name] = val
 
-import shutil
-import yaml
 import syllabus
-from syllabus.database import init_db, update_database
-
 from syllabus.utils import pages
-
-# use it to set environment variables with WSGI outside the request context
-# it is mostly useful if you want several instances of the syllabus having
-# different values for these variables: you only need to duplicate this file
-# and change these variables
-
+from syllabus.database import init_db, update_database
 
 default_toc = \
     {

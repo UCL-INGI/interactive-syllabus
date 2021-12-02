@@ -225,7 +225,7 @@ def toc_edition(course):
         if "new_content" in inpt:
             try:
                 # check YAML validity
-                toc_dict = yaml.load(inpt["new_content"], OrderedDictYAMLLoader)
+                toc_dict = yaml.load(inpt["new_content"], Loader=OrderedDictYAMLLoader)
                 if not TableOfContent.is_toc_dict_valid(syllabus.get_pages_path(course), toc_dict):
                     set_feedback(session, Feedback(feedback_type="error", message="The submitted table of contents "
                                                                                   "is not consistent with the files "
@@ -261,7 +261,7 @@ def config_edition():
         if "new_config" in inpt:
             try:
                 # check YAML validity
-                config = yaml.load(inpt["new_config"])
+                config = yaml.safe_load(inpt["new_config"])
                 # TODO: check that the configuration has the appropriate fields
                 # update the config
                 old_config = syllabus.get_config()

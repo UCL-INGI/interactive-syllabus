@@ -118,7 +118,7 @@ class TableOfContent(object):
         self._cached_path = os.path.join(self.toc_path, ".cached")
         self._print_cached_path = os.path.join(self.toc_path, ".print_cached")
         with open(toc_file, "r") as f:
-            toc_dict = yaml.load(f, OrderedDictYAMLLoader)
+            toc_dict = yaml.load(f, Loader=OrderedDictYAMLLoader)
             self._init_from_dict(toc_dict, ignore_not_found)
 
     def _init_from_dict(self, toc_dict: OrderedDict, ignore_not_found=False):

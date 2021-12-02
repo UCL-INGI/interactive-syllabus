@@ -88,7 +88,7 @@ def get_config(force=False):
     def reload_config():
         path = get_config_path()
         with open(path, "r") as f:
-            get_config.cached = yaml.load(f)
+            get_config.cached = yaml.safe_load(f)
             return get_config.cached
     if force:
         return reload_config()
