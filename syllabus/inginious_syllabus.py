@@ -25,8 +25,9 @@ from urllib import request as urllib_request
 
 from docutils.core import publish_string
 from docutils.parsers.rst import directives
-from flask import Flask, render_template, request, abort, make_response, session, redirect, safe_join, \
+from flask import Flask, render_template, request, abort, make_response, session, redirect, \
     send_from_directory, url_for, render_template_string
+from werkzeug.security import safe_join
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from sqlalchemy.orm.exc import NoResultFound

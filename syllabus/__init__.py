@@ -21,7 +21,8 @@
 
 import os
 import yaml
-from flask import request, has_request_context, safe_join
+from flask import request, has_request_context
+from werkzeug.security import safe_join
 from sphinx.application import Sphinx
 from sphinxcontrib.websupport import WebSupport
 

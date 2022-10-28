@@ -22,7 +22,7 @@ from functools import wraps
 import yaml
 from docutils.core import publish_string
 from flask import render_template_string, redirect, session, abort, request
-from flask.helpers import safe_join
+from werkzeug.security import safe_join
 from git import Repo, InvalidGitRepositoryError
 from werkzeug.utils import secure_filename
 

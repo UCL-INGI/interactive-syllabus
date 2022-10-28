@@ -3,7 +3,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 
-from flask import safe_join
+from werkzeug.security import safe_join
 
 import syllabus
 import yaml
