@@ -66,7 +66,4 @@ def verify_activation_mac(email: str, secret: str, timestamp: int, mac_to_verify
 
 
 class UserAlreadyExists(Exception):
-    def __init__(self, message):
-        self.message = message
-        self.reason = None
-        super().__init__(self.message)
+    pass
