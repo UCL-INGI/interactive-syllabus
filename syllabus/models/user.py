@@ -8,17 +8,15 @@ from hashlib import sha512, pbkdf2_hmac, sha256
 
 class User(Base):
     __tablename__ = 'users'
-    username = Column(String(40), primary_key=True, index=True)
-    email = Column(String(120), unique=True, nullable=False)
+    email = Column(String(120), primary_key=True, index=True)
     full_name = Column(String(50))
     hash_password = Column(String(80))
     change_password_url = Column(String(50))
     right = Column(String(30))
     activated = Column(Boolean(), nullable=False, default=False)
 
-    def __init__(self, name, email, hash_password, full_name=None, change_password_url=None, right=None,
+    def __init__(self, email, hash_password, full_name=None, change_password_url=None, right=None,
                  activated=False):
-        self.username = name
         self.email = email
         self.hash_password = hash_password
         self.full_name = full_name
@@ -27,10 +25,11 @@ class User(Base):
         self.activated = activated
 
     def to_dict(self):
-        return {"username": self.username, "email": self.email, "right": self.right}
+        # Username field is deprecated and kept here for retro-compatibility
+        return {"username": self.email, "email": self.email, "right": self.right}
 
     def __repr__(self):
-        return '<User %r>' % (self.username)
+        return '<User %r>' % self.email
 
     @property
     def admin(self):

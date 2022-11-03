@@ -36,7 +36,7 @@ import syllabus
 import syllabus.utils.directives
 import syllabus.utils.pages
 from syllabus.admin import admin_blueprint, pop_feeback, set_feedback, ErrorFeedback, SuccessFeedback
-from syllabus.database import init_db, db_session, update_database, locally_register_new_user, reload_database
+from syllabus.database import init_db, db_session, update_database, locally_register_new_user
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password_func, User, UserAlreadyExists, verify_activation_mac, get_activation_mac
 from syllabus.saml import prepare_request, init_saml_auth
@@ -399,12 +399,11 @@ def log_out():
 def handle_user_registration_infos(inpt, email, activation_required):
     """
 
-    :param inpt: the form containing the username, password confirm-password and email fields
+    :param inpt: the form containing the password confirm-password and email fields
     :param activation_required: set to true if the user still has to activate its account as of now
     :return: a new user
     :raises: UnicodeEncodeError
     """
-    username = inpt["username"]
     password = inpt["password"]
     confirm_password = inpt["confirm-password"]
 
@@ -416,18 +415,13 @@ def handle_user_registration_infos(inpt, email, activation_required):
     elif len(password) < 6:
         set_feedback(session, ErrorFeedback("Your password is too short (< 6 characters)"), feedback_type="login")
         error = True
-    elif re.match(r"^[-_0-9A-Z]{4,}$", username, re.IGNORECASE) is None:
-        set_feedback(session, ErrorFeedback("the username you entered is invalid (should contain at least 4 "
-                                            "characters and only letters from a to z, digits, - and _)"),
-                     feedback_type="login")
-        error = True
     if error:
         return None
 
     password_hash = hash_password_func(email=email, password=password,
                                        global_salt=syllabus.get_config().get('password_salt', None),
                                        n_iterations=syllabus.get_config().get('password_hash_iterations', 100000))
-    return User(username, email, hash_password=password_hash, right=None, activated=not activation_required)
+    return User(email, hash_password=password_hash, right=None, activated=not activation_required)
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -602,7 +596,6 @@ def saml():
             # session['samlNameId'] = auth.get_nameid()
             # session['samlSessionIndex'] = auth.get_session_index()
 
-            username = attrs[saml_config['sp']['attrs']['username']][0]
             realname = attrs[saml_config['sp']['attrs']['realname']][0]
             email = attrs[saml_config['sp']['attrs']['email']][0]
 
@@ -611,7 +604,7 @@ def saml():
                 user = User.query.filter(User.email == email).one()
             except NoResultFound:
                 # The user does not exist in our DB
-                user = User(name=username, full_name=realname, email=email, hash_password=None,
+                user = User(full_name=realname, email=email, hash_password=None,
                             change_password_url=None)
                 db_session.add(user)
                 db_session.commit()
@@ -653,6 +646,5 @@ def update_pages(secret, course):
 
 def main():
     update_database()
-    reload_database()
     init_db()
     app.run(host='0.0.0.0', port=5000)

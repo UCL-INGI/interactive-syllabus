@@ -20,14 +20,14 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base = declarative_base()
 Base.query = db_session.query_property()
 
-current_version = 3
+current_version = 4
 
 
 def create_db_user():
     from syllabus.models.user import User
     change_pwd_bytes = os.urandom(20)
     change_pwd_hex = binascii.hexlify(change_pwd_bytes).decode()
-    u = User('admin', 'admin@localhost', hash_password=None, change_password_url=change_pwd_hex, right='admin',
+    u = User('admin@localhost', hash_password=None, change_password_url=change_pwd_hex, right='admin',
              activated=True)
     db_session.add(u)
     db_session.commit()
@@ -62,7 +62,7 @@ def init_db():
     users = User.query.all()
     if len(users) == 0:
         create_db_user()
-    admin = User.query.filter(User.username == "admin").first()
+    admin = User.query.filter(User.email == "admin@localhost").first()
     if admin is not None and admin.hash_password is None:
         print("Go to the following link to reset the admin user password: /resetpassword/%s" % admin.change_password_url)
     
@@ -104,35 +104,49 @@ def update_database():
             """)
         if version < 3:
             print("updating to version 3")
-            from sqlalchemy.schema import CreateTable
-            from syllabus.models.user import User
-            from syllabus.models.params import Params
-            print()
+            # Rename users to users_old and drop index
+            connection.execute("ALTER TABLE users RENAME TO users_old")
+            connection.execute("DROP INDEX ix_users_username")
 
-            tmp_path = os.path.join(get_root_path(), 'temp.sqlite')
-            engine_tmp = create_engine('sqlite:///%s' % tmp_path, convert_unicode=True)
+            connection.execute("""
+            CREATE TABLE users (
+                username VARCHAR(40) PRIMARY KEY NOT NULL,
+                email VARCHAR(120) UNIQUE NOT NULL,
+                full_name VARCHAR(50),
+                hash_password VARCHAR(80),
+                change_password_url VARCHAR(50),
+                "right" VARCHAR(30),
+                activated BOOLEAN NOT NULL
+            );
+            """)
+            connection.execute("CREATE INDEX ix_users_username ON users (username)")
 
-            if os.path.isfile(tmp_path):
-                os.remove(tmp_path)
-            import syllabus.models.user
-            import syllabus.models.params
-            connection_tmp = engine_tmp.connect()
-            connection_tmp.execute(CreateTable(User.__table__))
-            connection_tmp.execute(CreateTable(Params.__table__))
             for row in connection.execute("SELECT username, email, full_name, hash_password, change_password_url, "
-                                          "right FROM users"):
-                connection_tmp.execute("INSERT INTO users (username, email, full_name, hash_password, change_password_url, right, activated) "\
-                                       "VALUES ('{}', '{}', {}, '{}', {}, {}, {})".format(row[0], row[1], "NULL" if row[2] is None else "'%s'" % row[2],
-                                                                                                row[3], "NULL" if row[4] is None else "'%s'" % row[4],
-                                                                                                "NULL" if row[5] is None else "'%s'" % row[5], 1))
-            for row in connection.execute("SELECT git_hook_url, id FROM params"):
-                connection_tmp.execute("INSERT INTO params (git_hook_url, id) "\
-                                       "VALUES ('{}', '{}')".format(row[0], row[1]))
-            os.remove(database_path)
-            os.rename(tmp_path, database_path)
-            os.chmod(database_path, stat.S_IRWXU | stat.S_IRWXG)
-            reload_database()
-            connection = engine.connect()
+                                          "right FROM users_old"):
+                connection.execute("INSERT INTO users (username, email, full_name, hash_password, change_password_url, right, activated) "
+                                   "VALUES ('{}', '{}', {}, '{}', {}, {}, {})".format(row[0], row[1], "NULL" if row[2] is None else "'%s'" % row[2],
+                                                                                      row[3], "NULL" if row[4] is None else "'%s'" % row[4],
+                                                                                      "NULL" if row[5] is None else "'%s'" % row[5], 1))
+            connection.execute("DROP TABLE users_old")
+        if version < 4:
+            print("updating to version 4")
+            from sqlalchemy.schema import CreateTable, CreateIndex
+            from syllabus.models.user import User
+            connection.execute("ALTER TABLE users RENAME TO users_old")
+            connection.execute("DROP INDEX ix_users_username")
+            connection.execute(CreateTable(User.__table__))
+            for idx in User.__table__.indexes:
+                connection.execute(CreateIndex(idx))
+            for row in connection.execute("SELECT username, email, full_name, hash_password, change_password_url, "
+                                          "right, activated FROM users_old"):
+                connection.execute("INSERT INTO users (email, full_name, hash_password, change_password_url, right, activated) "\
+                                       "VALUES ('{}', {}, {}, {}, {}, {})".format(row[1],
+                                                                                  "null" if row[2] is None else "'%s'" % row[2],
+                                                                                  "null" if row[3] is None else "'%s'" % row[3],
+                                                                                  "null" if row[4] is None else "'%s'" % row[4],
+                                                                                  "null" if row[5] is None else "'%s'" % row[5],
+                                                                                  row[6]))
+            connection.execute("DROP TABLE users_old")
 
         connection.execute("PRAGMA main.user_version=%d;" % current_version)
     else:
@@ -144,14 +158,11 @@ def locally_register_new_user(user, activated=False):
     from syllabus.models.user import User, UserAlreadyExists
     user.activated = activated
     user.right = None
-    existing_user = User.query.filter(or_(User.email == user.email, User.username == user.username)).first()
+    existing_user = User.query.filter(User.email == user.email).first()
     if existing_user is not None:
         exception = UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
                                                                                               existing_user.to_dict()))
-        if existing_user.email == user.email:
-            exception.reason = "email"
-        else:
-            exception.reason = "username"
+        exception.reason = "email"
         raise exception
     db_session.add(user)
     db_session.commit()
