@@ -164,7 +164,7 @@
                     {% if logged_in["right"] == "admin" %}
                         <li><a href="/admin/users" style="display: block">Admin Panel</a></li>
                     {% endif %}
-                    <li><a href="/logout" style="display: block">Log out ({{ logged_in['username'] }})</a></li>
+                    <li><a href="/logout" style="display: block">Log out ({{ logged_in['email'] }})</a></li>
                 {% else %}
                     <li>
                       <a href="/login">Log in</a>

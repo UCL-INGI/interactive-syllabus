@@ -169,7 +169,6 @@ authentication_methods:
         privateKey: ""
 
         attrs:
-          username: 'urn:oid:0.9.2342.19200300.100.1.1'
           realname: 'urn:oid:2.16.840.1.113730.3.1.241'
           email: 'urn:oid:0.9.2342.19200300.100.1.3'
 
