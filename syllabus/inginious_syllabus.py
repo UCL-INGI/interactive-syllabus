@@ -483,9 +483,7 @@ def register():
             set_feedback(session, SuccessFeedback(feedback_message), feedback_type="login")
             return seeother("/login")
         except UserAlreadyExists as e:
-            set_feedback(session, ErrorFeedback("Could not register: this user already exists{}.".format(
-                                                (": %s" % e.reason) if e.reason is not None else "")),
-                         feedback_type="login")
+            set_feedback(session, ErrorFeedback("Could not register: this user already exists."), feedback_type="login")
             db_session.rollback()
             return seeother("/register")
 

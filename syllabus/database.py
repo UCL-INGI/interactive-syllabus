@@ -162,7 +162,6 @@ def locally_register_new_user(user, activated=False):
     if existing_user is not None:
         exception = UserAlreadyExists("tried to create user {} while user {} already exists".format(user.to_dict,
                                                                                               existing_user.to_dict()))
-        exception.reason = "email"
         raise exception
     db_session.add(user)
     db_session.commit()
