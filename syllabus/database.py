@@ -5,7 +5,7 @@ import re
 import stat
 from operator import or_
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import ResultProxy
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,7 +13,7 @@ from syllabus import get_root_path
 from syllabus import get_config
 
 database_uri = os.environ.get("SYLLABUS_DATABASE_URI", 'sqlite:///%s' % os.path.join(get_root_path(), 'database.sqlite'))
-engine = create_engine(database_uri, convert_unicode=True)
+engine = create_engine(database_uri)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
@@ -32,7 +32,7 @@ def create_db_user():
     db_session.add(u)
     db_session.commit()
     connection = engine.connect()
-    connection.execute("PRAGMA main.user_version=%d;" % current_version)
+    connection.execute(text("PRAGMA main.user_version=%d;" % current_version))
 
 
 def generate_github_hook():
@@ -84,31 +84,31 @@ def update_database():
     database_path = database_uri.replace("sqlite://", "")
     if os.path.isfile(database_path):
         connection = engine.connect()
-        version = connection.execute("PRAGMA main.user_version;").first()[0]
+        version = connection.execute(text("PRAGMA main.user_version;")).first()[0]
         if version < current_version:
             print("database version (%d) is outdated, updating database to version %d" % (version, current_version))
         if version < 1:
             print("updating to version 1")
-            connection.execute("ALTER TABLE users ADD COLUMN right STRING(30);")
+            connection.execute(text("ALTER TABLE users ADD COLUMN right STRING(30);"))
         if version < 2:
             print("updating to version 2")
-            connection.execute("""
+            connection.execute(text("""
             CREATE TABLE params(
                git_hook_url STRING(80),
                id           INTEGER PRIMARY KEY
             );
-            """)
-            connection.execute("""
+            """))
+            connection.execute(text("""
             INSERT INTO params (git_hook_url, id)
             VALUES (NULL, 1);
-            """)
+            """))
         if version < 3:
             print("updating to version 3")
             # Rename users to users_old and drop index
-            connection.execute("ALTER TABLE users RENAME TO users_old")
-            connection.execute("DROP INDEX ix_users_username")
+            connection.execute(text("ALTER TABLE users RENAME TO users_old"))
+            connection.execute(text("DROP INDEX ix_users_username"))
 
-            connection.execute("""
+            connection.execute(text("""
             CREATE TABLE users (
                 username VARCHAR(40) PRIMARY KEY NOT NULL,
                 email VARCHAR(120) UNIQUE NOT NULL,
@@ -118,37 +118,37 @@ def update_database():
                 "right" VARCHAR(30),
                 activated BOOLEAN NOT NULL
             );
-            """)
-            connection.execute("CREATE INDEX ix_users_username ON users (username)")
+            """))
+            connection.execute(text("CREATE INDEX ix_users_username ON users (username)"))
 
-            for row in connection.execute("SELECT username, email, full_name, hash_password, change_password_url, "
-                                          "right FROM users_old"):
-                connection.execute("INSERT INTO users (username, email, full_name, hash_password, change_password_url, right, activated) "
+            for row in connection.execute(text("SELECT username, email, full_name, hash_password, change_password_url, "
+                                          "right FROM users_old")):
+                connection.execute(text("INSERT INTO users (username, email, full_name, hash_password, change_password_url, right, activated) "
                                    "VALUES ('{}', '{}', {}, '{}', {}, {}, {})".format(row[0], row[1], "NULL" if row[2] is None else "'%s'" % row[2],
                                                                                       row[3], "NULL" if row[4] is None else "'%s'" % row[4],
-                                                                                      "NULL" if row[5] is None else "'%s'" % row[5], 1))
-            connection.execute("DROP TABLE users_old")
+                                                                                      "NULL" if row[5] is None else "'%s'" % row[5], 1)))
+            connection.execute(text("DROP TABLE users_old"))
         if version < 4:
             print("updating to version 4")
             from sqlalchemy.schema import CreateTable, CreateIndex
             from syllabus.models.user import User
-            connection.execute("ALTER TABLE users RENAME TO users_old")
-            connection.execute("DROP INDEX ix_users_username")
+            connection.execute(text("ALTER TABLE users RENAME TO users_old"))
+            connection.execute(text("DROP INDEX ix_users_username"))
             connection.execute(CreateTable(User.__table__))
             for idx in User.__table__.indexes:
                 connection.execute(CreateIndex(idx))
-            for row in connection.execute("SELECT username, email, full_name, hash_password, change_password_url, "
-                                          "right, activated FROM users_old"):
-                connection.execute("INSERT INTO users (email, full_name, hash_password, change_password_url, right, activated) "\
+            for row in connection.execute(text("SELECT username, email, full_name, hash_password, change_password_url, "
+                                          "right, activated FROM users_old")):
+                connection.execute(text("INSERT INTO users (email, full_name, hash_password, change_password_url, right, activated) "\
                                        "VALUES ('{}', {}, {}, {}, {}, {})".format(row[1],
                                                                                   "null" if row[2] is None else "'%s'" % row[2],
                                                                                   "null" if row[3] is None else "'%s'" % row[3],
                                                                                   "null" if row[4] is None else "'%s'" % row[4],
                                                                                   "null" if row[5] is None else "'%s'" % row[5],
-                                                                                  row[6]))
-            connection.execute("DROP TABLE users_old")
+                                                                                  row[6])))
+            connection.execute(text("DROP TABLE users_old"))
 
-        connection.execute("PRAGMA main.user_version=%d;" % current_version)
+        connection.execute(text("PRAGMA main.user_version=%d;" % current_version))
     else:
         print("The database does not exist yet.")
 
