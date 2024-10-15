@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>LTI Tool Launch</title>
+  </head>
+
+  <body>
+    <form method="POST" action="{{ launch_url }}" id="form">
+      <input type="hidden" name="id_token" value="{{ id_token }}" />
+      <input type="hidden" name="state" value="{{ state }}" />
+    </form>
+
+    <script type="text/javascript">
+      document.getElementById("form").submit();
+    </script>
+
+    <noscript>
+      Please enable Javascript to access this content.
+    </noscript>
+  </body>
+</html>

@@ -10,7 +10,7 @@ setup(
     author_email='',
     scripts= ['syllabus-webapp'],
     install_requires=[
-        'pyyaml >= 3.12', 'werkzeug >= 0.11.11', 'pygments >= 2.1.3', 'flask >= 0.12', 'docutils >= 0.13.1', 'lti',
+        'pyyaml >= 3.12', 'werkzeug >= 0.11.11', 'pygments >= 2.1.3', 'flask >= 0.12', 'docutils >= 0.13.1', 'lti1p3platform >= 0.1.6',
         'flask-sqlalchemy >= 2.3.2', 'sqlalchemy >= 2.0.0','python3-saml', 'GitPython', 'sphinx', 'sphinxcontrib-websupport'
     ],
     include_package_data=True,

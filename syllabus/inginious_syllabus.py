@@ -40,7 +40,7 @@ from syllabus.database import init_db, db_session, update_database, locally_regi
 from syllabus.models.params import Params
 from syllabus.models.user import hash_password_func, User, UserAlreadyExists, verify_activation_mac, get_activation_mac
 from syllabus.saml import prepare_request, init_saml_auth
-from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission
+from syllabus.utils.inginious_lti import get_lti_data, get_lti_submission, bp as inginious_lti_bp
 from syllabus.utils.mail import send_confirmation_mail, send_authenticated_confirmation_mail
 from syllabus.utils.pages import seeother, get_content_data, permission_admin, update_last_visited, store_last_visited, render_content, default_rst_opts, get_cheat_sheet
 from syllabus.utils.toc import Content, Chapter, TableOfContent, ContentNotFoundError, Page
@@ -61,6 +61,7 @@ directives.register_directive('author', syllabus.utils.directives.AuthorDirectiv
 directives.register_directive('teacher', syllabus.utils.directives.TeacherDirective)
 directives.register_directive('framed', syllabus.utils.directives.FramedDirective)
 directives.register_directive('print', syllabus.utils.directives.PrintOnlyDirective)
+app.register_blueprint(inginious_lti_bp)
 
 
 if "saml" in syllabus.get_config()['authentication_methods']:
@@ -640,7 +641,6 @@ def update_pages(secret, course):
         return seeother("/")
     syllabus.utils.pages.init_and_sync_repo(course, force_sync=True)
     return "done"
-
 
 def main():
     update_database()
