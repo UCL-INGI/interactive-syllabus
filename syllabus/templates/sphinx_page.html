@@ -38,9 +38,11 @@
                 <li>
                   <a href="/login">Log in</a>
                 </li>
-                <li>
-                  <a href="/register">Register</a>
-                </li>
+                {% if "local" in auth_methods %}
+                   <li>
+                     <a href="/register">Register</a>
+                   </li>
+               {% endif %}
             {% endif %}
        </ul>
 </div>
