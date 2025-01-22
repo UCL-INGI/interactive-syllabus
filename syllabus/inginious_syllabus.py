@@ -160,7 +160,7 @@ def refresh(course):
     data = request.form['content']
     config = syllabus.get_config()
     inginious_config = config['courses'][course]['inginious']
-    inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+    inginious_course_url = "%s/course/%s" % (inginious_config['url'], inginious_config['course_id'])
     path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
     inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
     same_origin_proxy = inginious_config['same_origin_proxy']
@@ -266,7 +266,7 @@ def render_web_page(course: str, content: Content, print_mode=False, display_pri
 
         config = syllabus.get_config()
         inginious_config = config['courses'][course]['inginious']
-        inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        inginious_course_url = "%s/course/%s" % (inginious_config['url'], inginious_config['course_id'])
         path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
         inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
         same_origin_proxy = inginious_config['same_origin_proxy']
@@ -303,7 +303,7 @@ def render_sphinx_page(course: str, docname: str):
         doc_path = safe_join(build.builder.outdir, docname)
         config = syllabus.get_config()
         inginious_config = config['courses'][course]['inginious']
-        inginious_course_url = "%s/%s" % (inginious_config['url'], inginious_config['course_id'])
+        inginious_course_url = "%s/course/%s" % (inginious_config['url'], inginious_config['course_id'])
         path = safe_join(inginious_config.get("simple_grader_pattern", "/"), inginious_config['course_id'])
         inginious_sandbox_url = urllib.parse.urljoin(inginious_config["url"], path)
         same_origin_proxy = inginious_config['same_origin_proxy']
