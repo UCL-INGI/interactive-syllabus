@@ -20,7 +20,7 @@
 <div class="navbar-syllabus">
     <ul>
       <li class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn">{{ courses_titles[course_str] }}</a>
+        <a href="javascript:void(0)" class="dropbtn">{{ courses_titles[course_str] }}<span class="caret"></span></a>
         <div class="dropdown-content">
             {% for key, course_title in courses_titles.items() %}
                 <a href="/index/{{ key }}">{{ course_title }}</a>
@@ -109,6 +109,17 @@
 
         .navbar-syllabus .dropdown:hover .dropdown-content {
           display: block;
+        }
+
+        .dropdown .caret {
+          display: inline-block;
+          width: 0;
+          height: 0;
+          margin-left: 10px;
+          vertical-align: middle;
+          border-top:   4px dashed;
+          border-right: 4px solid transparent;
+          border-left:  4px solid transparent;
         }
 
         @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
